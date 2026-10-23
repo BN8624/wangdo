@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ownedYokai, power } from '../core/engine';
 import { fmt } from '../core/format';
 import { exportCode, importCode } from '../core/save';
-import { RANKS } from '../data/ranks';
+import { rankDef } from '../data/ranks';
 import { YOKAI } from '../data/yokai';
 import type { GameState } from '../core/types';
 import { replaceState, resetGame } from './store';
@@ -45,7 +45,7 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
         <div>
           <span>칭호</span>
           <b>
-            {RANKS[view.rank].title} ({view.rank + 1}/{RANKS.length})
+            {rankDef(view.rank).title}
           </b>
         </div>
         <div>

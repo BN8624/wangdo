@@ -1,6 +1,6 @@
 // 게임 전체에서 쓰는 타입. 상태는 JSON으로 그대로 저장할 수 있어야 한다.
 
-export type StatKey = 'might' | 'wit' | 'craft' | 'charm';
+export type StatKey = 'might' | 'wit' | 'politics' | 'charm';
 export type Stats = Record<StatKey, number>;
 
 export type ResourceKey = 'coin' | 'grain' | 'fame';
@@ -25,6 +25,9 @@ export interface YokaiDef {
   artSubject: string;
   /** 그림이 없을 때 쓰는 대표 색 */
   color: string;
+  /** 합류 경로: story:<화 id> · recruit · story:s2 … */
+  join: string;
+  voice: string;
 }
 
 export type WorkplaceId = 'market' | 'woodyard' | 'field' | 'tavern';
@@ -144,4 +147,41 @@ export interface GameState {
   introSeen: boolean;
   /** 안내 단계(끝나면 안내 목록 길이 이상) */
   guide: number;
+  /** 본 이야기 화와 선택으로 생긴 깃발 */
+  story: { done: string[]; flags: string[] };
+}
+
+// ───────── 메인 이야기(연재) ─────────
+
+export interface StoryLine {
+  /** narration · me · 식객 id · npc:이름 */
+  who: string;
+  text: string;
+  /** 이 깃발이 있을 때만 나오는 줄 */
+  if?: string;
+}
+
+export interface StoryEffects {
+  bond?: Record<string, number>;
+  flags?: string[];
+  res?: Partial<Resources>;
+}
+
+export interface StoryScene {
+  bg: string;
+  cg?: string | null;
+  cast?: string[];
+  lines: StoryLine[];
+  choice?: { prompt: string; options: { text: string; reply?: string; effects?: StoryEffects }[] };
+}
+
+export interface Episode {
+  id: string;
+  season: number;
+  no: number;
+  title: string;
+  summary: string;
+  unlock: { after?: string; rank?: number; power?: number; stage?: number };
+  scenes: StoryScene[];
+  reward?: { coin?: number; grain?: number; fame?: number; recruit?: string | null };
 }

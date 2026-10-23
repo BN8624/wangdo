@@ -21,7 +21,7 @@ import {
 } from '../core/engine';
 import { fmt, fmtDuration, fmtRate } from '../core/format';
 import { nextHint, type HintTarget } from '../core/hints';
-import { RANKS } from '../data/ranks';
+import { rankDef } from '../data/ranks';
 import { WORKPLACES, WORKPLACE_BY_ID } from '../data/village';
 import { ART } from '../data/art';
 import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
@@ -92,7 +92,7 @@ export function HomeView({ view, now, open, go }: Props) {
           <div className="rank-top">
             <div className="rank-title">
               <small>칭호</small>
-              {RANKS[view.rank].title}
+              {rankDef(view.rank).title}
             </div>
             <div className="next">{target ? <>다음 ▸ <b>{target.title}</b></> : '최고 칭호'}</div>
           </div>

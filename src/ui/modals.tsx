@@ -3,7 +3,7 @@ import { chooseWish, levelCap, markSceneSeen, rankMultiplier, talk, wishRewardAm
 import { fmt, fmtDuration } from '../core/format';
 import { ART, WISH_USES_YOKAI } from '../data/art';
 import { bondContent } from '../data/bond-content';
-import { RANKS } from '../data/ranks';
+import { rankDef } from '../data/ranks';
 import { BOND_LEVELS, GIFT_BY_ID } from '../data/village';
 import { WISH_BY_ID } from '../data/wishes';
 import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
@@ -82,7 +82,7 @@ export function WishModal({ view, onClose }: { view: GameState; onClose: () => v
 }
 
 export function PromoteModal({ rank, recruit, onClose }: { rank: number; recruit: string | null; onClose: () => void }) {
-  const r = RANKS[rank];
+  const r = rankDef(rank);
   const def = recruit ? YOKAI_BY_ID[recruit] : null;
   return (
     <Shell onClose={onClose}>

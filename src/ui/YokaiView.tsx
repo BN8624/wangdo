@@ -31,7 +31,7 @@ import { act } from './store';
 import { buzz, pushToast } from './toast';
 import type { ModalRequest } from './App';
 
-export const SPEC_COLOR: Record<StatKey, string> = { might: '#e2553f', wit: '#e08a1e', craft: '#4f9a3a', charm: '#d0577a' };
+export const SPEC_COLOR: Record<StatKey, string> = { might: '#e2553f', wit: '#e08a1e', politics: '#4f9a3a', charm: '#d0577a' };
 
 /** 아직 없는 식객이 언제 합류하는지 */
 export function joinCondition(id: string): string {

@@ -11,7 +11,8 @@
     "test": "vitest run",
     "simulate": "tsx scripts/simulate.ts",
     "art:prompts": "tsx scripts/art-prompts.ts",
-    "art:generate": "tsx scripts/gen-art.ts"
+    "art:generate": "tsx scripts/gen-art.ts",
+    "story:next": "tsx scripts/story-next.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

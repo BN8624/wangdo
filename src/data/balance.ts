@@ -41,13 +41,13 @@ export const BALANCE = {
 
   feastGrainBase: 80,
   feastGrainGrowth: 1.9,
-  feastFamePerCharm: 0.15,
+  feastFamePerCharm: 0.015,
   feastFameRankBonus: 0.05,
 
   staminaMax: 6,
   staminaRegenMinutes: 30,
   /** 소동 상대 수치 = foeBase × foeGrowth^순번 */
-  foeBase: 8,
+  foeBase: 80,
   foeGrowth: 1.09,
   bossMult: 1.3,
   /** 승률 = r^k / (r^k + 1), r = 내 능력치 ÷ 상대 수치 */

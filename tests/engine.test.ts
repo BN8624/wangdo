@@ -136,11 +136,11 @@ describe('인연', () => {
   it('호감도 단계가 오르면 능력치가 오르고 새 이야기가 열린다', () => {
     const s = game();
     s.res.coin = 1e6;
-    const before = statsOf(s, 'sora').craft;
+    const before = statsOf(s, 'sora').politics;
     const [a, r] = outing(s, T0, 'sora');
     expect(r.ok && r.to).toBe(bondLevel(BALANCE.outingBond));
     a.yokai.sora.bond = BOND_LEVELS[3].need;
-    expect(statsOf(a, 'sora').craft).toBeGreaterThan(before);
+    expect(statsOf(a, 'sora').politics).toBeGreaterThan(before);
     expect(unseenScene(a, 'sora')).toBe(1);
     expect(unseenScene(markSceneSeen(a, 'sora', 1), 'sora')).toBe(2);
   });

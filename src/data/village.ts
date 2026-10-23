@@ -2,10 +2,10 @@ import type { ComboDef, GiftDef, WorkplaceDef } from '../core/types';
 
 // 고을의 일터. 식객을 배치하면 그 식객의 능력치만큼 자원이 저절로 들어온다.
 export const WORKPLACES: WorkplaceDef[] = [
-  { id: 'market', name: '장터', stat: 'wit', produces: 'coin', perStat: 2, flavor: '꾀 많은 식객이 흥정을 붙인다' },
-  { id: 'woodyard', name: '나무터', stat: 'might', produces: 'coin', perStat: 1.5, flavor: '힘센 식객이 장작을 패서 판다' },
-  { id: 'field', name: '논밭', stat: 'craft', produces: 'grain', perStat: 0.8, flavor: '솜씨 좋은 식객이 농사를 짓는다' },
-  { id: 'tavern', name: '주막', stat: 'charm', produces: 'fame', perStat: 0.003, flavor: '매력 있는 식객이 손님을 끈다' },
+  { id: 'market', name: '저잣거리', stat: 'wit', produces: 'coin', perStat: 0.2, flavor: '지략이 뛰어난 식객이 상단을 굴린다' },
+  { id: 'woodyard', name: '훈련장', stat: 'might', produces: 'coin', perStat: 0.15, flavor: '무력이 높은 식객이 호위 일을 맡아 벌어 온다' },
+  { id: 'field', name: '논밭', stat: 'politics', produces: 'grain', perStat: 0.08, flavor: '정치에 밝은 식객이 소작과 세곡을 다스린다' },
+  { id: 'tavern', name: '주막', stat: 'charm', produces: 'fame', perStat: 0.0003, flavor: '매력 있는 식객이 손님과 소문을 끈다' },
 ];
 
 export const WORKPLACE_BY_ID = Object.fromEntries(WORKPLACES.map((w) => [w.id, w])) as Record<WorkplaceDef['id'], WorkplaceDef>;

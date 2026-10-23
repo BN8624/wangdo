@@ -2,7 +2,7 @@
 // 시간은 항상 인자로 받는다(Date.now()를 직접 부르지 않는다). 그래야 테스트와 시뮬레이션이 결정론적이다.
 
 import { BALANCE as B } from '../data/balance';
-import { MAX_RANK, RANKS } from '../data/ranks';
+import { rankDef } from '../data/ranks';
 import { CHAPTERS, STAGES_PER_CHAPTER, TOTAL_STAGES } from '../data/stages';
 import { BOND_LEVELS, COMBOS, GIFTS, GIFT_BY_ID, WORKPLACES } from '../data/village';
 import { WISHES, WISH_BY_ID } from '../data/wishes';
@@ -26,11 +26,11 @@ import type {
 
 export const MINUTE = 60_000;
 export const RESOURCE_KEYS: ResourceKey[] = ['coin', 'grain', 'fame'];
-export const STAT_KEYS: StatKey[] = ['might', 'wit', 'craft', 'charm'];
+export const STAT_KEYS: StatKey[] = ['might', 'wit', 'politics', 'charm'];
 
 export type Fail<R extends string> = { ok: false; reason: R };
 
-const freshYokai = (): YokaiState => ({ level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0 });
+export const freshYokai = (): YokaiState => ({ level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0 });
 
 export function newGame(now: number, seed: number = now): GameState {
   return {
@@ -50,6 +50,7 @@ export function newGame(now: number, seed: number = now): GameState {
     totals: { wishes: 0, feasts: 0, wins: 0, losses: 0, talks: 0, gifts: 0, earned: 0 },
     introSeen: false,
     guide: 0,
+    story: { done: [], flags: [] },
   };
 }
 
@@ -86,7 +87,7 @@ export function ownedYokai(s: GameState): { def: YokaiDef; state: YokaiState }[]
 }
 
 export function totalStats(s: GameState): Stats {
-  const sum: Stats = { might: 0, wit: 0, craft: 0, charm: 0 };
+  const sum: Stats = { might: 0, wit: 0, politics: 0, charm: 0 };
   for (const { def } of ownedYokai(s)) {
     const st = statsOf(s, def.id);
     for (const k of STAT_KEYS) sum[k] += st[k];
@@ -97,7 +98,7 @@ export function totalStats(s: GameState): Stats {
 /** 위세 = 모든 식객 능력치의 합 */
 export function power(s: GameState): number {
   const t = totalStats(s);
-  return t.might + t.wit + t.craft + t.charm;
+  return t.might + t.wit + t.politics + t.charm;
 }
 
 export const levelCap = (rank: number) => B.levelCapBase + rank * B.levelCapPerRank;
@@ -354,7 +355,7 @@ export function feast(s: GameState, now: number): [GameState, FeastResult] {
 }
 
 export function nextRank(s: GameState): RankDef | null {
-  return s.rank >= MAX_RANK ? null : RANKS[s.rank + 1];
+  return rankDef(s.rank + 1);
 }
 
 export type PromoteResult = { ok: true; rank: number; recruit: string | null } | Fail<'max-rank' | 'need-power' | 'need-fame'>;
@@ -370,7 +371,7 @@ export function promoteCheck(s: GameState): PromoteResult | { ok: true } {
 export function promote(s: GameState, now: number): [GameState, PromoteResult] {
   const check = promoteCheck(s);
   if (!check.ok) return [s, check];
-  const target = RANKS[s.rank + 1];
+  const target = rankDef(s.rank + 1);
   const next = clone(s);
   settleInPlace(next, now);
   next.res.fame -= target.fameCost;
@@ -408,7 +409,7 @@ export function useWish(s: GameState, now: number): [GameState, UseWishResult] {
 export function wishRewardAmount(s: GameState, reward: WishReward): number {
   switch (reward.kind) {
     case 'fame': {
-      const target = nextRank(s) ?? RANKS[MAX_RANK];
+      const target = nextRank(s) ?? rankDef(s.rank);
       return Math.max(1, Math.ceil((target.fameCost * reward.pct * B.wishRewardScale) / 100));
     }
     case 'stamina':
