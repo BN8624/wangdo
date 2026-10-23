@@ -5,12 +5,14 @@ import { YOKAI } from './yokai';
 // 화풍이 흔들리지 않도록 STYLE은 고정하고 종류별 틀 + 대상 묘사만 바꾼다.
 
 const STYLE =
-  'Premium Korean mobile game illustration in polished Korean webtoon / modern anime style: clean confident lineart, ' +
-  'soft cel shading with rich lighting, saturated colors with gold accents. Joseon-era fantasy kingdom. No text, no letters, no watermark, no frame.';
+  'Beautiful Korean mobile game illustration in a polished modern webtoon style: clean elegant lineart, soft painterly cel shading, refined harmonious palette. ' +
+  'Simple readable designs with minimal ornament (no gold filigree, no layered jewelry, no busy embroidery, no floating petals, no sparkles). Joseon-inspired fantasy. No text, no letters, no watermark, no frame.';
 
+// 체형은 한국 여자 아이돌을 기준으로 한다(사용자 지정).
 const HEROINE =
-  'The character is clearly an adult woman, glamorous and alluring, wearing a fashionable fantasy fusion-hanbok in her own colors and motifs, ' +
-  'with a form-fitting silhouette that shows bare shoulders, collarbones and arms and a high side slit in the skirt showing her legs. ' +
+  'The character is clearly an adult woman in her mid-to-late twenties, beautiful, elegant and alluring, with a soft charming face, large expressive eyes and glossy lips. ' +
+  'Body type like a typical adult Korean pop idol: slender and graceful, small face, narrow shoulders, very slim waist, slim hips, long straight slender legs, slim toned arms, a modest natural bust, natural proportions about seven and a half heads tall. ' +
+  'She wears a simplified elegant fusion hanbok of soft flowing fabric in her own two or three colors, with bare shoulders and a high side slit showing her leg. ' +
   'Tasteful and non-explicit: no nudity, no underwear visible.';
 
 const FRAME = {
