@@ -74,6 +74,7 @@ const BG: Record<string, string> = {
   night: 'a moonlit palace garden at night with a lotus pond, a stone bridge and fireflies',
   forest: 'a deep misty pine forest with shafts of light and an old shrine',
   hall: 'the interior of a county magistrate office (gwana) with a raised dais, folding screen and petition desk',
+  hut: 'the inside of a modest thatched-roof cottage room at night, warm low oil-lamp light, paper sliding doors, a folded blanket on the heated floor',
   court: 'the royal throne hall with a sun-and-moon folding screen behind the empty throne, red pillars and gold light',
 };
 

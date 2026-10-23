@@ -76,7 +76,7 @@ export function completeEpisode(s: GameState, ep: Episode, choices: (number | nu
   return [next, { recruit, bondUps }];
 }
 
-const BGS = ['village', 'palace', 'market', 'tavern', 'field', 'night', 'forest', 'hall', 'court'];
+const BGS = ['village', 'palace', 'market', 'tavern', 'field', 'night', 'forest', 'hall', 'court', 'hut'];
 
 /** 화 파일이 형식에 맞는지 검사한다. 문제가 없으면 빈 배열 */
 export function validateEpisode(ep: Episode, heroineIds: Set<string>): string[] {
