@@ -47,7 +47,7 @@ export const CHAPTERS: ChapterDef[] = [
       '방망이 짝퉁 장수',
       '감투 쓴 소매치기',
     ],
-    boss: { name: '감투 장수 김서방', yokai: 'kimseobang', line: '허허, 이 감투가 보이시오? 그럼 진짜 손님이구려!' },
+    boss: { name: '감투 장수 김아씨', yokai: 'gamtu', line: '호호, 이 감투가 보이세요? 그럼 진짜 손님이네요!' },
   },
   {
     id: 'lotus-pond',

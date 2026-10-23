@@ -5,6 +5,7 @@ export const ART_STYLE = [
   'Bright, warm Korean folk-tale picture book illustration.',
   'Soft watercolor and gouache on hanji paper texture, gentle brown ink outlines, cute rounded proportions, cheerful friendly expression.',
   'Palette: warm cream, jade green, vermilion, saffron yellow and soft indigo, like Korean dancheong accents.',
+  'Every character is an adult young woman in her twenties, drawn in a wholesome, modest, family-friendly way.',
   'Upper-body character portrait, centered, three-quarter view.',
   'Plain warm cream background with no scenery. No text, no letters, no watermark, no frame, no border.',
 ].join(' ');
