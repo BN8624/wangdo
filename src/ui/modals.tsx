@@ -1,15 +1,16 @@
+import { NovelFrame } from './StoryView';
 import { useEffect, useState } from 'react';
 import { chooseWish, levelCap, markSceneSeen, rankMultiplier, talk, wishRewardAmount, type FightResult } from '../core/engine';
 import { fmt, fmtDuration } from '../core/format';
-import { ART, WISH_USES_YOKAI } from '../data/art';
+import { ART } from '../data/art';
 import { bondContent } from '../data/bond-content';
 import { rankDef } from '../data/ranks';
 import { BOND_LEVELS, GIFT_BY_ID } from '../data/village';
 import { WISH_BY_ID } from '../data/wishes';
 import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
 import type { ComboDef, GameState, ResourceKey } from '../core/types';
-import { Burst, Club, RES_LABEL, ResIcon, Villager, VillageScene } from './icons';
-import { Art, Portrait } from './Portrait';
+import { Burst, LineIcon, RES_LABEL, ResIcon, VillageScene } from './icons';
+import { Portrait } from './Portrait';
 import { act, type OfflineSummary } from './store';
 import { buzz, pushToast } from './toast';
 import type { ModalRequest } from './App';
@@ -50,14 +51,8 @@ export function WishModal({ view, onClose }: { view: GameState; onClose: () => v
     <Shell>
       <div className="head">
         <Burst />
-        <span className="ttuk-word">뚝딱!</span>
-        {WISH_USES_YOKAI[wish.id] ? (
-          <Frame id={WISH_USES_YOKAI[wish.id]} />
-        ) : (
-          <div className="who-pic portrait-frame">
-            <Villager wishId={wish.id} />
-          </div>
-        )}
+        <span className="ttuk-word">상소</span>
+        <Frame id={view.favorite} />
       </div>
       <div className="title">{wish.who}</div>
       <div className="bubble">{wish.text}</div>
@@ -93,7 +88,7 @@ export function PromoteModal({ rank, recruit, onClose }: { rank: number; recruit
           <Frame id={def.id} />
         ) : (
           <div className="who-pic" style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-            <Club size={130} />
+            <LineIcon name="crown" size={90} />
           </div>
         )}
       </div>
@@ -188,7 +183,7 @@ export function OfflineModal({ summary, onClose }: { summary: OfflineSummary; on
       <div className="head jade">
         <Burst />
         <span className="ttuk-word">어서 와요!</span>
-        <Frame id="dudu" />
+        <Frame id="baekseol" />
       </div>
       <div className="title">자리를 비운 {fmtDuration(summary.minutes * 60_000)} 동안</div>
       <div className="sub">식객들이 일터에서 부지런히 벌어 왔어요</div>
@@ -205,7 +200,7 @@ export function OfflineModal({ summary, onClose }: { summary: OfflineSummary; on
       </div>
       <div className="actions">
         <button className="btn cheong wide" onClick={onClose}>
-          고을로 가기
+          궁궐로 가기
         </button>
       </div>
     </Shell>
@@ -343,31 +338,7 @@ export function SceneViewer({ id, level, onClose }: { id: string; level: number;
       onClose();
     }
   };
-  const withCg = level === 3 || level === 5;
-  return (
-    <div className="vn" onClick={next} role="dialog" aria-label={scene.title}>
-      <div className="vn-bg">
-        {withCg ? (
-          <Art className="vn-cg" src={ART.cg(id, level)} fallback={<VillageScene rank={level * 2} />} />
-        ) : (
-          <VillageScene rank={level * 2} />
-        )}
-      </div>
-      {!withCg && (
-        <div className="vn-char">
-          <Portrait def={YOKAI_BY_ID[id]} />
-        </div>
-      )}
-      <div className="vn-title">
-        {name} · {level}. {scene.title}
-      </div>
-      <div className="vn-box">
-        {line.who !== 'narration' && <div className="vn-name">{line.who === 'me' ? '나' : name}</div>}
-        <div className={`vn-text ${line.who === 'narration' ? 'narr' : ''}`}>{line.text}</div>
-        <div className="vn-more">{i + 1 < scene.lines.length ? '▼' : '끝'}</div>
-      </div>
-    </div>
-  );
+  return <NovelFrame title={`${name} · ${level}. ${scene.title}`} bg={level===3||level===5?ART.cg(id,level):ART.bg('night')} cast={level===3||level===5?[]:[id]} line={{who:line.who==='her'?id:line.who,text:line.text}} onNext={next} />;
 }
 
 export function ComboModal({ combo, onClose }: { combo: ComboDef; onClose: () => void }) {
@@ -390,57 +361,6 @@ export function ComboModal({ combo, onClose }: { combo: ComboDef; onClose: () =>
         <div className="sub">같은 일터에 있으면 생산량 +20%</div>
         <button className="btn hong wide" onClick={onClose}>
           좋아요!
-        </button>
-      </div>
-    </Shell>
-  );
-}
-
-const STORY = [
-  '산골 마을 달골에 사는 나무꾼인 당신.\n오늘도 나무를 하러 깊은 산에 올랐다가\n그만 길을 잃고 말았어요.',
-  '어둑한 숲속, 도깨비들이 놀다 간 자리에\n울퉁불퉁한 방망이 하나가 떨어져 있었어요.\n"금 나와라… 뚝딱?"',
-  '방망이 소리에 장난꾸러기 도깨비 두두와\n새내기 구미호 방울, 우렁각시 소라가 나타났어요.\n"방망이 주인님! 우리랑 같이 살아요!"',
-  '아가씨들에게 일터를 맡기고, 이야기를 나누며\n쓸쓸한 달골을 팔도 제일의 고을로 키워 보세요.\n언젠가 도깨비 대왕이 될지도 몰라요!',
-];
-
-export function IntroModal({ onClose }: { onClose: () => void }) {
-  const [page, setPage] = useState(0);
-  const last = page === STORY.length - 1;
-  return (
-    <Shell>
-      <div className="head">
-        {page === 2 ? (
-          <div className="trio">
-            {['bangul', 'dudu', 'sora'].map((id) => (
-              <div key={id} className="portrait-frame">
-                <Portrait def={YOKAI_BY_ID[id]} />
-              </div>
-            ))}
-          </div>
-        ) : (
-          <Art
-            className="scene-img"
-            src={[ART.story('lost'), ART.story('club'), '', ART.village(3)][page]}
-            fallback={
-              <div className="who-pic" style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-                <Club size={130} />
-              </div>
-            }
-          />
-        )}
-      </div>
-      <div className="title">왕도 — 나무꾼에서 도깨비 대왕까지</div>
-      <div className="story" style={{ whiteSpace: 'pre-line' }}>
-        {STORY[page]}
-      </div>
-      <div className="page-dots">
-        {STORY.map((_, i) => (
-          <b key={i} className={i === page ? 'on' : ''} />
-        ))}
-      </div>
-      <div className="actions">
-        <button className="btn hong wide" onClick={() => (last ? onClose() : setPage(page + 1))}>
-          {last ? '시작하기' : '다음'}
         </button>
       </div>
     </Shell>

@@ -49,7 +49,7 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
           </b>
         </div>
         <div>
-          <span>위세</span>
+          <span>권세</span>
           <b>{fmt(power(view))}</b>
         </div>
         <div>
@@ -59,7 +59,7 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
           </b>
         </div>
         <div>
-          <span>소동 겨루기</span>
+          <span>토벌</span>
           <b>
             {fmt(view.totals.wins)}승 {fmt(view.totals.losses)}패
           </b>
@@ -71,11 +71,11 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
           </b>
         </div>
         <div>
-          <span>방망이를 두드린 횟수</span>
+          <span>처리한 정무</span>
           <b>{fmt(view.totals.wishes)}</b>
         </div>
         <div>
-          <span>연 잔치</span>
+          <span>개최한 연회</span>
           <b>{fmt(view.totals.feasts)}</b>
         </div>
         <div>
@@ -119,7 +119,7 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
           )}
         </div>
       </div>
-      <div className="soft" style={{ textAlign: 'center', fontSize: 12, margin: '18px 0' }}>
+      <div className="soft" style={{ textAlign: 'center', fontSize: 13, margin: '18px 0' }}>
         왕도 v{__APP_VERSION__} · 그림: AI 생성
       </div>
     </div>

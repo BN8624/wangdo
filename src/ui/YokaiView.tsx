@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   STAT_KEYS,
+  setFavorite,
   affordableLevels,
   bondLevel,
   giftPrice,
@@ -26,6 +27,7 @@ import { BOND_LEVELS, GIFTS, WORKPLACE_BY_ID } from '../data/village';
 import { GRADE_LABEL, STAT_LABEL, YOKAI, YOKAI_BY_ID } from '../data/yokai';
 import type { GameState, StatKey } from '../core/types';
 import { Portrait } from './Portrait';
+import { LineIcon } from './icons';
 import { act } from './store';
 import { buzz, pushToast } from './toast';
 import type { ModalRequest } from './App';
@@ -47,7 +49,7 @@ function Hearts({ level }: { level: number }) {
   return (
     <span className="hearts" aria-label={`호감도 ${level}단계`}>
       {Array.from({ length: 5 }, (_, i) => (
-        <i key={i} className={i < level ? 'on' : ''}>♥</i>
+        <i key={i} className={i < level ? 'on' : ''}><LineIcon name="heart" size={16}/></i>
       ))}
     </span>
   );
@@ -65,7 +67,7 @@ export function YokaiView({ view, now, onOpen }: { view: GameState; now: number;
         식객 <span>{owned.length} / {YOKAI.length}</span>
       </div>
       <div className="page-sub">
-        위세 {fmt(power(view))} · {STAT_KEYS.map((k) => `${STAT_LABEL[k]} ${fmt(t[k])}`).join(' · ')}
+        권세 {fmt(power(view))} · {STAT_KEYS.map((k) => `${STAT_LABEL[k]} ${fmt(t[k])}`).join(' · ')}
       </div>
       <div className="grid">
         {order.map((def) => {
@@ -76,7 +78,7 @@ export function YokaiView({ view, now, onOpen }: { view: GameState; now: number;
                 <div className="pic">
                   <Portrait def={def} />
                 </div>
-                <div className="nm">???</div>
+                <div className="nm">{def.name}</div>
                 <div className="kd">{joinCondition(def.id)}</div>
                 <div className="lv">&nbsp;</div>
               </div>
@@ -95,6 +97,7 @@ export function YokaiView({ view, now, onOpen }: { view: GameState; now: number;
                 <Portrait def={def} />
               </div>
               <div className="nm">{def.name}</div>
+              <div className="kd">{def.kind}</div>
               <div className="kd">
                 Lv <b>{mine.level}</b> · <Hearts level={bondLevel(mine.bond)} />
               </div>
@@ -173,6 +176,7 @@ export function YokaiSheet({ view, now, id, open, onClose }: { view: GameState; 
           </div>
         </div>
 
+        <button className="btn wide" disabled={view.favorite===id} onClick={()=>act(s=>[setFavorite(s,id),null])}>{view.favorite===id?'대표 식객':'대표로 세우기'}</button>
         <div className="tabs">
           <button className={tab === 'bond' ? 'on' : ''} onClick={() => setTab('bond')}>
             인연
@@ -197,7 +201,7 @@ export function YokaiSheet({ view, now, id, open, onClose }: { view: GameState; 
                 }}
               />
             </div>
-            <div className="soft" style={{ fontSize: 12, marginTop: 4 }}>
+            <div className="soft" style={{ fontSize: 13, marginTop: 4 }}>
               {nextNeed ? `다음 단계 〈${BOND_LEVELS[lv + 1].name}〉까지 ${nextNeed - y.bond}` : '가장 깊은 인연이에요'}
             </div>
             <div className="bond-btns">

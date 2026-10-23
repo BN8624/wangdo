@@ -35,7 +35,7 @@ export function GuideBar({ step, index, tab }: { step: GuideStep; index: number;
             </small>
           </div>
           <div className="guide-text">
-            {step.tab && step.tab !== tab ? `아래 〈${{ home: '고을', yokai: '식객', stage: '소동' }[step.tab]}〉 탭으로 가 볼까요? ` : ''}
+            {step.tab && step.tab !== tab ? `아래 〈${{ home: '궁궐', yokai: '식객', stage: '토벌' }[step.tab]}〉 탭으로 가 볼까요? ` : ''}
             {step.text}
           </div>
           {!step.done && (
@@ -43,7 +43,7 @@ export function GuideBar({ step, index, tab }: { step: GuideStep; index: number;
               알겠어요
             </button>
           )}
-          {step.reward && <div className="soft" style={{ fontSize: 12, marginTop: 4 }}>보상: {rewardText(step)}</div>}
+          {step.reward && <div className="soft" style={{ fontSize: 13, marginTop: 4 }}>보상: {rewardText(step)}</div>}
         </div>
       </div>
     </>

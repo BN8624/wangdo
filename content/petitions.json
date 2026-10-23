@@ -1,0 +1,302 @@
+[
+  {
+    "id": "ferry-tax",
+    "who": "달골 나루터 사공",
+    "text": "관아와 흑운채가 같은 배에 통행세를 매겨 노를 저을수록 빚이 늡니다. 물고기는 어느 쪽에도 내지 않는데, 사람만 두 번 내야 합니까?",
+    "minRank": 0,
+    "choices": [
+      { "label": "겹친 세금을 돌려주라", "reward": { "kind": "coin", "minutes": 40 } },
+      { "label": "징수패부터 공개 대조하라", "reward": { "kind": "fame", "pct": 4 } }
+    ]
+  },
+  {
+    "id": "boundary-persimmon",
+    "who": "달골 과수원지기",
+    "text": "이웃 밭으로 뻗은 감나무 가지를 두고 싸우다 수확철이 지났습니다. 이웃은 뿌리는 제 땅에 있어도 감이 익는 햇볕은 자기 것이라 우깁니다.",
+    "minRank": 0,
+    "choices": [
+      { "label": "나무 주인에게 수확을 맡겨라", "reward": { "kind": "grain", "minutes": 30 } },
+      { "label": "경계를 재고 나눌 몫을 정하라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "invisible-stall",
+    "who": "장터 좌판지기",
+    "text": "감투를 쓴 도깨비 상인이 자리가 비어 보인다는 이유로 자리세를 거부합니다. 손님들은 물건만 떠다닌다며 몰려드는데 제 좌판까지 구경터가 됐습니다.",
+    "minRank": 1,
+    "choices": [
+      { "label": "보이지 않아도 자리세는 내라", "reward": { "kind": "coin", "minutes": 30 } },
+      { "label": "경계를 표시하고 통로를 내라", "reward": { "kind": "fame", "pct": 4 } }
+    ]
+  },
+  {
+    "id": "mill-night-shift",
+    "who": "물레방앗간 일꾼",
+    "text": "밤일을 맡은 요괴에게 주인이 달빛도 품삯이라며 곡식을 덜 줍니다. 낮에 일한 사람들 몫도 줄일 눈치라 함께 장부를 들고 왔습니다.",
+    "minRank": 1,
+    "choices": [
+      { "label": "밀린 품삯을 곡식으로 지급하라", "reward": { "kind": "grain", "minutes": 40 } },
+      { "label": "교대표와 품삯 기준을 세워라", "reward": { "kind": "stamina", "amount": 1 } }
+    ]
+  },
+  {
+    "id": "broken-betrothal",
+    "who": "혼약을 거둔 장인",
+    "text": "딸과 상대가 함께 혼약을 거뒀는데 중매인이 이미 받아 간 비단은 돌려줄 수 없답니다. 두 사람 마음보다 자기 수고가 오래 남는다니, 수고에도 혼례를 올려야겠습니까?",
+    "minRank": 2,
+    "choices": [
+      { "label": "실제 비용만 빼고 반환하라", "reward": { "kind": "coin", "minutes": 40 } },
+      { "label": "당사자를 불러 정산을 중재하라", "reward": { "kind": "fame", "pct": 5 } }
+    ]
+  },
+  {
+    "id": "goblin-spring",
+    "who": "산기슭 물지게꾼",
+    "text": "샘을 지키던 도깨비가 새 울타리를 세우자 아래 마을 물값이 뛰었습니다. 도깨비는 샘을 청소한 품삯도 못 받았다며 물동이부터 내려놓으랍니다.",
+    "minRank": 2,
+    "choices": [
+      { "label": "청소 품삯을 공동 부담하라", "reward": { "kind": "grain", "minutes": 40 } },
+      { "label": "취수 시간과 관리 몫을 정하라", "reward": { "kind": "stamina", "amount": 1 } }
+    ]
+  },
+  {
+    "id": "salt-under-firewood",
+    "who": "나루 검문지기",
+    "text": "장작 아래 숨긴 소금을 잡았더니 운송인은 남씨 가문의 빈 자루만 빌렸다고 합니다. 자루에는 인장이 선명한데 운송 허가장은 비에 젖었다며 내놓지 않습니다.",
+    "minRank": 3,
+    "choices": [
+      { "label": "짐을 봉인하고 운송장을 대조하라", "reward": { "kind": "coin", "minutes": 50 } },
+      { "label": "자루 주인까지 불러 조사하라", "reward": { "kind": "fame", "pct": 5 } }
+    ]
+  },
+  {
+    "id": "harvest-measure",
+    "who": "달골 소작인 대표",
+    "text": "씨앗을 빌릴 때 쓴 되보다 갚을 때 쓰는 되가 큽니다. 창고지기는 송씨 집안의 넉넉한 인심이라는데, 그 인심에 저희 겨울밥이 들어갑니다.",
+    "minRank": 3,
+    "choices": [
+      { "label": "같은 되로 다시 정산하라", "reward": { "kind": "grain", "minutes": 50 } },
+      { "label": "공인된 되를 장터에 비치하라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "song-feast-bribe",
+    "who": "송씨 별창 심부름꾼",
+    "text": "창고 점검일에 잔치를 열 테니 나리께서 참석만 해 주시면 됩니다. 수고비는 상 아래 두겠으며, 장부를 펴실 자리까지 마련할 필요는 없겠지요.",
+    "minRank": 4,
+    "choices": [
+      { "label": "잔칫상 대신 장부부터 내라", "reward": { "kind": "fame", "pct": 6 } },
+      { "label": "수고비를 봉인해 증거로 남겨라", "reward": { "kind": "coin", "minutes": 50 } }
+    ]
+  },
+  {
+    "id": "witness-rice",
+    "who": "야간 운송을 본 인부",
+    "text": "곡식 배를 봤다고 증언한 뒤 어느 나루에서도 일을 주지 않습니다. 입을 닫으면 품삯을 주겠다는데, 제 식구 밥상까지 증인석에 앉힐 수는 없습니다.",
+    "minRank": 4,
+    "choices": [
+      { "label": "증언자 구휼과 일감을 마련하라", "reward": { "kind": "grain", "minutes": 60 } },
+      { "label": "보복 고용 거부를 조사하라", "reward": { "kind": "fame", "pct": 6 } }
+    ]
+  },
+  {
+    "id": "settlement-timber",
+    "who": "흑운채 정착민 대표",
+    "text": "정착지 지붕을 올릴 나무를 베었더니 달골 땔감터를 침범했다며 도끼를 빼앗겼소. 약탈을 그만두고 집을 지으려니 이번에는 어디까지가 남의 산인지부터 막히오.",
+    "minRank": 5,
+    "choices": [
+      { "label": "벌목 구역과 보식 몫을 정하라", "reward": { "kind": "grain", "minutes": 50 } },
+      { "label": "묵은 관아 목재부터 빌려주라", "reward": { "kind": "stamina", "amount": 1 } }
+    ]
+  },
+  {
+    "id": "stopped-contract-interest",
+    "who": "달골 공동 곡간 대표",
+    "text": "송씨 지역 대리 계약이 정지됐는데도 창고에서는 이자를 받으러 옵니다. 원금과 이자를 가려 달랬더니 이름 담보까지 풀어 달라는 소리냐며 겁을 줍니다.",
+    "minRank": 5,
+    "choices": [
+      { "label": "징수를 멈추고 채무를 대조하라", "reward": { "kind": "coin", "minutes": 60 } },
+      { "label": "다툼 없는 원금만 따로 맡겨라", "reward": { "kind": "fame", "pct": 6 } }
+    ]
+  },
+  {
+    "id": "capital-gate-toll",
+    "who": "한빛성 채소 행상",
+    "text": "성문을 지날 때마다 남씨 운송표가 없다는 이유로 짐을 뒤집니다. 정식 세금보다 검사 중 시드는 채소 값이 더 드니, 배추도 가문을 골라 태어나야 합니까?",
+    "minRank": 6,
+    "choices": [
+      { "label": "가문과 무관한 검문표를 쓰라", "reward": { "kind": "coin", "minutes": 60 } },
+      { "label": "상하기 쉬운 짐부터 검사하라", "reward": { "kind": "grain", "minutes": 60 } }
+    ]
+  },
+  {
+    "id": "paper-copy-fee",
+    "who": "도성 청원서 필사인",
+    "text": "윤씨 종이상과 관청 서리가 짜고 지정한 종이에 쓴 청원만 받습니다. 억울한 사연은 같아도 싼 종이에 적으면 글씨가 불경해진다는군요.",
+    "minRank": 6,
+    "choices": [
+      { "label": "읽을 수 있는 청원은 모두 받으라", "reward": { "kind": "fame", "pct": 6 } },
+      { "label": "관청 종이를 공개 입찰하라", "reward": { "kind": "coin", "minutes": 50 } }
+    ]
+  },
+  {
+    "id": "theater-curfew",
+    "who": "도성 극장 주인",
+    "text": "이무기 배우의 밤 공연은 소란하다며 막으면서 대신 댁 연회 북소리는 내버려 둡니다. 관객은 박수도 통행패를 받아 쳐야 하느냐고 묻습니다.",
+    "minRank": 7,
+    "choices": [
+      { "label": "공연과 연회에 같은 기준을 대라", "reward": { "kind": "fame", "pct": 7 } },
+      { "label": "이웃과 공연 시간을 합의하라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "marriage-name-collateral",
+    "who": "도성 혼약 당사자",
+    "text": "혼인을 하면 제 이름 담보의 빚까지 상대에게 옮겨 적겠다고 송씨 대리인이 찾아왔습니다. 혼인은 저희가 정했지만 빚을 함께 지겠다는 맹세는 한 적 없습니다.",
+    "minRank": 7,
+    "choices": [
+      { "label": "동의 없는 채무 이전을 막아라", "reward": { "kind": "fame", "pct": 7 } },
+      { "label": "각자 계약을 나눠 심리하라", "reward": { "kind": "coin", "minutes": 60 } }
+    ]
+  },
+  {
+    "id": "customs-black-feathers",
+    "who": "삼족오 상단 짐꾼 대표",
+    "text": "국경에서 봉인한 상자가 한빛성 세관에 오니 약재 대신 모래로 차 있습니다. 세관은 삼족오가 날며 바꿨다 하고 상단은 관리 손만 땅에 닿았다고 맞섭니다.",
+    "minRank": 8,
+    "choices": [
+      { "label": "구간별 봉인 기록을 대조하라", "reward": { "kind": "coin", "minutes": 70 } },
+      { "label": "양측 입회로 남은 짐을 열어라", "reward": { "kind": "fame", "pct": 7 } }
+    ]
+  },
+  {
+    "id": "royal-granary-leak",
+    "who": "왕실 곡창 수리장",
+    "text": "곡창 지붕이 새는데 수리비는 송씨 채권 이자를 갚느라 남지 않았답니다. 비는 왕실 사정을 듣지 않으니 젖기 전에 곡식부터 옮겨야 합니다.",
+    "minRank": 8,
+    "choices": [
+      { "label": "마른 창고로 옮겨 손실을 막아라", "reward": { "kind": "grain", "minutes": 70 } },
+      { "label": "긴급 수리비를 우선 배정하라", "reward": { "kind": "stamina", "amount": 1 } }
+    ]
+  },
+  {
+    "id": "song-succession-favor",
+    "who": "송씨 가문 중개인",
+    "text": "송채령의 계약 정리안에 먼저 관인을 찍어 주시면 가문이 관아 빚 일부를 대신 갚겠습니다. 세부 장부는 승계가 끝난 뒤 보여 드린다니, 나리께서도 큰 흐름만 보시지요.",
+    "minRank": 9,
+    "choices": [
+      { "label": "장부 공개 전에는 관인을 못 찍는다", "reward": { "kind": "fame", "pct": 8 } },
+      { "label": "채무자 입회 심리부터 열어라", "reward": { "kind": "coin", "minutes": 70 } }
+    ]
+  },
+  {
+    "id": "rumor-pamphlet",
+    "who": "한빛성 인쇄방 주인",
+    "text": "왕실이 곡식 빚을 감추려 요괴 이름을 지운다는 글이 밤새 붙었습니다. 관리가 글쓴이 대신 인쇄공을 잡겠다는데, 활자는 소문을 읽을 줄 모릅니다.",
+    "minRank": 9,
+    "choices": [
+      { "label": "소문과 확인된 사실을 나눠 알리라", "reward": { "kind": "fame", "pct": 8 } },
+      { "label": "원고와 주문 기록을 보전하라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "palace-lantern-oil",
+    "who": "궁중 등불 담당 서리",
+    "text": "연회 등불 기름값에 불이 필요 없는 야광 구슬 값까지 섞여 있습니다. 납품상은 대신의 먼 친척인데, 촌수는 멀어도 계산서는 늘 가까이 옵니다.",
+    "minRank": 10,
+    "choices": [
+      { "label": "납품량을 세고 부풀린 값을 거둬라", "reward": { "kind": "coin", "minutes": 80 } },
+      { "label": "친족 거래를 공개하고 재입찰하라", "reward": { "kind": "fame", "pct": 8 } }
+    ]
+  },
+  {
+    "id": "oath-registry-access",
+    "who": "이름 계약 재판 청원인",
+    "text": "하늘나라 등록소는 원본이 없으면 이름 담보를 다툴 수 없다고 합니다. 원본을 가진 쪽은 열람료부터 내라니, 제 이름을 읽는 데도 빚이 붙습니다.",
+    "minRank": 10,
+    "choices": [
+      { "label": "재판용 사본 제출을 요구하라", "reward": { "kind": "fame", "pct": 8 } },
+      { "label": "열람료를 공탁하고 반환을 다투라", "reward": { "kind": "coin", "minutes": 70 } }
+    ]
+  },
+  {
+    "id": "dragon-water-dues",
+    "who": "도성 수로조합 대표",
+    "text": "용궁 사절은 가뭄 때 빌려 준 물의 값을 갚지 않으면 수문을 닫겠답니다. 왕실은 송씨에게 이미 물값을 줬다는데 용궁에는 받은 기록이 없다 합니다.",
+    "minRank": 11,
+    "choices": [
+      { "label": "삼자 장부를 맞추며 급수를 잇자", "reward": { "kind": "grain", "minutes": 80 } },
+      { "label": "임시 급수 조약부터 맺어라", "reward": { "kind": "fame", "pct": 9 } }
+    ]
+  },
+  {
+    "id": "missing-living-names",
+    "who": "저승 관청 연락관",
+    "text": "살아 있는 세 사람의 이름이 저승 명부에서도 호적에서도 빠졌습니다. 두 관청이 서로 먼저 고치라며 버티는 동안 당사자들은 살아 있다는 증명조차 못 냅니다.",
+    "minRank": 11,
+    "choices": [
+      { "label": "공동 조사와 임시 신분을 보장하라", "reward": { "kind": "fame", "pct": 9 } },
+      { "label": "생계 배급을 먼저 이어 주라", "reward": { "kind": "grain", "minutes": 70 } }
+    ]
+  },
+  {
+    "id": "northern-return-passes",
+    "who": "북방 귀환민 대표",
+    "text": "동료를 데려오려는데 군영은 위조 통행패가 섞였다며 전원의 귀환을 막습니다. 남겠다는 이까지 끌고 오면 충성의 증거라니, 고향길이 왜 포승줄이 됩니까?",
+    "minRank": 12,
+    "choices": [
+      { "label": "개별 심사로 귀환 의사를 확인하라", "reward": { "kind": "fame", "pct": 9 } },
+      { "label": "중립 숙소를 열고 신원을 대조하라", "reward": { "kind": "stamina", "amount": 1 } }
+    ]
+  },
+  {
+    "id": "sealed-palace-testimony",
+    "who": "왕실 문서고 기록관",
+    "text": "왕실 차입을 증언할 문서가 있으나 대신들은 궁중 체면을 들어 봉인을 요구합니다. 봉인 끈값까지 빌려야 할 형편에 체면만 새 비단을 두르려 합니다.",
+    "minRank": 12,
+    "choices": [
+      { "label": "증인 보호 뒤 공개 심리를 열어라", "reward": { "kind": "fame", "pct": 9 } },
+      { "label": "독립 감사에 원본을 맡겨라", "reward": { "kind": "coin", "minutes": 80 } }
+    ]
+  },
+  {
+    "id": "emergency-grain-bond",
+    "who": "도성 구휼청 책임자",
+    "text": "송씨 가문이 비축곡을 풀되 다음 해 세금 징수권을 담보로 달랍니다. 오늘 굶는 이를 살려야 하나 내년 밥상까지 저당 잡힐 수는 없어 결재를 청합니다.",
+    "minRank": 13,
+    "choices": [
+      { "label": "여러 상단에서 곡식을 나눠 사라", "reward": { "kind": "grain", "minutes": 90 } },
+      { "label": "징수권 대신 상환 상한을 정하라", "reward": { "kind": "coin", "minutes": 90 } }
+    ]
+  },
+  {
+    "id": "palace-shadow-witness",
+    "who": "궁문 야간 경비관",
+    "text": "어둑시니가 대신들의 밀담을 들었다는데 신분이 없다는 이유로 증언이 거부됐습니다. 밀담에 나온 자들이 그 그림자를 압수하라니, 등불을 어디까지 들이대야 합니까?",
+    "minRank": 13,
+    "choices": [
+      { "label": "신분과 별개로 증언을 검증하라", "reward": { "kind": "fame", "pct": 10 } },
+      { "label": "증언자를 보호하고 물증을 찾으라", "reward": { "kind": "stamina", "amount": 1 } }
+    ]
+  },
+  {
+    "id": "throne-oath-registration",
+    "who": "즉위 맹세 심사 서기관",
+    "text": "하늘나라에서 왕권을 견제할 약정은 등록 양식에 없다며 되돌려 보냈습니다. 왕의 책임을 빼면 오늘 안에 등록해 준다는데, 빈칸 편하자고 나라 약속을 비울 수는 없습니다.",
+    "minRank": 14,
+    "choices": [
+      { "label": "공동 입회로 임시 공증하라", "reward": { "kind": "fame", "pct": 10 } },
+      { "label": "책임 조항을 지키며 재심을 청하라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "royal-debt-open-ledger",
+    "who": "백성과 요괴 공동 청원단",
+    "text": "왕실 빚을 공개한다 하니 가문들은 채권을 거두겠다 하고 관리들은 세금을 먼저 올리자 합니다. 갚을 돈보다 누가 정했는지부터 밝히고, 저희 몫을 정할 자리에 저희도 불러 주십시오.",
+    "minRank": 14,
+    "choices": [
+      { "label": "대표단과 채무 심의회를 열어라", "reward": { "kind": "fame", "pct": 10 } },
+      { "label": "필수 배급을 지키며 상환을 협상하라", "reward": { "kind": "grain", "minutes": 90 } }
+    ]
+  }
+]

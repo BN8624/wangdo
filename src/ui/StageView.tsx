@@ -19,7 +19,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
   const [party, setParty] = useState<string[]>(() => (info ? bestParty(view, info) : []));
   const [choosing, setChoosing] = useState<number | null>(null);
 
-  // 소동이 바뀌거나 새 식객이 오면 추천 편성으로 다시 맞춘다.
+  // 토벌이 바뀌거나 새 식객이 오면 추천 편성으로 다시 맞춘다.
   const owned = Object.keys(view.yokai).length;
   useEffect(() => {
     if (info) setParty(bestParty(view, info));
@@ -29,9 +29,9 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
   if (!info) {
     return (
       <div className="view">
-        <div className="page-title">소동 해결</div>
+        <div className="page-title">토벌 해결</div>
         <div className="card" style={{ textAlign: 'center', lineHeight: 1.7 }}>
-          <b style={{ fontFamily: 'var(--serif)', fontSize: 18 }}>모든 소동을 잠재웠어요!</b>
+          <b style={{ fontFamily: 'var(--serif)', fontSize: 18 }}>모든 토벌을 잠재웠어요!</b>
           <br />
           팔도가 조용해졌어요. 다음 이야기는 준비 중이에요.
         </div>
@@ -82,7 +82,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
           const cls = done ? 'done' : idx === view.stage.index ? 'now' : 'todo';
           return (
             <span key={i} style={{ display: 'contents' }}>
-              <div className={`node ${cls} ${isBoss ? 'boss' : ''}`}>{done ? '✓' : isBoss ? '大' : i + 1}</div>
+              <div className={`node ${cls} ${isBoss ? 'boss' : ''}`}>{done ? '✓' : isBoss ? '왕'  : i + 1}</div>
               {i < STAGES_PER_CHAPTER - 1 && <div className={`link ${done ? 'done' : ''}`} />}
             </span>
           );
@@ -96,10 +96,10 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
           </div>
           <div>
             <div className="foe-no">
-              {info.chapter.title.split(' · ')[0]} · {info.isBoss ? '대장' : `${info.number}번째 소동`}
+              {info.chapter.title.split(' · ')[0]} · {info.isBoss ? '대장' : `${info.number}번째 토벌`}
             </div>
             <div className="foe-name">{info.foe}</div>
-            <div className="soft" style={{ fontSize: 12 }}>세 판 중 두 판을 이기면 해결!</div>
+            <div className="soft" style={{ fontSize: 13 }}>세 판 중 두 판을 이기면 해결!</div>
           </div>
         </div>
 

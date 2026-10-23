@@ -1,4 +1,4 @@
-// 식객 인연 대사. 글은 src/data/bonds/<id>.json에 있다(Codex가 쓰고 사람이 다듬는다).
+// 식객 인연 대사. 글은 content/bonds/<id>.json에 있다(Codex가 쓰고 사람이 다듬는다).
 export interface BondTalk {
   line: string;
   replies: { text: string; delta: number; reaction: string }[];
@@ -23,7 +23,7 @@ export interface BondContent {
   scenes: BondScene[];
 }
 
-const files = import.meta.glob<BondContent>('./bonds/*.json', { eager: true, import: 'default' });
+const files = import.meta.glob<BondContent>('../../content/bonds/*.json', { eager: true, import: 'default' });
 
 export const BOND_CONTENT: Record<string, BondContent> = Object.fromEntries(
   Object.values(files).map((c) => [c.id, c]),

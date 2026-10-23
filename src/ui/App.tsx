@@ -1,15 +1,15 @@
+import { StoryView } from './StoryView';
 import { useEffect, useMemo, useState } from 'react';
 import { RESOURCE_KEYS, bestParty, partyChance, partyChances, promoteCheck, settle, stageInfo, talkReadyIn, unseenScene, type FightResult } from '../core/engine';
 import { fmt } from '../core/format';
 import type { HintTarget } from '../core/hints';
 import type { ComboDef } from '../core/types';
 import { HomeView } from './HomeView';
-import { NavIcon, ResIcon } from './icons';
+import { IconSymbols, NavIcon, ResIcon } from './icons';
 import {
   BondUpModal,
   ComboModal,
   FightModal,
-  IntroModal,
   OfflineModal,
   PromoteModal,
   ReactModal,
@@ -30,7 +30,7 @@ export type ModalRequest =
   | { kind: 'promote'; rank: number; recruit: string | null }
   | { kind: 'fight'; result: Extract<FightResult, { ok: true }> }
   | { kind: 'offline'; summary: OfflineSummary }
-  | { kind: 'intro' }
+  | { kind: 'story'; episode?: string }
   | { kind: 'talk'; id: string }
   | { kind: 'react'; id: string; text: string; gained: number; levelUp: number; outing?: boolean }
   | { kind: 'bondup'; id: string; level: number }
@@ -40,9 +40,9 @@ export type ModalRequest =
 type Tab = 'home' | 'yokai' | 'stage' | 'record';
 
 const TABS: { id: Tab; label: string; icon: 'home' | 'yokai' | 'stage' | 'record' }[] = [
-  { id: 'home', label: '고을', icon: 'home' },
+  { id: 'home', label: '궁궐', icon: 'home' },
   { id: 'yokai', label: '식객', icon: 'yokai' },
-  { id: 'stage', label: '소동', icon: 'stage' },
+  { id: 'stage', label: '토벌', icon: 'stage' },
   { id: 'record', label: '기록', icon: 'record' },
 ];
 
@@ -57,7 +57,7 @@ export function App() {
 
   useEffect(() => {
     const first: ModalRequest[] = [];
-    if (!state.introSeen) first.push({ kind: 'intro' });
+    if (!state.introSeen) first.push({ kind: 'story', episode: 's1e01' });
     const offline = takeOfflineSummary();
     if (offline) first.push({ kind: 'offline', summary: offline });
     if (state.wish.pending) first.push({ kind: 'wish' });
@@ -97,16 +97,17 @@ export function App() {
 
   return (
     <div className={`app ${step ? 'guiding' : ''}`}>
-      <div className="res-bar" data-guide="res">
+      <IconSymbols />
+      <div className={`res-bar ${tab === 'home' ? 'home-res' : ''}`} data-guide="res">
         {RESOURCE_KEYS.map((k) => (
           <div className="chip" key={k}>
             <ResIcon kind={k} />
-            {fmt(view.res[k])}
+            <span><small>{{coin:'엽전',grain:'곡식',fame:'명성'}[k]}</small>{fmt(view.res[k])}</span>
           </div>
         ))}
         <div className="chip">
           <ResIcon kind="stamina" />
-          {view.stamina.value}
+          <span><small>기력</small>{view.stamina.value}</span>
         </div>
       </div>
 
@@ -127,14 +128,7 @@ export function App() {
 
       {sheet && !top && <YokaiSheet view={view} now={now} id={sheet} open={open} onClose={() => setSheet(null)} />}
 
-      {top?.kind === 'intro' && (
-        <IntroModal
-          onClose={() => {
-            act((s) => [{ ...s, introSeen: true }, null]);
-            closeTop();
-          }}
-        />
-      )}
+      {top?.kind === 'story' && <StoryView view={view} episode={top.episode} onClose={closeTop} open={open} />}
       {top?.kind === 'offline' && <OfflineModal summary={top.summary} onClose={closeTop} />}
       {top?.kind === 'wish' && <WishModal view={view} onClose={closeTop} />}
       {top?.kind === 'promote' && <PromoteModal rank={top.rank} recruit={top.recruit} onClose={closeTop} />}
