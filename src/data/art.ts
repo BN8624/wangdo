@@ -10,10 +10,10 @@ const STYLE =
 
 // 디자인 기준은 docs/CHARACTER_GUIDE.md. 체형은 공통, 옷과 자세는 식객마다 다르게(subject에 적는다).
 const HEROINE =
-  'The character is clearly an adult woman in her late twenties, very beautiful and glamorous, with a small pretty face, large expressive eyes and glossy lips, ' +
-  'a glamorous hourglass figure with a large full bust, a very slim waist, curvy hips and long slender legs. ' +
-  'Her outfit and pose follow the subject description and express her personality. ' +
-  'Alluring but tasteful and non-explicit: no nudity, no underwear visible.';
+  'The character is clearly an adult woman in her late twenties, very beautiful and glamorous, with a mature pretty face, large expressive eyes and glossy lips, ' +
+  'a voluptuous hourglass figure: large bust, narrow waist, wide curvy hips and full, shapely, healthy thighs (not skinny legs), in the style of high-end Korean gacha game character art. ' +
+  'Her fitted outfit shows the curves of her figure; her outfit and pose follow the subject description and express her personality. ' +
+  'Alluring but tasteful and non-explicit: clothing covers the hips and chest, no nudity, no underwear visible.';
 
 const FRAME = {
   full: `${HEROINE} Full body, her signature pose. Isolated on a fully transparent background (PNG with alpha), no scenery, no floor, no shadow.`,
