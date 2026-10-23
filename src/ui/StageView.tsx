@@ -82,7 +82,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
           const cls = done ? 'done' : idx === view.stage.index ? 'now' : 'todo';
           return (
             <span key={i} style={{ display: 'contents' }}>
-              <div className={`node ${cls} ${isBoss ? 'boss' : ''}`}>{done ? '✓' : isBoss ? '왕'  : i + 1}</div>
+              <div className={`node ${cls} ${isBoss ? 'boss' : ''}`}>{done ? '✓' : isBoss ? '★' : i + 1}</div>
               {i < STAGES_PER_CHAPTER - 1 && <div className={`link ${done ? 'done' : ''}`} />}
             </span>
           );

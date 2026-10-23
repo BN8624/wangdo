@@ -49,7 +49,7 @@ function Hearts({ level }: { level: number }) {
   return (
     <span className="hearts" aria-label={`호감도 ${level}단계`}>
       {Array.from({ length: 5 }, (_, i) => (
-        <i key={i} className={i < level ? 'on' : ''}><LineIcon name="heart" size={16}/></i>
+        <i key={i} className={i < level ? 'on' : ''}><LineIcon name={i < level ? 'heart-fill' : 'heart'} size={16}/></i>
       ))}
     </span>
   );
