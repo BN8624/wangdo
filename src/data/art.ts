@@ -8,15 +8,15 @@ const STYLE =
   'Beautiful Korean mobile game illustration in a polished modern webtoon style: clean elegant lineart, soft painterly cel shading, refined harmonious palette. ' +
   'Simple readable designs with minimal ornament (no gold filigree, no layered jewelry, no busy embroidery, no floating petals, no sparkles). Joseon-inspired fantasy. No text, no letters, no watermark, no frame.';
 
-// 체형은 한국 여자 아이돌을 기준으로 한다(사용자 지정).
+// 디자인 기준은 docs/CHARACTER_GUIDE.md. 체형은 공통, 옷과 자세는 식객마다 다르게(subject에 적는다).
 const HEROINE =
-  'The character is clearly an adult woman in her mid-to-late twenties, beautiful, elegant and alluring, with a soft charming face, large expressive eyes and glossy lips. ' +
-  'Body type like a typical adult Korean pop idol: slender and graceful, small face, narrow shoulders, very slim waist, slim hips, long straight slender legs, slim toned arms, a modest natural bust, natural proportions about seven and a half heads tall. ' +
-  'She wears a simplified elegant fusion hanbok of soft flowing fabric in her own two or three colors, with bare shoulders and a high side slit showing her leg. ' +
-  'Tasteful and non-explicit: no nudity, no underwear visible.';
+  'The character is clearly an adult woman in her late twenties, very beautiful and glamorous, with a small pretty face, large expressive eyes and glossy lips, ' +
+  'a glamorous hourglass figure with a large full bust, a very slim waist, curvy hips and long slender legs. ' +
+  'Her outfit and pose follow the subject description and express her personality. ' +
+  'Alluring but tasteful and non-explicit: no nudity, no underwear visible.';
 
 const FRAME = {
-  full: `${HEROINE} Full body standing pose facing slightly to the side, confident and charming. Isolated on a fully transparent background (PNG with alpha), no scenery, no floor, no shadow.`,
+  full: `${HEROINE} Full body, her signature pose. Isolated on a fully transparent background (PNG with alpha), no scenery, no floor, no shadow.`,
   card: `${HEROINE} Three-quarter body shot, dynamic pose, with a scenic background that suits her story.`,
   cg: `${HEROINE} Wide romantic story illustration (event CG) of her alone, seen from the point of view of the viewer who is with her (the viewer is not drawn). Warm emotional lighting and a detailed background.`,
   bg: 'Background art with no people. Tall vertical composition for a phone screen, the lower third fairly open.',
