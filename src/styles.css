@@ -609,3 +609,9 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .say b { grid-column: 1 / -1; color: var(--seal); font: 700 14px var(--title); }
 .say button { color: var(--seal); font-weight: 700; font-size: 14px; white-space: nowrap; }
 .home .say { position: static; flex: none; margin: 6px 12px 10px; }
+
+/* 무릎 위 구도: 캐릭터는 메뉴 아래부터 화면 끝까지 크게, 잘린 아래쪽은 흐리게. 할 일 칸은 그 위에 얹는다. */
+.home .home-menu { position: relative; z-index: 2; }
+.home .heroine { position: absolute; left: 0; right: 0; top: 70px; bottom: 0; padding: 0; z-index: 1; }
+.home .heroine-art img { -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent 100%); mask-image: linear-gradient(to bottom, #000 86%, transparent 100%); }
+.home .quest, .home .say { position: absolute; left: 0; right: 0; bottom: 0; margin: 0 12px 10px; z-index: 2; }

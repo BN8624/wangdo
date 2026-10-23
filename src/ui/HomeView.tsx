@@ -56,7 +56,6 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
   </div>
   <div className="heroine">
    <button className="heroine-art" aria-label={`${def.name}에게 말 걸기`} onClick={poke}>
-    <img className="heroine-shadow" src={ART.full(def.id)} alt="" aria-hidden="true"/>
     <Art className="heroine-img" src={ART.full(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/>
    </button>
   </div>
