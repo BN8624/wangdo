@@ -11,8 +11,8 @@ const STYLE =
 // 디자인 기준은 docs/CHARACTER_GUIDE.md. 체형은 공통, 옷과 자세는 식객마다 다르게(subject에 적는다).
 const HEROINE =
   'Polished Korean gacha-game character art: soft airbrushed shading, glossy luminous skin with a warm blush, detailed glossy eyes. ' +
-  'The character is clearly an adult woman in her late twenties, very beautiful and glamorous: tall and long-legged (about eight heads tall, small head, legs longer than half her height), large bust, slim waist, curvy hips in proportion (not exaggerated) and full shapely thighs; she must not look short or stocky. ' +
-  'Bold, daring outfit that shows skin (bare midriff, bare shoulders, deep neckline, short skirt) and her curves; her outfit, pose and expression follow the subject description and express her personality. ' +
+  'The character is clearly an adult woman in her late twenties, very beautiful and glamorous, with a slender, fit model-like figure: tall and long-legged (about eight heads tall), slim shoulders and arms, a very slim waist, long slender legs with shapely slim thighs, a large but natural bust (not oversized); never chubby, plump or stocky. ' +
+  'Bold, daring outfit that shows skin (bare back, bare shoulders, deep neckline, high slit, short skirt); legwear differs per character (bare legs are fine, not everyone wears stockings) and her curves; her outfit, pose and expression follow the subject description and express her personality. ' +
   'Alluring but tasteful and non-explicit: no nudity, no underwear visible, no low camera angle looking up the skirt.';
 
 const FRAME = {
