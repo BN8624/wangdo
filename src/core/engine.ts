@@ -10,6 +10,7 @@ import { nextRandom } from './rng';
 import type {
   GameState,
   RankDef,
+  ResourceKey,
   StageInfo,
   StatKey,
   Stats,
@@ -21,6 +22,7 @@ import type {
 
 export const MINUTE = 60_000;
 export const STORED_KEYS: StoredKey[] = ['coin', 'grain', 'hands'];
+export const RESOURCE_KEYS: ResourceKey[] = ['coin', 'grain', 'hands', 'fame'];
 export const STAT_KEYS: StatKey[] = ['might', 'wit', 'craft', 'charm'];
 
 /** 어떤 능력치가 어떤 자원을 만드는지 */

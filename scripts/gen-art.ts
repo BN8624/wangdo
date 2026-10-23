@@ -1,18 +1,13 @@
 // npm run art:generate [-- 아이디... --force]
-// ChatGPT 구독으로 로그인한 Codex CLI(`codex login --device-auth`)의 이미지 생성으로 요괴 초상화를 만든다.
+// ChatGPT 구독으로 로그인한 Codex CLI(`codex login --device-auth`)의 이미지 생성으로 src/data/art.ts의 그림을 그린다.
 // API 키는 필요 없다. 이미지 변환에 ImageMagick(`convert`)을 쓴다.
-//
-// 1) 화풍 기준 그림(art/style-anchor.webp)이 없으면 첫 캐릭터를 그려 기준으로 삼는다.
-// 2) 나머지는 기준 그림을 첨부해 같은 화풍으로 그린다.
-// 이미 있는 초상화는 건너뛴다(--force로 다시 그림). 결과: public/portraits/<id>.webp
+// 화풍 기준 그림(art/style-anchor.webp)을 첨부해 모든 그림의 화풍을 맞춘다. 이미 있는 그림은 건너뛴다.
 
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { portraitPath, portraitPrompt } from '../src/data/art';
-import { YOKAI } from '../src/data/yokai';
-import type { YokaiDef } from '../src/core/types';
+import { ART_ASSETS, ASPECT, artPrompt, type ArtAsset } from '../src/data/art';
 
 const CODEX = process.env.CODEX_BIN ?? 'codex';
 const ROOT = resolve(import.meta.dirname, '..');
@@ -22,62 +17,93 @@ const args = process.argv.slice(2);
 const force = args.includes('--force');
 const only = args.filter((a) => !a.startsWith('--'));
 
-function instructions(def: YokaiDef, withReference: boolean): string {
+const SIZE = { portrait: '2:3, 1024x1536', landscape: '3:2, 1536x1024', square: '1:1, 1024x1024' };
+
+function instructions(a: ArtAsset, withReference: boolean): string {
   return [
-    'Use your built-in image generation tool to create exactly one image in portrait orientation (2:3, 1024x1536).',
+    `Use your built-in image generation tool to create exactly one image (${SIZE[ASPECT[a.kind]]}).`,
     withReference
-      ? 'The attached image is the style reference. Match its art style exactly (brushwork, line weight, palette, lighting, background), but draw a completely different character as described below.'
+      ? 'The attached image is only a style reference. Match its art style exactly (brushwork, line weight, palette, paper texture), but do not include the character from it; draw only the subject described below.'
       : '',
     'Save the generated image in the current working directory as out.png. Do not write code and do not create any other files.',
     '',
     'PROMPT:',
-    portraitPrompt(def),
+    artPrompt(a),
   ]
     .filter(Boolean)
     .join('\n');
 }
 
-/** Codex로 한 장 그리고 webp로 줄여 저장한다. */
-function draw(def: YokaiDef, out: string, reference: string | null) {
-  const work = mkdtempSync(join(tmpdir(), `art-${def.id}-`));
+const magick = (...a: string[]) => execFileSync('convert', a);
+
+/** 종류별로 크기를 줄이고 형식을 맞춘다. */
+function finish(a: ArtAsset, png: string, out: string) {
+  mkdirSync(dirname(out), { recursive: true });
+  switch (a.kind) {
+    case 'portrait':
+    case 'npc':
+      return magick(png, '-resize', '768x1152', '-quality', '82', out);
+    case 'scene':
+      return magick(png, '-resize', '1200x800', '-quality', '80', out);
+    case 'square':
+      return magick(png, '-resize', '512x512', '-quality', '82', out);
+    case 'icon':
+      // 크림색 바탕을 네 귀퉁이에서부터 투명하게 지우고 여백을 잘라 낸다.
+      return magick(
+        png, '-alpha', 'set', '-fuzz', '12%', '-fill', 'none',
+        '-draw', 'color 0,0 floodfill', '-draw', 'color 1023,0 floodfill',
+        '-draw', 'color 0,1023 floodfill', '-draw', 'color 1023,1023 floodfill',
+        '-trim', '+repage', '-resize', '160x160', '-background', 'none', '-gravity', 'center', '-extent', '160x160',
+        '-quality', '90', out,
+      );
+    case 'appicon': {
+      const dir = dirname(out);
+      magick(png, '-resize', '512x512', out);
+      magick(png, '-resize', '192x192', join(dir, 'icon-192.png'));
+      magick(png, '-resize', '180x180', join(dir, 'apple-touch-icon.png'));
+      return magick(png, '-resize', '64x64', join(dir, 'favicon.png'));
+    }
+  }
+}
+
+function draw(a: ArtAsset, out: string, reference: string | null) {
+  const work = mkdtempSync(join(tmpdir(), `art-${a.id}-`));
   try {
     const refArgs = reference ? ['-i', reference] : [];
     execFileSync(
       CODEX,
-      ['exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', work, ...refArgs, '--', instructions(def, !!reference)],
-      { stdio: ['ignore', 'ignore', 'inherit'], timeout: 10 * 60_000 },
+      ['exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', work, ...refArgs, '--', instructions(a, !!reference)],
+      { stdio: ['ignore', 'ignore', 'pipe'], timeout: 10 * 60_000, maxBuffer: 64 * 1024 * 1024 },
     );
     const png = join(work, 'out.png');
     if (!existsSync(png)) throw new Error('Codex가 out.png를 만들지 않았습니다.');
-    mkdirSync(dirname(out), { recursive: true });
-    execFileSync('convert', [png, '-resize', '768x1152', '-quality', '82', out]);
+    finish(a, png, out);
   } finally {
     rmSync(work, { recursive: true, force: true });
   }
 }
 
-const targets = YOKAI.filter((y) => only.length === 0 || only.includes(y.id));
+const targets = ART_ASSETS.filter((a) => only.length === 0 || only.includes(a.id));
 
 if (!existsSync(ANCHOR)) {
-  const first = YOKAI[0];
-  const out = resolve(ROOT, 'public', portraitPath(first.id));
-  console.log(`화풍 기준 그림 생성: ${first.name}`);
+  const first = ART_ASSETS[0];
+  const out = resolve(ROOT, 'public', first.out);
+  console.log(`화풍 기준 그림 생성: ${first.id}`);
   draw(first, out, null);
   mkdirSync(dirname(ANCHOR), { recursive: true });
   copyFileSync(out, ANCHOR);
 }
 
-for (const def of targets) {
-  const out = resolve(ROOT, 'public', portraitPath(def.id));
-  if (existsSync(out) && !force) {
-    console.log(`건너뜀(이미 있음): ${def.name}`);
-    continue;
-  }
-  console.log(`그리는 중: ${def.name} (${def.kind})`);
+let failed = 0;
+for (const a of targets) {
+  const out = resolve(ROOT, 'public', a.out);
+  if (existsSync(out) && !force) continue;
+  console.log(`그리는 중: ${a.id}`);
   try {
-    draw(def, out, ANCHOR);
+    draw(a, out, ANCHOR);
   } catch (err) {
-    console.error(`실패: ${def.name} — ${(err as Error).message}`);
+    failed++;
+    console.error(`실패: ${a.id} — ${(err as Error).message.split('\n')[0]}`);
   }
 }
-console.log('끝. public/portraits/를 확인하세요.');
+console.log(failed ? `끝. 실패 ${failed}장 — 다시 실행하면 빠진 것만 그립니다.` : '끝.');

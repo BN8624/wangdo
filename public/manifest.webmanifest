@@ -1,0 +1,14 @@
+{
+  "name": "왕도 — 나무꾼에서 도깨비 대왕까지",
+  "short_name": "왕도",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fbf5e6",
+  "theme_color": "#fbf5e6",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
