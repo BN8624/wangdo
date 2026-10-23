@@ -10,6 +10,8 @@ import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
 import type { GameState, WorkplaceId } from '../core/types';
 import { LineIcon, ResIcon } from './icons';
 import { Art, Portrait } from './Portrait';
+import { LiveArt } from './LiveArt';
+import { rigOf } from '../data/rigs';
 import { act } from './store';
 import { buzz, pushToast } from './toast';
 import type { ModalRequest } from './App';
@@ -57,8 +59,7 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
   <div className="heroine">
    <button className="heroine-art" aria-label={`${def.name}에게 말 걸기`} onClick={poke}>
     <img className="heroine-shadow" src={ART.full(def.id)} alt="" aria-hidden="true"/>
-    <Art className="heroine-img" src={ART.full(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/>
-    <img className="heroine-upper" src={ART.full(def.id)} alt="" aria-hidden="true"/>
+    <LiveArt className="heroine-live" src={ART.full(def.id)} rig={rigOf(def.id)} alt={def.name}/>
    </button>
   </div>
   {line ? <div className="say" role="status"><b>{def.name}</b><span>{line}</span><button onClick={() => onHeroine(def.id)}>대화하기 ›</button></div> : !step && <button className="quest" onClick={() => go(hint.target)}><b>할 일</b><span>{hint.text}</span><em>가기 ›</em></button>}
