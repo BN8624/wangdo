@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { activeCombos, assign, feast, feastCost, feastFame, hasAptitude, nextRank, ownedYokai, power, promote, promoteCheck, slotsPerWorkplace, statsOf, useWish, workplaceOf, workplaceRate, } from '../core/engine';
 import { fmt, fmtRate } from '../core/format';
@@ -14,6 +14,7 @@ import { act } from './store';
 import { buzz, pushToast } from './toast';
 import type { ModalRequest } from './App';
 import { guideStep } from '../core/guide';
+import { bondContent } from '../data/bond-content';
 import { EPISODES } from '../data/story';
 import { nextEpisode, lockReason } from '../core/story';
 interface Props {
@@ -27,11 +28,16 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
     const [picking, setPicking] = useState<WorkplaceId | null>(null);
     const [work, setWork] = useState(false);
     const [banquet, setBanquet] = useState(false);
+    const [taps, setTaps] = useState(0);
+    const [line, setLine] = useState<string | null>(null);
+    useEffect(() => { if (!line) return; const t = setTimeout(() => setLine(null), 5000); return () => clearTimeout(t); }, [line, taps]);
     const step = guideStep(view);
     const wpTarget = step?.target?.startsWith('wp-') ? step.target : null;
     const def = YOKAI_BY_ID[view.favorite] ?? YOKAI_BY_ID[Object.keys(view.yokai)[0]];
     const ep = nextEpisode(view, EPISODES), locked = ep ? lockReason(view, ep) : null;
     const hint = nextHint(view, now);
+    const talks = bondContent(def.id).talks;
+    const poke = () => { setTaps(n => n + 1); setLine(talks.length ? talks[taps % talks.length].line : null); };
     const resting = ownedYokai(view).some(({ def: d }) => !workplaceOf(view, d.id));
     const doWish = () => { const r = act(useWish); if (r.ok)
         open({ kind: 'wish' }); };
@@ -48,10 +54,12 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
    <button className="menu-icon" data-guide={wpTarget ?? 'work'} onClick={() => setWork(true)}><LineIcon name="home" size={24}/><span>일터</span>{resting && <i className="badge dot"/>}</button>
    <button className="menu-icon" data-guide="feast" onClick={() => setBanquet(true)}><LineIcon name="cup" size={24}/><span>연회</span></button>
   </div>
-  <button className="heroine" aria-label={`${def.name} 보기`} onClick={() => onHeroine(def.id)}>
-   <Art src={ART.full(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/>
-  </button>
-  {!step && <button className="quest" onClick={() => go(hint.target)}><b>할 일</b><span>{hint.text}</span><em>가기 ›</em></button>}
+  <div className="heroine">
+   <button key={taps} className={`heroine-art ${taps ? 'poked' : ''}`} aria-label={`${def.name}에게 말 걸기`} onClick={poke}>
+    <Art src={ART.full(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/>
+   </button>
+  </div>
+  {line ? <div className="say" role="status"><b>{def.name}</b><span>{line}</span><button onClick={() => onHeroine(def.id)}>대화하기 ›</button></div> : !step && <button className="quest" onClick={() => go(hint.target)}><b>할 일</b><span>{hint.text}</span><em>가기 ›</em></button>}
   {work && createPortal(<WorkSheet view={view} open={open} picking={picking} setPicking={setPicking} onClose={() => { setWork(false); setPicking(null); }}/>, document.body)}
   {banquet && createPortal(<><div className="dim" onClick={() => setBanquet(false)}/><div className="modal" role="dialog" aria-label="연회"><div className="title">연회 열기</div><div className="bubble">곡식 {fmt(feastCost(view.rank))} · 명성 +{fmt(feastFame(view))}<br />모든 식객의 호감도가 올라갑니다.</div><div className="actions"><button className="btn hong" disabled={view.res.grain < feastCost(view.rank)} onClick={doFeast}>연회 열기</button><button className="btn" onClick={() => setBanquet(false)}>닫기</button></div></div></>, document.body)}
  </div>;

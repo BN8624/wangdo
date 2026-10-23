@@ -598,3 +598,16 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .home .quest { position: static; flex: none; margin: 6px 12px 10px; width: auto; }
 .app.guiding .home { padding-bottom: 132px; }
 .nav .badge:empty { min-width: 9px; width: 9px; height: 9px; padding: 0; top: 8px; right: calc(50% - 20px); }
+
+/* 대표 식객: 숨 쉬듯 움직이고, 누르면 살짝 튀며 한마디 한다 */
+.heroine { position: relative; }
+.heroine-art { position: relative; height: 100%; width: 100%; display: flex; justify-content: center; align-items: flex-end; }
+.heroine-art::before { content: ''; position: absolute; left: 22%; right: 22%; bottom: 0; height: 26px; border-radius: 50%; background: radial-gradient(ellipse at center, rgba(70,40,30,.28), rgba(70,40,30,0) 70%); }
+.heroine-art img { position: relative; transform-origin: 50% 100%; animation: breathe 4.2s ease-in-out infinite; }
+.heroine-art.poked img { animation: poke .45s ease-out, breathe 4.2s ease-in-out .45s infinite; }
+@keyframes breathe { 0%, 100% { transform: translateY(0) scale(1); } 50% { transform: translateY(-4px) scale(1.012, 1.006); } }
+@keyframes poke { 0% { transform: scale(1); } 35% { transform: translateY(-10px) scale(1.02); } 100% { transform: translateY(0) scale(1); } }
+.say { position: absolute; left: 14px; right: 14px; top: 8px; padding: 10px 12px; border-radius: 14px; background: rgba(255,252,248,.96); border: 1px solid var(--line); box-shadow: 0 6px 18px rgba(80,40,30,.16); display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: end; animation: rise .25s ease; font-size: 15px; line-height: 1.5; }
+.say b { grid-column: 1 / -1; color: var(--seal); font: 700 14px var(--title); }
+.say button { color: var(--seal); font-weight: 700; font-size: 14px; white-space: nowrap; }
+.home .say { position: static; flex: none; margin: 6px 12px 10px; }
