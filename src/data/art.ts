@@ -75,6 +75,7 @@ const BG: Record<string, string> = {
   forest: 'a deep misty pine forest with shafts of light and an old shrine',
   hall: 'the interior of a county magistrate office (gwana) with a raised dais, folding screen and petition desk',
   hut: 'the inside of a modest thatched-roof cottage room at night, warm low oil-lamp light, paper sliding doors, a folded blanket on the heated floor',
+  map: 'a bright clean bird\'s-eye town map of Dalgol valley: walled government office at the top, market street middle left, training yard middle right, pavilion on a pond in the center, rice paddies bottom left, thatched tavern bottom right',
   court: 'the royal throne hall with a sun-and-moon folding screen behind the empty throne, red pillars and gold light',
 };
 

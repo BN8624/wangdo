@@ -540,3 +540,46 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .speaker, .guide-name { color: var(--seal); }
 .tabs button.on { color: var(--seal); }
 .sheet .btn.wide:disabled { background: #fbe3e6; color: var(--seal); border: 1px solid rgba(217,86,107,.3); opacity: 1; }
+
+/* ── 첫 화면 v3: 얇은 상태줄 + 마을 지도 + 한 줄 할 일 ── */
+.res-bar { display: none; }
+.topbar { position: sticky; top: 0; z-index: 12; display: flex; align-items: center; gap: 8px; padding: calc(8px + env(safe-area-inset-top)) 10px 8px; background: rgba(255,252,248,.96); border-bottom: 1px solid var(--line); box-shadow: 0 2px 10px rgba(110,60,50,.06); }
+.rank-btn { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.rank-btn .emb { position: relative; flex: none; width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(160deg,#e47a8b,var(--seal)); color: #fff; display: grid; place-items: center; box-shadow: 0 2px 6px rgba(217,86,107,.35); }
+.rank-btn .emb .badge { right: -6px; top: -6px; font-style: normal; }
+.rank-btn .rk { display: flex; flex-direction: column; line-height: 1.2; min-width: 0; text-align: left; }
+.rank-btn small { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
+.rank-btn b { font: 700 16px var(--serif); color: var(--gold); white-space: nowrap; }
+.pills { margin-left: auto; display: flex; gap: 4px; flex-wrap: nowrap; }
+.pill { display: inline-flex; align-items: center; gap: 3px; background: #fff; border: 1px solid var(--line); border-radius: 999px; padding: 3px 8px 3px 4px; font: 700 13px var(--serif); white-space: nowrap; }
+.town { position: relative; height: calc(100dvh - 57px - 80px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); overflow: hidden; }
+.map-scroll { position: absolute; inset: 0; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
+.map-scroll::-webkit-scrollbar { display: none; }
+.map { position: relative; height: 100%; aspect-ratio: 2 / 3; min-width: 100%; margin: 0 auto; }
+.map-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.spot { position: absolute; transform: translate(-50%, -50%); display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px; border-radius: 999px; background: rgba(255,252,248,.95); border: 1px solid rgba(217,86,107,.35); box-shadow: 0 3px 10px rgba(80,40,30,.18); font: 700 15px var(--title); color: var(--ink); white-space: nowrap; }
+.spot small { font: 12px var(--sans); color: var(--ink-2); }
+.spot small.open { color: var(--seal); font-weight: 700; }
+.spot .badge { position: static; min-width: 18px; height: 18px; font-size: 12px; }
+.town-icons { position: absolute; left: 10px; top: 10px; display: grid; gap: 8px; }
+.round-icon { position: relative; width: 56px; height: 56px; border-radius: 16px; background: rgba(255,252,248,.95); border: 1px solid var(--line); box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 12px; color: var(--ink); }
+.round-icon svg { color: var(--seal); }
+.round-icon .badge { font-style: normal; }
+.quest { position: absolute; left: 10px; right: 10px; bottom: 10px; display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 14px; background: rgba(255,252,248,.96); border: 1px solid var(--line); box-shadow: var(--shadow); text-align: left; font-size: 14px; }
+.quest b { flex: none; color: #fff; background: var(--seal); border-radius: 8px; padding: 2px 8px; font: 700 13px var(--sans); }
+.quest span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quest em { flex: none; font-style: normal; color: var(--seal); font-weight: 700; }
+/* 안내도 한 줄 띠로: 얼굴은 작게, 지도 아래쪽에 */
+.guide { width: calc(100% - 20px); padding: 10px 12px; gap: 10px; border-radius: 14px; border-left-width: 1px; box-shadow: 0 4px 16px rgba(110,60,50,.16); }
+.guiding:has(.guide) .sheet { padding-bottom: 16px; }
+.guide-face { width: 44px; height: 44px; }
+.guide-text { font-size: 15px; line-height: 1.45; }
+.app.guiding { padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+.app.guiding .view:not(.town) { padding-bottom: 150px; }
+.rank-modal .bar-row { margin-top: 8px; }
+.rank-modal .small-note { font-size: 13px; margin-top: 8px; }
+.rank-modal .sub { color: var(--gold); font: 700 18px var(--serif); text-align: center; margin-bottom: 8px; }
+.btn.hong:disabled { background: #eee4dc; color: #a8958f; box-shadow: none; }
+.rank-modal { padding: 18px 18px 10px; }
+.rank-modal .title { margin-bottom: 2px; }
+.rank-modal .actions { margin-top: 14px; }

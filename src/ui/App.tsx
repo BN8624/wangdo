@@ -1,11 +1,12 @@
 import { StoryView } from './StoryView';
 import { useEffect, useMemo, useState } from 'react';
-import { RESOURCE_KEYS, bestParty, partyChance, partyChances, promoteCheck, settle, stageInfo, talkReadyIn, unseenScene, type FightResult } from '../core/engine';
+import { RESOURCE_KEYS, bestParty, partyChance, partyChances, power, promoteCheck, settle, stageInfo, talkReadyIn, unseenScene, type FightResult } from '../core/engine';
 import { fmt } from '../core/format';
 import type { HintTarget } from '../core/hints';
 import type { ComboDef } from '../core/types';
-import { HomeView } from './HomeView';
-import { IconSymbols, NavIcon, ResIcon } from './icons';
+import { HomeView, RankSheet } from './HomeView';
+import { rankDef } from '../data/ranks';
+import { IconSymbols, LineIcon, NavIcon, ResIcon } from './icons';
 import {
   BondUpModal,
   ComboModal,
@@ -53,6 +54,7 @@ export function App() {
   const [tab, setTab] = useState<Tab>('home');
   const [queue, setQueue] = useState<ModalRequest[]>([]);
   const [sheet, setSheet] = useState<string | null>(null);
+  const [rankOpen, setRankOpen] = useState(false);
   const toasts = useToasts();
 
   useEffect(() => {
@@ -98,18 +100,26 @@ export function App() {
   return (
     <div className={`app ${step ? 'guiding' : ''}`}>
       <IconSymbols />
-      <div className={`res-bar ${tab === 'home' ? 'home-res' : ''}`} data-guide="res">
-        {RESOURCE_KEYS.map((k) => (
-          <div className="chip" key={k}>
-            <ResIcon kind={k} />
-            <span><small>{{coin:'엽전',grain:'곡식',fame:'명성'}[k]}</small>{fmt(view.res[k])}</span>
-          </div>
-        ))}
-        <div className="chip">
-          <ResIcon kind="stamina" />
-          <span><small>기력</small>{view.stamina.value}</span>
+      <header className="topbar" data-guide="res">
+        <button className="rank-btn" data-guide="promote" onClick={() => setRankOpen(true)}>
+          <span className="emb"><LineIcon name="crown" size={22} />{promoteCheck(view).ok && <i className="badge">↑</i>}</span>
+          <span className="rk"><small>{rankDef(view.rank).title}</small><b>권세 {fmt(power(view))}</b></span>
+        </button>
+        <div className="pills">
+          {RESOURCE_KEYS.map((k) => (
+            <span className="pill" key={k} aria-label={{ coin: '엽전', grain: '곡식', fame: '명성' }[k]}>
+              <ResIcon kind={k} size={16} />
+              {fmt(view.res[k])}
+            </span>
+          ))}
+          {tab === 'stage' && (
+            <span className="pill" aria-label="기력">
+              <ResIcon kind="stamina" size={16} />
+              {view.stamina.value}
+            </span>
+          )}
         </div>
-      </div>
+      </header>
 
       {tab === 'home' && <HomeView view={view} now={now} open={open} go={go} />}
       {tab === 'yokai' && <YokaiView view={view} now={now} onOpen={setSheet} />}
@@ -126,6 +136,7 @@ export function App() {
         ))}
       </nav>
 
+      {rankOpen && !top && <RankSheet view={view} open={open} onClose={() => setRankOpen(false)} />}
       {sheet && !top && <YokaiSheet view={view} now={now} id={sheet} open={open} onClose={() => setSheet(null)} />}
 
       {top?.kind === 'story' && <StoryView view={view} episode={top.episode} onClose={closeTop} open={open} />}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { activeCombos, assign, feast, feastCost, feastFame, hasAptitude, nextRank, ownedYokai, power, promote, promoteCheck, slotsPerWorkplace, statsOf, useWish, workplaceOf, workplaceRate, } from '../core/engine';
 import { fmt, fmtRate } from '../core/format';
@@ -14,7 +14,6 @@ import { act } from './store';
 import { buzz, pushToast } from './toast';
 import type { ModalRequest } from './App';
 import { guideStep } from '../core/guide';
-import { bondContent } from '../data/bond-content';
 import { EPISODES } from '../data/story';
 import { nextEpisode, lockReason } from '../core/story';
 interface Props {
@@ -23,47 +22,79 @@ interface Props {
     open: (m: ModalRequest) => void;
     go: (t: HintTarget) => void;
 }
+/** 지도 위 건물 자리(지도 그림 기준 %). 지도 그림을 바꾸면 여기만 맞추면 된다. */
+const SPOTS: { id: string; name: string; x: number; y: number }[] = [
+    { id: 'office', name: '관아', x: 56, y: 15 },
+    { id: 'market', name: '저잣거리', x: 26, y: 33 },
+    { id: 'woodyard', name: '훈련장', x: 78, y: 36 },
+    { id: 'pavilion', name: '정자', x: 54, y: 45 },
+    { id: 'field', name: '논밭', x: 24, y: 66 },
+    { id: 'tavern', name: '주막', x: 76, y: 66 },
+];
 export function HomeView({ view, now, open, go }: Props) {
     const [picking, setPicking] = useState<WorkplaceId | null>(null);
     const [work, setWork] = useState(false);
-    const guideTarget = guideStep(view)?.target;
-    useEffect(() => { if (guideTarget?.startsWith('wp-'))
-        setWork(true); }, [guideTarget]);
     const [banquet, setBanquet] = useState(false);
-    const [talk, setTalk] = useState(0);
-    const target = nextRank(view), pw = power(view), canPromote = promoteCheck(view).ok;
-    const def = YOKAI_BY_ID[view.favorite] ?? YOKAI_BY_ID[Object.keys(view.yokai)[0]];
-    const talks = bondContent(def.id).talks;
+    const step = guideStep(view);
     const ep = nextEpisode(view, EPISODES), locked = ep ? lockReason(view, ep) : null;
     const hint = nextHint(view, now);
+    const slots = slotsPerWorkplace(view.rank);
+    const scroller = useRef<HTMLDivElement>(null);
+    useEffect(() => { const el = scroller.current; if (el) el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2; }, []);
     const doWish = () => { const r = act(useWish); if (r.ok)
         open({ kind: 'wish' }); };
-    const doPromote = () => { const r = act(promote); if (r.ok)
-        open({ kind: 'promote', rank: r.rank, recruit: r.recruit }); };
     const doFeast = () => { const r = act(feast); if (r.ok) {
         buzz();
         pushToast({ text: `연회 성공 · 명성 +${fmt(r.fame)}`, res: 'fame' });
         setBanquet(false);
     } };
-    return <div className="view palace">
-  <Art className="palace-bg" src={ART.bg('palace')} alt="해랑국 궁궐" fallback={<div className="palace-bg art-placeholder"/>}/>
-  <div className="palace-shade"/>
-  <button className="hero" aria-label={`${def.name} 대사 바꾸기`} onClick={() => setTalk(n => n + 1)}><Art src={ART.full(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/></button>
-  <div className="rank-plate panel"><div className="rank-top"><LineIcon name="crown"/><div><div>{rankDef(view.rank).title}</div><strong className="power">권세 {fmt(pw)}</strong></div>{canPromote && <button className="btn hong small" data-guide="promote" onClick={doPromote}>승급</button>}</div>
-  {target && !canPromote && <><div className="soft">다음 관직 · {target.title}</div><Progress label="권세" have={pw} need={target.powerReq} color="var(--gold)"/><Progress label="명성" have={view.res.fame} need={target.fameCost} color="var(--gold)"/></>}
+    const tap = (id: string) => {
+        if (id === 'office') return doWish();
+        if (id === 'pavilion') return setBanquet(true);
+        setWork(true);
+        setPicking(id as WorkplaceId);
+    };
+    const tag = (id: string) => {
+        if (id === 'office') return view.wish.pending || view.wish.charges > 0 ? <span className="badge">{view.wish.pending ? '!' : view.wish.charges}</span> : null;
+        if (id === 'pavilion') return null;
+        const n = view.work[id as WorkplaceId].length;
+        return <small className={n < slots ? 'open' : ''}>{n}/{slots}</small>;
+    };
+    return <div className="view town">
+  <div className="map-scroll" ref={scroller}>
+   <div className="map">
+    <Art className="map-img" src={ART.bg('map')} alt="달골 마을" fallback={<div className="map-img art-placeholder"/>}/>
+    {SPOTS.map(sp => <button key={sp.id} className="spot" style={{ left: `${sp.x}%`, top: `${sp.y}%` }} data-guide={sp.id === 'office' ? 'ttuk' : sp.id === 'pavilion' ? 'feast' : `wp-${sp.id}`} onClick={() => tap(sp.id)}>{sp.name}{tag(sp.id)}</button>)}
+   </div>
   </div>
-  <div className="side-menu">
-   <button className="tile panel" data-guide="story" onClick={() => open({ kind: 'story' })}><LineIcon name="scroll"/>이야기{ep && !locked && <span className="badge">!</span>}</button>
-   <button className="tile panel" data-guide="ttuk" disabled={!view.wish.pending && view.wish.charges <= 0} onClick={doWish}><LineIcon name="scroll"/>정무<span className="badge">{view.wish.charges}</span></button>
-   <button className="tile panel" data-guide="feast" onClick={() => setBanquet(true)}><LineIcon name="cup"/>연회</button>
-   <button className="tile panel" onClick={() => setWork(true)}><LineIcon name="home"/>일터</button>
+  <div className="town-icons">
+   <button className="round-icon" data-guide="story" onClick={() => open({ kind: 'story', episode: ep && !locked ? ep.id : undefined })}><LineIcon name="scroll" size={24}/><span>이야기</span>{ep && !locked && <i className="badge">!</i>}</button>
+   <button className="round-icon" onClick={() => setWork(true)}><LineIcon name="home" size={24}/><span>일터</span></button>
   </div>
-  <div className="home-bottom"><div className="home-bubble panel"><div className="speaker">{def.kind} · {def.name}</div><div>{talks[talk % talks.length]?.line}</div></div>
-  <div className="home-actions"><button className="btn panel" disabled={!view.wish.pending && view.wish.charges <= 0} onClick={doWish}>정무 처리<small>남은 상소 {view.wish.charges}건</small></button><button className="btn hong" onClick={() => open({ kind: 'story', episode: ep && !locked ? ep.id : undefined })}>이야기 이어 보기<small>{locked ?? ep?.title ?? '다음 화 준비 중'}</small></button></div>
-  <button className="hint" onClick={() => go(hint.target)}>다음 할 일 · {hint.text}</button></div>
+  {!step && <button className="quest" onClick={() => go(hint.target)}><b>할 일</b><span>{hint.text}</span><em>가기 ›</em></button>}
   {work && createPortal(<WorkSheet view={view} open={open} picking={picking} setPicking={setPicking} onClose={() => { setWork(false); setPicking(null); }}/>, document.body)}
-  {banquet && createPortal(<><div className="dim" onClick={() => setBanquet(false)}/><div className="modal" role="dialog" aria-label="연회"><div className="title">연회 열기</div><div className="bubble">곡식 {fmt(feastCost(view.rank))} · 명성 +{fmt(feastFame(view))}<br />모든 식객의 호감도가 올라갑니다.</div><div className="actions"><button className="btn hong" disabled={view.res.grain < feastCost(view.rank)} onClick={doFeast}>연회 열기</button><button className="btn" onClick={() => setBanquet(false)}>닫기</button></div></div></>, document.body)}
+  {banquet && createPortal(<><div className="dim" onClick={() => setBanquet(false)}/><div className="modal" role="dialog" aria-label="연회"><div className="title">정자에서 연회 열기</div><div className="bubble">곡식 {fmt(feastCost(view.rank))} · 명성 +{fmt(feastFame(view))}<br />모든 식객의 호감도가 올라갑니다.</div><div className="actions"><button className="btn hong" disabled={view.res.grain < feastCost(view.rank)} onClick={doFeast}>연회 열기</button><button className="btn" onClick={() => setBanquet(false)}>닫기</button></div></div></>, document.body)}
  </div>;
+}
+
+/** 관직 창: 다음 관직까지 남은 권세·명성과 승급 */
+export function RankSheet({ view, open, onClose }: { view: GameState; open: (m: ModalRequest) => void; onClose: () => void }) {
+    const target = nextRank(view), pw = power(view), canPromote = promoteCheck(view).ok;
+    const doPromote = () => { const r = act(promote); if (r.ok) {
+        onClose();
+        open({ kind: 'promote', rank: r.rank, recruit: r.recruit });
+    } };
+    return createPortal(<><div className="dim" onClick={onClose}/><div className="modal rank-modal" role="dialog" aria-label="관직">
+    <div className="title">{rankDef(view.rank).title}</div>
+    <div className="sub">권세 {fmt(pw)}</div>
+    {target ? <>
+      <div className="soft">다음 관직 · <b>{target.title}</b>{target.recruit && ` · ${YOKAI_BY_ID[target.recruit].name} 합류`}</div>
+      <Progress label="권세" have={pw} need={target.powerReq} color="var(--gold)"/>
+      <Progress label="명성" have={view.res.fame} need={target.fameCost} color="var(--seal)"/>
+      <div className="soft small-note">권세는 식객 레벨·호감도로, 명성은 주막·연회·토벌로 올라요.</div>
+    </> : <div className="soft">가장 높은 관직이에요.</div>}
+    <div className="actions"><button className="btn hong" data-guide="promote" disabled={!canPromote} onClick={doPromote}>승급하기</button><button className="btn" onClick={onClose}>닫기</button></div>
+  </div></>, document.body);
 }
 function Progress({ label, have, need, color }: {
     label: string;
