@@ -139,7 +139,7 @@ export function App() {
       {top?.kind === 'scene' && <SceneViewer key={`${top.id}-${top.level}`} id={top.id} level={top.level} onClose={closeTop} />}
       {top?.kind === 'combo' && <ComboModal combo={top.combo} onClose={closeTop} />}
 
-      {step && !top && !sheet && <GuideBar step={step} index={state.guide} tab={tab} />}
+      {step && !top && <GuideBar step={step} index={state.guide} tab={tab} />}
 
       <div className="toasts">
         {toasts.map((t) => (

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { activeCombos, assign, feast, feastCost, feastFame, hasAptitude, nextRank, ownedYokai, power, promote, promoteCheck, slotsPerWorkplace, statsOf, useWish, workplaceOf, workplaceRate, } from '../core/engine';
 import { fmt, fmtRate } from '../core/format';
 import { nextHint, type HintTarget } from '../core/hints';
@@ -60,9 +61,8 @@ export function HomeView({ view, now, open, go }: Props) {
   <div className="home-bottom"><div className="home-bubble panel"><div className="speaker">{def.kind} · {def.name}</div><div>{talks[talk % talks.length]?.line}</div></div>
   <div className="home-actions"><button className="btn panel" disabled={!view.wish.pending && view.wish.charges <= 0} onClick={doWish}>정무 처리<small>남은 상소 {view.wish.charges}건</small></button><button className="btn hong" onClick={() => open({ kind: 'story', episode: ep && !locked ? ep.id : undefined })}>이야기 이어 보기<small>{locked ?? ep?.title ?? '다음 화 준비 중'}</small></button></div>
   <button className="hint" onClick={() => go(hint.target)}>다음 할 일 · {hint.text}</button></div>
-  {work && <><div className="dim" onClick={() => setWork(false)}/><div className="sheet" role="dialog" aria-label="일터"><button className="close" onClick={() => setWork(false)}>닫기</button><div className="sheet-title">일터</div>{WORKPLACES.map(wp => <div className="work-row panel" key={wp.id} data-guide={`wp-${wp.id}`}><b>{wp.name}</b><span><ResIcon kind={wp.produces}/>{fmtRate(workplaceRate(view, wp))}/분</span><div className="faces">{Array.from({ length: slotsPerWorkplace(view.rank) }, (_, i) => <button className="face" key={i} aria-label={`${wp.name} ${i + 1}번 칸 식객 고르기`} onClick={() => setPicking(wp.id)}>{view.work[wp.id][i] ? <Portrait def={YOKAI_BY_ID[view.work[wp.id][i]]}/> : '+'}</button>)}</div>{activeCombos(view.work[wp.id]).length > 0 && <small>짝꿍 보너스 적용 중</small>}</div>)}</div></>}
-  {banquet && <><div className="dim" onClick={() => setBanquet(false)}/><div className="modal" role="dialog" aria-label="연회"><div className="title">연회 열기</div><div className="bubble">곡식 {fmt(feastCost(view.rank))} · 명성 +{fmt(feastFame(view))}<br />모든 식객의 호감도가 올라갑니다.</div><div className="actions"><button className="btn hong" disabled={view.res.grain < feastCost(view.rank)} onClick={doFeast}>연회 열기</button><button className="btn" onClick={() => setBanquet(false)}>닫기</button></div></div></>}
-  {picking && <WorkSheet view={view} wp={picking} open={open} onClose={() => setPicking(null)}/>}
+  {work && createPortal(<WorkSheet view={view} open={open} picking={picking} setPicking={setPicking} onClose={() => { setWork(false); setPicking(null); }}/>, document.body)}
+  {banquet && createPortal(<><div className="dim" onClick={() => setBanquet(false)}/><div className="modal" role="dialog" aria-label="연회"><div className="title">연회 열기</div><div className="bubble">곡식 {fmt(feastCost(view.rank))} · 명성 +{fmt(feastFame(view))}<br />모든 식객의 호감도가 올라갑니다.</div><div className="actions"><button className="btn hong" disabled={view.res.grain < feastCost(view.rank)} onClick={doFeast}>연회 열기</button><button className="btn" onClick={() => setBanquet(false)}>닫기</button></div></div></>, document.body)}
  </div>;
 }
 function Progress({ label, have, need, color }: {
@@ -83,18 +83,15 @@ function Progress({ label, have, need, color }: {
       </span>
     </div>);
 }
-/** 일터에 보낼 식객 고르기 */
-function WorkSheet({ view, wp: wpId, open, onClose }: {
+/** 일터 창: 일터 목록에서 칸을 누르면 같은 창 안에서 식객 고르기로 넘어간다. */
+function WorkSheet({ view, open, picking, setPicking, onClose }: {
     view: GameState;
-    wp: WorkplaceId;
     open: (m: ModalRequest) => void;
+    picking: WorkplaceId | null;
+    setPicking: (w: WorkplaceId | null) => void;
     onClose: () => void;
 }) {
-    const wp = WORKPLACE_BY_ID[wpId];
-    const full = view.work[wpId].length >= slotsPerWorkplace(view.rank);
-    const list = ownedYokai(view)
-        .map(({ def }) => ({ def, value: statsOf(view, def.id)[wp.stat] * (hasAptitude(def, wp) ? 1.5 : 1), at: workplaceOf(view, def.id) }))
-        .sort((a, b) => b.value - a.value);
+    const slots = slotsPerWorkplace(view.rank);
     const send = (id: string, to: WorkplaceId | null) => {
         const r = act((s, now) => assign(s, now, id, to));
         if (!r.ok) {
@@ -103,40 +100,61 @@ function WorkSheet({ view, wp: wpId, open, onClose }: {
             return;
         }
         buzz();
+        if (to)
+            setPicking(null);
         for (const c of r.newCombos)
             open({ kind: 'combo', combo: c });
     };
     return (<>
       <div className="dim" onClick={onClose}/>
-      <div className="sheet work-picker" role="dialog" aria-label={`${wp.name} 배치`}>
-        <button className="close" onClick={onClose}>닫기</button>
-        <div className="grab"/>
-        <div className="sheet-title">
-          {wp.name} <span>{wp.flavor}</span>
+      <div className="sheet" role="dialog" aria-label="일터">
+        <div className="sheet-head">
+          {picking ? <button className="back" onClick={() => setPicking(null)}>‹ 일터</button> : <div className="sheet-title">일터</div>}
+          <button className="close" onClick={onClose}>닫기</button>
         </div>
-        <div className="pick-list">
-          {list.map(({ def, at }) => {
+        {picking ? <Picker view={view} wpId={picking} send={send}/> : WORKPLACES.map((wp) => (
+          <button className="work-row panel" key={wp.id} data-guide={`wp-${wp.id}`} onClick={() => setPicking(wp.id)}>
+            <div className="work-info">
+              <b>{wp.name}</b>
+              <span>{STAT_LABEL[wp.stat]} → <ResIcon kind={wp.produces} size={16}/> {wp.produces === 'fame' ? `${fmtRate(workplaceRate(view, wp) * 60)}/시간` : `${fmtRate(workplaceRate(view, wp))}/분`}</span>
+              {activeCombos(view.work[wp.id]).length > 0 && <small>짝꿍 보너스 +{activeCombos(view.work[wp.id]).length * 20}%</small>}
+            </div>
+            <div className="faces">
+              {Array.from({ length: slots }, (_, i) => (
+                <span className={`face ${view.work[wp.id][i] ? '' : 'empty'}`} key={i}>
+                  {view.work[wp.id][i] ? <Portrait def={YOKAI_BY_ID[view.work[wp.id][i]]}/> : '+'}
+                </span>
+              ))}
+            </div>
+          </button>
+        ))}
+      </div>
+    </>);
+}
+
+function Picker({ view, wpId, send }: { view: GameState; wpId: WorkplaceId; send: (id: string, to: WorkplaceId | null) => void }) {
+    const wp = WORKPLACE_BY_ID[wpId];
+    const full = view.work[wpId].length >= slotsPerWorkplace(view.rank);
+    const list = ownedYokai(view)
+        .map(({ def }) => ({ def, value: statsOf(view, def.id)[wp.stat] * (hasAptitude(def, wp) ? 1.5 : 1), at: workplaceOf(view, def.id) }))
+        .sort((a, b) => b.value - a.value);
+    return (<>
+      <div className="sheet-title">{wp.name}<span>{wp.flavor}</span></div>
+      <div className="pick-list">
+        {list.map(({ def, at }) => {
             const here = at === wpId;
             return (<div key={def.id} className={`pick ${here ? 'here' : ''}`}>
-                <div className="pick-pic">
-                  <Portrait def={def}/>
-                </div>
+                <div className="pick-pic"><Portrait def={def}/></div>
                 <div className="pick-info">
                   <b>{def.name}</b>
-                  <span>
-                    {STAT_LABEL[wp.stat]} {fmt(statsOf(view, def.id)[wp.stat])}
-                    {hasAptitude(def, wp) && <em> 적성 ×1.5</em>}
-                  </span>
+                  <span>{STAT_LABEL[wp.stat]} {fmt(statsOf(view, def.id)[wp.stat])}{hasAptitude(def, wp) && <em> 적성 ×1.5</em>}</span>
                   <small>{at ? `${WORKPLACE_BY_ID[at].name}에서 일하는 중` : '쉬는 중'}</small>
                 </div>
-                {here ? (<button className="btn cheong small" onClick={() => send(def.id, null)}>
-                    쉬게 하기
-                  </button>) : (<button className="btn hwang small" disabled={full} onClick={() => send(def.id, wpId)}>
-                    보내기
-                  </button>)}
+                {here
+                  ? <button className="btn small" onClick={() => send(def.id, null)}>쉬게 하기</button>
+                  : <button className="btn hong small" disabled={full} onClick={() => send(def.id, wpId)}>보내기</button>}
               </div>);
         })}
-        </div>
       </div>
     </>);
 }

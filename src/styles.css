@@ -502,3 +502,27 @@ button:disabled { opacity: .55; }
 .hearts i.on { color:#ef8d99; }
 .hearts i.on svg { fill:currentColor; }
 .dim:has(+ .work-picker) { z-index:22; }
+
+/* ── 겹침 정리: 창은 body 바로 아래(포털), 안내는 창이 열리면 위로 ── */
+.dim { z-index: 40; }
+.sheet, .modal { z-index: 41; }
+.vn { z-index: 45; }
+.guide { z-index: 42; }
+.toasts { z-index: 50; }
+body:has(.sheet) .guide { top: calc(8px + env(safe-area-inset-top)); bottom: auto; }
+body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
+.sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.sheet-head .sheet-title { margin: 0; }
+.sheet-head .close, .sheet-head .back { position: static; padding: 6px 12px; border-radius: 10px; border: 1px solid var(--line); color: var(--text, #fffaf2); font-size: 15px; }
+.work-row { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 10px; padding: 12px; margin-bottom: 8px; text-align: left; }
+.work-info { display: flex; flex-direction: column; gap: 2px; }
+.work-info b { font-family: var(--title); font-size: 19px; }
+.work-info span { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; color: var(--gold, #f2c66d); }
+.work-info small { font-size: 13px; color: #ff9f8f; }
+.work-row .faces { display: flex; gap: 4px; flex: none; }
+.work-row .face { width: 40px; height: 40px; border-radius: 50%; overflow: hidden; border: 1.5px solid rgba(255, 255, 255, .35); display: flex; align-items: center; justify-content: center; }
+.work-row .face.empty { border-style: dashed; color: rgba(255, 255, 255, .6); }
+
+/* 안내 말풍선이 아래에 있을 때 목록 끝이 가려지지 않게, 알림은 화면 가운데 위쪽에 */
+.app.guiding { padding-bottom: calc(80px + 170px + env(safe-area-inset-bottom)); }
+.toasts { top: 36%; }
