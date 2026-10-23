@@ -16,7 +16,7 @@ const HEROINE =
   'Alluring but tasteful and non-explicit: no nudity, no underwear visible, no low camera angle looking up the skirt.';
 
 const FRAME = {
-  full: `${HEROINE} Knee-up shot (head to just above the knees) at eye level, filling the frame, her signature pose. Isolated on a fully transparent background (PNG with alpha), no scenery, no floor, no shadow.`,
+  full: `${HEROINE} Full body from head to feet at eye level, her signature pose, feet firmly on the ground (or seated if stated). Modern fashionable outfit mixed with Korean Joseon accents (jeogori collars, ribbon ties, norigae tassels), not a traditional robe. Isolated on a fully transparent background (PNG with alpha), no scenery, no floor, no shadow.`,
   card: `${HEROINE} Three-quarter body shot, dynamic pose, with a scenic background that suits her story.`,
   cg: `${HEROINE} Wide romantic story illustration (event CG) of her alone, seen from the point of view of the viewer who is with her (the viewer is not drawn). Warm emotional lighting and a detailed background.`,
   bg: 'Background art with no people. Tall vertical composition for a phone screen, the lower third fairly open.',

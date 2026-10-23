@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
 import { activeCombos, assign, feast, feastCost, feastFame, hasAptitude, nextRank, ownedYokai, power, promote, promoteCheck, slotsPerWorkplace, statsOf, useWish, workplaceOf, workplaceRate, } from '../core/engine';
 import { fmt, fmtRate } from '../core/format';
@@ -15,6 +15,7 @@ import { buzz, pushToast } from './toast';
 import type { ModalRequest } from './App';
 import { guideStep } from '../core/guide';
 import { bondContent } from '../data/bond-content';
+import { themeOf } from '../data/themes';
 import { EPISODES } from '../data/story';
 import { nextEpisode, lockReason } from '../core/story';
 interface Props {
@@ -37,6 +38,7 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
     const ep = nextEpisode(view, EPISODES), locked = ep ? lockReason(view, ep) : null;
     const hint = nextHint(view, now);
     const talks = bondContent(def.id).talks;
+    const theme = themeOf(def.id);
     const poke = () => { setTaps(n => n + 1); setLine(talks.length ? talks[taps % talks.length].line : null); };
     const resting = ownedYokai(view).some(({ def: d }) => !workplaceOf(view, d.id));
     const doWish = () => { const r = act(useWish); if (r.ok)
@@ -47,7 +49,10 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
         setBanquet(false);
     } };
     return <div className="view home">
-  <Art className="home-bg" src={ART.bg('palace')} alt="" fallback={<div className="home-bg art-placeholder"/>}/>
+  <div className="stand-bg" style={{ '--theme': theme } as CSSProperties}>
+   <div className="stand-face" style={{ backgroundImage: `url(${ART.full(def.id)})` }}/>
+   <i className="band b1"/><i className="band b2"/>
+  </div>
   <div className="home-menu">
    <button className="menu-icon" data-guide="story" onClick={() => open({ kind: 'story', episode: ep && !locked ? ep.id : undefined })}><LineIcon name="scroll" size={24}/><span>이야기</span>{ep && !locked && <i className="badge">!</i>}</button>
    <button className="menu-icon" data-guide="ttuk" disabled={!view.wish.pending && view.wish.charges <= 0} onClick={doWish}><LineIcon name="flag" size={24}/><span>정무</span>{(view.wish.pending || view.wish.charges > 0) && <i className="badge">{view.wish.pending ? '!' : view.wish.charges}</i>}</button>
@@ -56,9 +61,11 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
   </div>
   <div className="heroine">
    <button className="heroine-art" aria-label={`${def.name}에게 말 걸기`} onClick={poke}>
+    <img className="heroine-shadow" src={ART.full(def.id)} alt="" aria-hidden="true"/>
     <Art className="heroine-img" src={ART.full(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/>
    </button>
   </div>
+  <div className="nameplate"><small style={{ background: theme }}>{def.kind}</small><b>{def.name}</b></div>
   {line ? <div className="say" role="status"><b>{def.name}</b><span>{line}</span><button onClick={() => onHeroine(def.id)}>대화하기 ›</button></div> : !step && <button className="quest" onClick={() => go(hint.target)}><b>할 일</b><span>{hint.text}</span><em>가기 ›</em></button>}
   {work && createPortal(<WorkSheet view={view} open={open} picking={picking} setPicking={setPicking} onClose={() => { setWork(false); setPicking(null); }}/>, document.body)}
   {banquet && createPortal(<><div className="dim" onClick={() => setBanquet(false)}/><div className="modal" role="dialog" aria-label="연회"><div className="title">연회 열기</div><div className="bubble">곡식 {fmt(feastCost(view.rank))} · 명성 +{fmt(feastFame(view))}<br />모든 식객의 호감도가 올라갑니다.</div><div className="actions"><button className="btn hong" disabled={view.res.grain < feastCost(view.rank)} onClick={doFeast}>연회 열기</button><button className="btn" onClick={() => setBanquet(false)}>닫기</button></div></div></>, document.body)}

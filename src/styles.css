@@ -610,8 +610,14 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .say button { color: var(--seal); font-weight: 700; font-size: 14px; white-space: nowrap; }
 .home .say { position: static; flex: none; margin: 6px 12px 10px; }
 
-/* 무릎 위 구도: 캐릭터는 메뉴 아래부터 화면 끝까지 크게, 잘린 아래쪽은 흐리게. 할 일 칸은 그 위에 얹는다. */
-.home .home-menu { position: relative; z-index: 2; }
-.home .heroine { position: absolute; left: 0; right: 0; top: 70px; bottom: 0; padding: 0; z-index: 1; }
-.home .heroine-art img { -webkit-mask-image: linear-gradient(to bottom, #000 86%, transparent 100%); mask-image: linear-gradient(to bottom, #000 86%, transparent 100%); }
-.home .quest, .home .say { position: absolute; left: 0; right: 0; bottom: 0; margin: 0 12px 10px; z-index: 2; }
+/* 첫 화면 배경: 니케 스탠디처럼 모눈 바탕 + 대표 색 사선 띠 + 크게 흐린 얼굴, 왼쪽 아래 이름표 */
+.home::after { display: none; }
+.stand-bg { position: absolute; inset: 0; z-index: -1; overflow: hidden; background-color: #f7f3f1;
+  background-image: linear-gradient(rgba(60,40,40,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(60,40,40,.05) 1px, transparent 1px); background-size: 22px 22px; }
+.stand-face { position: absolute; inset: 0; background-repeat: no-repeat; background-size: 260% auto; background-position: 52% 3%; opacity: .14; filter: grayscale(.3); }
+.stand-bg .band { position: absolute; background: var(--theme); transform: skewX(-20deg); }
+.stand-bg .b1 { left: 8%; top: 12%; width: 46%; height: 100%; opacity: .16; }
+.stand-bg .b2 { left: 60%; top: 34%; width: 7%; height: 80%; opacity: .5; }
+.nameplate { position: absolute; left: 14px; bottom: 76px; z-index: 2; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; transform: skewX(-8deg); pointer-events: none; }
+.nameplate small { color: #fff; font: 700 12px var(--sans); padding: 2px 8px; }
+.nameplate b { background: #1f1b22; color: #fff; font: 700 24px var(--title); padding: 3px 14px; letter-spacing: 3px; }
