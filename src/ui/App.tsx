@@ -121,7 +121,7 @@ export function App() {
         </div>
       </header>
 
-      {tab === 'home' && <HomeView view={view} now={now} open={open} go={go} />}
+      {tab === 'home' && <HomeView view={view} now={now} open={open} go={go} onHeroine={setSheet} />}
       {tab === 'yokai' && <YokaiView view={view} now={now} onOpen={setSheet} />}
       {tab === 'stage' && <StageView view={view} now={now} open={open} />}
       {tab === 'record' && <RecordView view={view} now={now} />}

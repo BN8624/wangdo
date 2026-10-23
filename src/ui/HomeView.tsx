@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { activeCombos, assign, feast, feastCost, feastFame, hasAptitude, nextRank, ownedYokai, power, promote, promoteCheck, slotsPerWorkplace, statsOf, useWish, workplaceOf, workplaceRate, } from '../core/engine';
 import { fmt, fmtRate } from '../core/format';
@@ -21,26 +21,18 @@ interface Props {
     now: number;
     open: (m: ModalRequest) => void;
     go: (t: HintTarget) => void;
+    onHeroine: (id: string) => void;
 }
-/** 지도 위 건물 자리(지도 그림 기준 %). 지도 그림을 바꾸면 여기만 맞추면 된다. */
-const SPOTS: { id: string; name: string; x: number; y: number }[] = [
-    { id: 'office', name: '관아', x: 56, y: 15 },
-    { id: 'market', name: '저잣거리', x: 26, y: 33 },
-    { id: 'woodyard', name: '훈련장', x: 78, y: 36 },
-    { id: 'pavilion', name: '정자', x: 54, y: 45 },
-    { id: 'field', name: '논밭', x: 24, y: 66 },
-    { id: 'tavern', name: '주막', x: 76, y: 66 },
-];
-export function HomeView({ view, now, open, go }: Props) {
+export function HomeView({ view, now, open, go, onHeroine }: Props) {
     const [picking, setPicking] = useState<WorkplaceId | null>(null);
     const [work, setWork] = useState(false);
     const [banquet, setBanquet] = useState(false);
     const step = guideStep(view);
+    const wpTarget = step?.target?.startsWith('wp-') ? step.target : null;
+    const def = YOKAI_BY_ID[view.favorite] ?? YOKAI_BY_ID[Object.keys(view.yokai)[0]];
     const ep = nextEpisode(view, EPISODES), locked = ep ? lockReason(view, ep) : null;
     const hint = nextHint(view, now);
-    const slots = slotsPerWorkplace(view.rank);
-    const scroller = useRef<HTMLDivElement>(null);
-    useEffect(() => { const el = scroller.current; if (el) el.scrollLeft = (el.scrollWidth - el.clientWidth) / 2; }, []);
+    const resting = ownedYokai(view).some(({ def: d }) => !workplaceOf(view, d.id));
     const doWish = () => { const r = act(useWish); if (r.ok)
         open({ kind: 'wish' }); };
     const doFeast = () => { const r = act(feast); if (r.ok) {
@@ -48,32 +40,20 @@ export function HomeView({ view, now, open, go }: Props) {
         pushToast({ text: `연회 성공 · 명성 +${fmt(r.fame)}`, res: 'fame' });
         setBanquet(false);
     } };
-    const tap = (id: string) => {
-        if (id === 'office') return doWish();
-        if (id === 'pavilion') return setBanquet(true);
-        setWork(true);
-        setPicking(id as WorkplaceId);
-    };
-    const tag = (id: string) => {
-        if (id === 'office') return view.wish.pending || view.wish.charges > 0 ? <span className="badge">{view.wish.pending ? '!' : view.wish.charges}</span> : null;
-        if (id === 'pavilion') return null;
-        const n = view.work[id as WorkplaceId].length;
-        return <small className={n < slots ? 'open' : ''}>{n}/{slots}</small>;
-    };
-    return <div className="view town">
-  <div className="map-scroll" ref={scroller}>
-   <div className="map">
-    <Art className="map-img" src={ART.bg('map')} alt="달골 마을" fallback={<div className="map-img art-placeholder"/>}/>
-    {SPOTS.map(sp => <button key={sp.id} className="spot" style={{ left: `${sp.x}%`, top: `${sp.y}%` }} data-guide={sp.id === 'office' ? 'ttuk' : sp.id === 'pavilion' ? 'feast' : `wp-${sp.id}`} onClick={() => tap(sp.id)}>{sp.name}{tag(sp.id)}</button>)}
-   </div>
+    return <div className="view home">
+  <Art className="home-bg" src={ART.bg('palace')} alt="" fallback={<div className="home-bg art-placeholder"/>}/>
+  <div className="home-menu">
+   <button className="menu-icon" data-guide="story" onClick={() => open({ kind: 'story', episode: ep && !locked ? ep.id : undefined })}><LineIcon name="scroll" size={24}/><span>이야기</span>{ep && !locked && <i className="badge">!</i>}</button>
+   <button className="menu-icon" data-guide="ttuk" disabled={!view.wish.pending && view.wish.charges <= 0} onClick={doWish}><LineIcon name="flag" size={24}/><span>정무</span>{(view.wish.pending || view.wish.charges > 0) && <i className="badge">{view.wish.pending ? '!' : view.wish.charges}</i>}</button>
+   <button className="menu-icon" data-guide={wpTarget ?? 'work'} onClick={() => setWork(true)}><LineIcon name="home" size={24}/><span>일터</span>{resting && <i className="badge dot"/>}</button>
+   <button className="menu-icon" data-guide="feast" onClick={() => setBanquet(true)}><LineIcon name="cup" size={24}/><span>연회</span></button>
   </div>
-  <div className="town-icons">
-   <button className="round-icon" data-guide="story" onClick={() => open({ kind: 'story', episode: ep && !locked ? ep.id : undefined })}><LineIcon name="scroll" size={24}/><span>이야기</span>{ep && !locked && <i className="badge">!</i>}</button>
-   <button className="round-icon" onClick={() => setWork(true)}><LineIcon name="home" size={24}/><span>일터</span></button>
-  </div>
+  <button className="heroine" aria-label={`${def.name} 보기`} onClick={() => onHeroine(def.id)}>
+   <Art src={ART.full(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/>
+  </button>
   {!step && <button className="quest" onClick={() => go(hint.target)}><b>할 일</b><span>{hint.text}</span><em>가기 ›</em></button>}
   {work && createPortal(<WorkSheet view={view} open={open} picking={picking} setPicking={setPicking} onClose={() => { setWork(false); setPicking(null); }}/>, document.body)}
-  {banquet && createPortal(<><div className="dim" onClick={() => setBanquet(false)}/><div className="modal" role="dialog" aria-label="연회"><div className="title">정자에서 연회 열기</div><div className="bubble">곡식 {fmt(feastCost(view.rank))} · 명성 +{fmt(feastFame(view))}<br />모든 식객의 호감도가 올라갑니다.</div><div className="actions"><button className="btn hong" disabled={view.res.grain < feastCost(view.rank)} onClick={doFeast}>연회 열기</button><button className="btn" onClick={() => setBanquet(false)}>닫기</button></div></div></>, document.body)}
+  {banquet && createPortal(<><div className="dim" onClick={() => setBanquet(false)}/><div className="modal" role="dialog" aria-label="연회"><div className="title">연회 열기</div><div className="bubble">곡식 {fmt(feastCost(view.rank))} · 명성 +{fmt(feastFame(view))}<br />모든 식객의 호감도가 올라갑니다.</div><div className="actions"><button className="btn hong" disabled={view.res.grain < feastCost(view.rank)} onClick={doFeast}>연회 열기</button><button className="btn" onClick={() => setBanquet(false)}>닫기</button></div></div></>, document.body)}
  </div>;
 }
 
