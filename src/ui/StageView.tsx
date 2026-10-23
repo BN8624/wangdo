@@ -42,7 +42,6 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
   const chances = partyChances(view, info, party);
   const total = partyChance(chances);
   const regen = staminaRegenRemaining(view, now);
-  const bossDef = YOKAI_BY_ID[info.chapter.boss.yokai];
   const chapterStart = info.chapterIndex * STAGES_PER_CHAPTER;
 
   const go = () => {
@@ -93,7 +92,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
       <div className="card" style={{ marginTop: 14 }}>
         <div className="foe">
           <div className={`foe-pic ${info.isBoss ? 'boss' : ''}`}>
-            {info.isBoss ? <Portrait def={bossDef} /> : <FoeGroup chapterId={info.chapter.id} />}
+            <FoeGroup chapterId={info.chapter.id} />
           </div>
           <div>
             <div className="foe-no">
@@ -158,7 +157,6 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
             <ResIcon kind="coin" size={16} />+{fmt(info.coin)}
           </span>
           <span>+ 선물</span>
-          {info.isBoss && !view.yokai[info.chapter.boss.yokai] && <span>+ 새 식객</span>}
         </div>
         <button className="btn hong wide go" data-guide="go" disabled={view.stamina.value < 1 || party.length < 3} onClick={go}>
           출동! <small>기력 1</small>

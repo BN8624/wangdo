@@ -58,6 +58,7 @@ try {
   writeFileSync(out, JSON.stringify(ep, null, 2) + '\n');
   const line = existsSync(join(work, 'summary-line.txt')) ? readFileSync(join(work, 'summary-line.txt'), 'utf8').trim() : `- ${ep.id} ${ep.title}: ${ep.summary}`;
   appendFileSync(join(STORY, 'summary.md'), `\n${line}`);
+  execFileSync('npx', ['tsx', join(ROOT, 'scripts/story-index.ts')], { stdio: 'inherit' });
   console.log(`새 화 저장: ${out}`);
 } finally {
   rmSync(work, { recursive: true, force: true });

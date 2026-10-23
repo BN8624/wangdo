@@ -31,6 +31,7 @@ import {
   wishMaxCharges,
   winChance,
   workplaceRate,
+  freshYokai,
 } from '../src/core/engine';
 import { GUIDE, advanceGuide } from '../src/core/guide';
 import { deserialize, exportCode, importCode, serialize } from '../src/core/save';
@@ -42,10 +43,11 @@ import { YOKAI_BY_ID } from '../src/data/yokai';
 
 const T0 = Date.UTC(2026, 0, 1, 9);
 
-/** 시작 식객 셋을 적성 일터에 보낸 새 게임 */
+/** 식객 넷을 적성 일터에 보낸 새 게임 */
 function game() {
   const s = newGame(T0, 1);
-  s.work = { market: ['bangul'], woodyard: ['dudu'], field: ['sora'], tavern: [] };
+  for (const id of ['muyeong', 'sodam', 'geumyeong']) s.yokai[id] = freshYokai();
+  s.work = { market: ['geumyeong'], woodyard: ['muyeong'], field: ['sodam'], tavern: ['baekseol'] };
   return s;
 }
 
@@ -62,25 +64,25 @@ describe('일터와 생산', () => {
   it('적성이 맞는 일터에서 더 많이 만든다', () => {
     const s = game();
     const market = WORKPLACE_BY_ID.market;
-    expect(workplaceRate(s, market)).toBeCloseTo(statsOf(s, 'bangul').wit * BALANCE.aptitudeMult * market.perStat);
-    const [resting] = assign(s, T0, 'bangul', null);
-    const [sora] = assign(assign(resting, T0, 'sora', null)[0], T0, 'sora', 'market');
-    expect(workplaceRate(sora, market)).toBeCloseTo(statsOf(s, 'sora').wit * market.perStat);
+    expect(workplaceRate(s, market)).toBeCloseTo(statsOf(s, 'geumyeong').wit * BALANCE.aptitudeMult * market.perStat);
+    const [resting] = assign(s, T0, 'geumyeong', null);
+    const [sora] = assign(assign(resting, T0, 'sodam', null)[0], T0, 'sodam', 'market');
+    expect(workplaceRate(sora, market)).toBeCloseTo(statsOf(s, 'sodam').wit * market.perStat);
   });
 
   it('칸이 차면 더 보낼 수 없고, 칭호가 오르면 칸이 늘어난다', () => {
     const s = game();
-    expect(assign(s, T0, 'dudu', 'market')[1]).toEqual({ ok: false, reason: 'full' });
+    expect(assign(s, T0, 'muyeong', 'market')[1]).toEqual({ ok: false, reason: 'full' });
     expect(slotsPerWorkplace(BALANCE.slotRanks[0])).toBe(2);
   });
 
   it('짝꿍을 같은 일터에 두면 처음 한 번 이야기가 나온다', () => {
     const s = game();
     s.rank = 2;
-    s.yokai.kkulkkeok = { level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0 };
-    const [a, r] = assign(s, T0, 'kkulkkeok', 'woodyard');
-    expect(r.ok && r.newCombos.map((c) => c.id)).toEqual(['strong']);
-    const [, r2] = assign(assign(a, T0, 'kkulkkeok', null)[0], T0, 'kkulkkeok', 'woodyard');
+    s.yokai.seorin = freshYokai();
+    const [a, r] = assign(s, T0, 'seorin', 'woodyard');
+    expect(r.ok && r.newCombos.map((c) => c.id)).toEqual(['blades']);
+    const [, r2] = assign(assign(a, T0, 'seorin', null)[0], T0, 'seorin', 'woodyard');
     expect(r2.ok && r2.newCombos).toEqual([]);
   });
 
@@ -100,34 +102,34 @@ describe('일터와 생산', () => {
 describe('식객 레벨업', () => {
   it('엽전을 내고 능력치가 오르며, 칭호 상한을 넘지 못한다', () => {
     const s = game();
-    const cost = levelCost(YOKAI_BY_ID.dudu, 1);
-    const [next, r] = levelUp(s, T0, 'dudu', 1);
+    const cost = levelCost(YOKAI_BY_ID.muyeong, 1);
+    const [next, r] = levelUp(s, T0, 'muyeong', 1);
     expect(r).toEqual({ ok: true, levels: 1, spent: cost });
     expect(power(next)).toBeGreaterThan(power(s));
     next.res.coin = 1e12;
-    expect(levelUp(next, T0, 'dudu', 999)[0].yokai.dudu.level).toBe(levelCap(0));
+    expect(levelUp(next, T0, 'muyeong', 999)[0].yokai.muyeong.level).toBe(levelCap(0));
   });
 });
 
 describe('인연', () => {
   it('대화는 대답 점수만큼 호감도를 올리고, 한동안 다시 할 수 없다', () => {
     const s = game();
-    const [a, r] = talk(s, T0, 'dudu', 8);
+    const [a, r] = talk(s, T0, 'muyeong', 8);
     expect(r.ok && r.gained).toBe(8 * BALANCE.talkMult);
-    expect(talk(a, T0 + MINUTE, 'dudu', 8)[1]).toEqual({ ok: false, reason: 'cooldown' });
-    expect(talk(a, T0 + BALANCE.talkCooldownMinutes * MINUTE, 'dudu', 8)[1].ok).toBe(true);
+    expect(talk(a, T0 + MINUTE, 'muyeong', 8)[1]).toEqual({ ok: false, reason: 'cooldown' });
+    expect(talk(a, T0 + BALANCE.talkCooldownMinutes * MINUTE, 'muyeong', 8)[1].ok).toBe(true);
   });
 
   it('좋아하는 선물은 더 기뻐하고, 없으면 엽전으로 사서 준다', () => {
     const s = game();
     s.res.coin = 10_000;
-    const liked = YOKAI_BY_ID.dudu.likes[0];
-    const [a, r] = giveGift(s, T0, 'dudu', liked);
+    const liked = YOKAI_BY_ID.muyeong.likes[0];
+    const [a, r] = giveGift(s, T0, 'muyeong', liked);
     expect(r.ok && r.liked && r.bought).toBe(true);
     expect(a.res.coin).toBe(s.res.coin - giftPrice(liked, 0));
-    expect(a.yokai.dudu.bond).toBe(BALANCE.giftBond.liked);
+    expect(a.yokai.muyeong.bond).toBe(BALANCE.giftBond.liked);
     a.gifts.brush = 1;
-    const [b, r2] = giveGift(a, T0, 'dudu', 'brush');
+    const [b, r2] = giveGift(a, T0, 'muyeong', 'brush');
     expect(r2.ok && !r2.liked && !r2.bought).toBe(true);
     expect(b.gifts.brush).toBe(0);
     expect(b.res.coin).toBe(a.res.coin);
@@ -136,13 +138,13 @@ describe('인연', () => {
   it('호감도 단계가 오르면 능력치가 오르고 새 이야기가 열린다', () => {
     const s = game();
     s.res.coin = 1e6;
-    const before = statsOf(s, 'sora').politics;
-    const [a, r] = outing(s, T0, 'sora');
+    const before = statsOf(s, 'sodam').politics;
+    const [a, r] = outing(s, T0, 'sodam');
     expect(r.ok && r.to).toBe(bondLevel(BALANCE.outingBond));
-    a.yokai.sora.bond = BOND_LEVELS[3].need;
-    expect(statsOf(a, 'sora').politics).toBeGreaterThan(before);
-    expect(unseenScene(a, 'sora')).toBe(1);
-    expect(unseenScene(markSceneSeen(a, 'sora', 1), 'sora')).toBe(2);
+    a.yokai.sodam.bond = BOND_LEVELS[3].need;
+    expect(statsOf(a, 'sodam').politics).toBeGreaterThan(before);
+    expect(unseenScene(a, 'sodam')).toBe(1);
+    expect(unseenScene(markSceneSeen(a, 'sodam', 1), 'sodam')).toBe(2);
   });
 });
 
@@ -153,15 +155,15 @@ describe('잔치와 승급', () => {
     const [next, r] = feast(s, T0);
     expect(r.ok).toBe(true);
     expect(next.res.fame).toBeGreaterThan(s.res.fame);
-    expect(next.yokai.sora.bond).toBe(BALANCE.feastBond);
+    expect(next.yokai.sodam.bond).toBe(BALANCE.feastBond);
   });
 
-  it('위세와 명성이 모두 차야 승급하고, 칭호 식객이 합류한다', () => {
-    const s = game();
+  it('위세와 명성이 모두 차야 승급하고, 관직 식객이 합류한다', () => {
+    const s = newGame(T0, 1);
     s.rank = 1;
     s.res.fame = RANKS[2].fameCost;
     expect(promote(s, T0)[1]).toEqual({ ok: false, reason: 'need-power' });
-    for (const id of ['dudu', 'bangul', 'sora']) s.yokai[id].level = 20;
+    s.yokai.baekseol.level = 20;
     const [next, r] = promote(s, T0);
     expect(r).toEqual({ ok: true, rank: 2, recruit: RANKS[2].recruit });
     expect(next.yokai[RANKS[2].recruit!].level).toBe(1);
@@ -201,35 +203,35 @@ describe('소동 겨루기', () => {
     const s = game();
     const info = stageInfo(0)!;
     const best = partyChance(partyChances(s, info, bestParty(s, info)));
-    for (const p of [['dudu', 'bangul', 'sora'], ['sora', 'dudu', 'bangul']]) {
+    for (const p of [['muyeong', 'geumyeong', 'sodam'], ['sodam', 'muyeong', 'geumyeong']]) {
       expect(best).toBeGreaterThanOrEqual(partyChance(partyChances(s, info, p)));
     }
   });
 
   it('기력을 쓰고, 이기면 다음 소동으로 넘어가 보상을 받는다', () => {
     const s = game();
-    for (const id of ['dudu', 'bangul', 'sora']) s.yokai[id].level = 10;
+    for (const id of ['muyeong', 'geumyeong', 'sodam']) s.yokai[id].level = 10;
     const info = stageInfo(0)!;
     const [next, r] = fight(s, T0, bestParty(s, info));
     expect(next.stamina.value).toBe(BALANCE.staminaMax - 1);
     expect(r.ok && r.won).toBe(true);
     expect(next.stage.index).toBe(1);
-    expect(fight(s, T0, ['dudu', 'dudu', 'sora'])[1]).toEqual({ ok: false, reason: 'bad-party' });
+    expect(fight(s, T0, ['muyeong', 'muyeong', 'sodam'])[1]).toEqual({ ok: false, reason: 'bad-party' });
   });
 
   it('기력이 없으면 출동할 수 없다', () => {
     const s = game();
     s.stamina.value = 0;
-    expect(fight(s, T0, ['dudu', 'bangul', 'sora'])[1]).toEqual({ ok: false, reason: 'no-stamina' });
+    expect(fight(s, T0, ['muyeong', 'geumyeong', 'sodam'])[1]).toEqual({ ok: false, reason: 'no-stamina' });
   });
 
-  it('장의 대장을 이기면 식객으로 합류한다', () => {
+  it('장의 우두머리를 이기면 다음 장으로 넘어간다', () => {
     const s = game();
     s.stage.index = STAGES_PER_CHAPTER - 1;
-    for (const id of ['dudu', 'bangul', 'sora']) s.yokai[id].level = 200;
+    for (const id of Object.keys(s.yokai)) s.yokai[id].level = 200;
     const [next, r] = fight(s, T0, bestParty(s, stageInfo(s.stage.index)!));
-    expect(r.ok && r.recruit).toBe('kkulkkeok');
-    expect(next.yokai.kkulkkeok.level).toBe(1);
+    expect(r.ok && r.won && r.stage.isBoss).toBe(true);
+    expect(stageInfo(next.stage.index)!.chapterIndex).toBe(1);
   });
 });
 
@@ -254,7 +256,7 @@ describe('안내', () => {
     [s] = advanceGuide(s, true);
     expect(s.guide).toBe(1);
     expect(advanceGuide(s, true)[1]).toBeNull();
-    [s] = assign(s, T0, 'bangul', 'market');
+    s.story.done.push('s1e01');
     const coin = s.res.coin;
     [s] = advanceGuide(s);
     expect(s.guide).toBe(2);

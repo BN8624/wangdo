@@ -12,13 +12,13 @@ export const WORKPLACE_BY_ID = Object.fromEntries(WORKPLACES.map((w) => [w.id, w
 
 /** 같은 일터에 함께 두면 생산량이 오르는 짝꿍 */
 export const COMBOS: ComboDef[] = [
-  { id: 'strong', pair: ['dudu', 'kkulkkeok'], title: '힘자랑 대결', text: '두두와 꿀꺽이가 누가 장작을 더 많이 패나 내기를 시작했다. 덕분에 일이 두 배로 빨라졌다!' },
-  { id: 'haggle', pair: ['bangul', 'gamtu'], title: '흥정 맞수', text: '방울과 김아씨가 손님 하나를 두고 흥정 솜씨를 겨룬다. 손님은 어리둥절, 돈궤는 두둑.' },
-  { id: 'kitchen', pair: ['sora', 'bokdeongi'], title: '부엌 동맹', text: '소라의 손맛에 복덩이의 복이 더해지니, 쌀독이 마를 틈이 없다.' },
-  { id: 'reverse', pair: ['geokkuri', 'haechi'], title: '거꾸로 판결', text: '거꾸리가 반대로 말할 때마다 해치가 바로잡는다. 구경꾼이 몰려들었다.' },
-  { id: 'sky-water', pair: ['haedoji', 'yongkkum'], title: '하늘과 물', text: '해돋이가 하늘에서 길을 보고, 용꿈이 물길을 낸다. 일이 술술 풀린다.' },
-  { id: 'fire-tiger', pair: ['beom', 'gangcheori'], title: '불과 범', text: '추위 타는 강철이가 호야 곁에 붙어 있다. 호야는 귀찮은 척하면서도 꼬리를 덮어 준다.' },
-  { id: 'moonlight', pair: ['dalbi', 'seureureu'], title: '달밤 산책', text: '달비가 이야기를 들려주자 스르르가 처음으로 쑥스럽지 않게 웃었다.' },
+  { id: 'blades', pair: ['muyeong', 'seorin'], title: '새벽 대련', text: '무영과 서린이 새벽마다 칼을 맞댄다. 구경꾼이 몰리니 호위 의뢰도 따라 늘었다.' },
+  { id: 'fox-trade', pair: ['baekseol', 'danhui'], title: '여우와 장사꾼', text: '백설과 단희가 손님의 속마음을 두고 내기를 건다. 이긴 쪽은 없고 주막 돈궤만 무거워진다.' },
+  { id: 'ledger', pair: ['sodam', 'haeryun'], title: '장부와 법전', text: '소담의 장부에 해륜의 법전이 더해지자 세곡이 한 톨도 새지 않는다.' },
+  { id: 'shadow-rite', pair: ['geumyeong', 'bari'], title: '그림자와 무녀', text: '금영이 엿들은 비밀을 바리가 점괘로 맞춰 본다. 저잣거리 시세가 손바닥 안이다.' },
+  { id: 'fire-death', pair: ['bulsae', 'wolha'], title: '불과 저승길', text: '불새가 지핀 불 앞에서 월하가 처음으로 웃었다. 훈련장 열기가 식을 줄 모른다.' },
+  { id: 'sky-sea', pair: ['cheongyeon', 'haejin'], title: '하늘과 바다', text: '선녀와 용왕의 딸이 서로의 고향 자랑을 하다 상단 거래 길을 하나 뚫었다.' },
+  { id: 'dance-coin', pair: ['yeonhwa', 'oryeon'], title: '춤과 장삿속', text: '연화의 춤판에 오련이 상단 손님을 끌어온다. 둘 다 서로 손해 봤다고 투덜댄다.' },
 ];
 
 export const GIFTS: GiftDef[] = [

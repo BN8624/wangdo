@@ -92,7 +92,7 @@ export interface ChapterDef {
   title: string;
   intro: string;
   foes: string[];
-  boss: { name: string; yokai: string; line: string };
+  boss: { name: string; stat: StatKey; line: string };
 }
 
 export interface StageInfo {
@@ -149,6 +149,8 @@ export interface GameState {
   guide: number;
   /** 본 이야기 화와 선택으로 생긴 깃발 */
   story: { done: string[]; flags: string[] };
+  /** 궁궐 화면에 서 있는 대표 식객 */
+  favorite: string;
 }
 
 // ───────── 메인 이야기(연재) ─────────

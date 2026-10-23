@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><title>왕도 시안 v2.1</title>
+<style>
+@font-face { font-family: 'Gowun Batang'; font-weight: 700; src: url('../fonts/ijwNs5nhRMIjYsdSgcMa3wRZ4J7awg.ttf'); }
+@font-face { font-family: 'Gowun Dodum'; src: url('../fonts/3Jn5SD_00GqwlBnWc1TUJF0F.ttf'); }
+@font-face { font-family: 'Song Myung'; src: url('../fonts/songmyung.ttf'); }
+:root { --panel: rgba(18, 14, 22, 0.8); --line: rgba(255, 255, 255, 0.14); --text: #fffaf2; --sub: #d8d0c2; --gold: #f2c66d; --red: #d9473c; }
+* { box-sizing: border-box; margin: 0; }
+body { background: #0d0b10; font-family: 'Gowun Dodum', sans-serif; color: var(--text); padding: 34px 40px; width: 900px; }
+h1 { font-family: 'Song Myung'; font-size: 32px; color: var(--gold); }
+p.d { color: var(--sub); font-size: 16px; margin: 4px 0 24px; }
+.row { display: flex; gap: 40px; }
+.cap { font-family: 'Song Myung'; font-size: 21px; color: var(--gold); margin-bottom: 10px; }
+.phone { width: 390px; height: 844px; border-radius: 44px; overflow: hidden; position: relative; background: #000; box-shadow: 0 0 0 9px #23202a, 0 30px 60px rgba(0, 0, 0, .6); }
+.bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8, 6, 10, .7) 0%, transparent 25%, transparent 60%, rgba(8, 6, 10, .9) 86%); }
+.hero { position: absolute; left: 50%; bottom: 150px; transform: translateX(-50%); height: 600px; }
+.hero img { height: 100%; }
+.panel { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; backdrop-filter: blur(4px); }
+svg { display: block; }
+.top { position: absolute; top: 46px; left: 12px; right: 12px; display: flex; align-items: center; gap: 10px; padding: 8px 12px; }
+.av { width: 44px; height: 44px; border-radius: 50%; background: #3a2c36; border: 2px solid var(--gold); display: flex; align-items: center; justify-content: center; flex: none; }
+.who { flex: 1; }
+.who .t { font-size: 14px; color: var(--sub); }
+.who .p { font-family: 'Gowun Batang'; font-weight: 700; font-size: 22px; color: var(--gold); line-height: 1.2; }
+.rank { text-align: right; font-size: 13px; color: var(--sub); }
+.rank b { display: block; font-size: 18px; color: var(--text); }
+.res { position: absolute; top: 116px; left: 12px; right: 12px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.res div { display: flex; align-items: center; gap: 5px; padding: 6px 8px; font-family: 'Gowun Batang'; font-weight: 700; font-size: 15px; }
+.side { position: absolute; right: 12px; top: 172px; display: grid; gap: 10px; }
+.tile { width: 66px; padding: 8px 0 6px; text-align: center; font-size: 14px; position: relative; }
+.tile svg { margin: 0 auto 3px; }
+.badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: #fff; font-size: 12px; font-weight: 700; min-width: 20px; height: 20px; border-radius: 10px; display: flex; align-items: center; justify-content: center; padding: 0 5px; }
+.bubble { position: absolute; left: 12px; right: 12px; bottom: 170px; padding: 12px 14px; }
+.bubble .nm { font-family: 'Song Myung'; font-size: 17px; color: var(--gold); }
+.bubble .tx { font-size: 17px; line-height: 1.55; }
+.actions { position: absolute; left: 12px; right: 12px; bottom: 92px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.btn { border-radius: 12px; padding: 12px; font-family: 'Song Myung'; font-size: 20px; text-align: center; position: relative; }
+.btn small { display: block; font-family: 'Gowun Dodum'; font-size: 13px; color: var(--sub); }
+.btn.main { background: var(--red); border: none; }
+.btn.main small { color: #ffe4dc; }
+.nav { position: absolute; left: 0; right: 0; bottom: 0; height: 80px; display: flex; justify-content: space-around; align-items: center; background: #15111a; border-top: 1px solid var(--line); padding-bottom: 10px; }
+.nav div { text-align: center; font-size: 13px; color: #9a92a3; }
+.nav div svg { margin: 0 auto 2px; }
+.nav .on { color: var(--gold); }
+/* 모집 */
+.gbg { position: absolute; inset: 0; background: radial-gradient(circle at 50% 38%, #4a3420 0%, #1c1414 50%, #0d0b10 80%); }
+.grade { position: absolute; top: 64px; left: 0; right: 0; text-align: center; }
+.grade span { display: inline-block; background: var(--gold); color: #2a1a08; font-family: 'Song Myung'; font-size: 18px; padding: 3px 16px; border-radius: 20px; }
+.card { position: absolute; left: 50%; top: 108px; transform: translateX(-50%); width: 316px; height: 470px; border-radius: 14px; overflow: hidden; border: 2px solid var(--gold); box-shadow: 0 0 50px rgba(242, 198, 109, .45); }
+.card img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 15%; }
+.gain { position: absolute; top: 590px; left: 0; right: 0; text-align: center; font-family: 'Gowun Batang'; font-weight: 700; font-size: 22px; color: var(--gold); }
+.plate { position: absolute; left: 16px; right: 16px; top: 628px; padding: 10px 14px; }
+.plate .k { font-size: 14px; color: var(--sub); }
+.plate .nm { font-family: 'Song Myung'; font-size: 28px; line-height: 1.2; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; }
+.stats div { text-align: center; background: rgba(255, 255, 255, .06); border-radius: 8px; padding: 4px 0; font-size: 13px; color: var(--sub); }
+.stats b { display: block; font-family: 'Gowun Batang'; font-size: 17px; color: var(--text); }
+.gbtns { position: absolute; left: 16px; right: 16px; bottom: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+</style></head>
+<body>
+<h1>왕도 · 시안 v2.1</h1>
+<p class="d">한자 제거 · 장식을 줄인 반투명 패널과 큰 글씨 · 어깨와 다리가 드러나는 퓨전 한복</p>
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#f2c66d"/><rect x="9" y="9" width="6" height="6" fill="#3a2a10"/></symbol>
+    <symbol id="i-rice" viewBox="0 0 24 24"><path d="M12 21V9" stroke="#b9d77a" stroke-width="2"/><g fill="#f0d37a"><ellipse cx="12" cy="6" rx="2.4" ry="3.6"/><ellipse cx="8" cy="10" rx="2.2" ry="3.2" transform="rotate(-30 8 10)"/><ellipse cx="16" cy="10" rx="2.2" ry="3.2" transform="rotate(30 16 10)"/><ellipse cx="8.4" cy="15" rx="2" ry="3" transform="rotate(-35 8.4 15)"/><ellipse cx="15.6" cy="15" rx="2" ry="3" transform="rotate(35 15.6 15)"/></g></symbol>
+    <symbol id="i-fame" viewBox="0 0 24 24"><path d="M12 2.5l2.9 6.2 6.6.6-5 4.5 1.5 6.6L12 17l-6 3.4 1.5-6.6-5-4.5 6.6-.6z" fill="#ff8f6b"/></symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2L5 14h6l-1 8 8-12h-6z" fill="#7fd0ff"/></symbol>
+    <symbol id="i-scroll" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h3"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 21V4M6 4h11l-2 4 2 4H6"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7-4.5-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.5-7 10-7 10z"/></symbol>
+    <symbol id="i-crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 18h16l1-11-5 4-4-6-4 6-5-4z"/></symbol>
+    <symbol id="i-cup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 5h12l-2 8a4 4 0 0 1-8 0zM12 17v3M8 21h8"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M3 11l9-7 9 7M6 10v10h12V10"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="9" cy="8" r="3.5"/><path d="M3 20c0-3.5 2.7-6 6-6s6 2.5 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14c3 0 5 2 5 5"/></symbol>
+  </defs>
+</svg>
+<div class="row">
+  <div>
+    <div class="cap">① 궁궐 (메인)</div>
+    <div class="phone">
+      <img class="bg" src="../art/style-scene.png">
+      <div class="shade"></div>
+      <div class="hero"><img src="../art/style-heroine.png"></div>
+      <div class="top panel">
+        <div class="av"><svg width="24" height="24" style="color:#f2c66d"><use href="#i-crown"/></svg></div>
+        <div class="who"><div class="t">종6품 현감 · 달골 나무꾼</div><div class="p">권세 1,284,560</div></div>
+        <div class="rank">이번 주 순위<b>4위 <span style="color:#ff8f6b;font-size:13px">▲2</span></b></div>
+      </div>
+      <div class="res">
+        <div class="panel"><svg width="20" height="20"><use href="#i-coin"/></svg>12.4만</div>
+        <div class="panel"><svg width="20" height="20"><use href="#i-rice"/></svg>3.2만</div>
+        <div class="panel"><svg width="20" height="20"><use href="#i-fame"/></svg>8,450</div>
+        <div class="panel"><svg width="20" height="20"><use href="#i-bolt"/></svg>5/6</div>
+      </div>
+      <div class="side">
+        <div class="tile panel"><svg width="26" height="26"><use href="#i-scroll"/></svg>정무<span class="badge">3</span></div>
+        <div class="tile panel"><svg width="26" height="26"><use href="#i-cup"/></svg>연회</div>
+        <div class="tile panel"><svg width="26" height="26"><use href="#i-flag"/></svg>원정</div>
+        <div class="tile panel"><svg width="26" height="26"><use href="#i-crown"/></svg>순위<span class="badge">!</span></div>
+      </div>
+      <div class="bubble panel"><div class="nm">구미호 · 백설</div><div class="tx">오늘 밤 연회엔 저만 데려가 주실 거죠, 나리? 송씨 댁 여우들보다는 제가 낫잖아요.</div></div>
+      <div class="actions">
+        <div class="btn panel">정무 처리<small>판결을 기다리는 상소 3건</small><span class="badge">3</span></div>
+        <div class="btn main">식객 모집<small>무료 1회 남음</small></div>
+      </div>
+      <div class="nav">
+        <div class="on"><svg width="26" height="26"><use href="#i-home"/></svg>궁궐</div>
+        <div><svg width="26" height="26"><use href="#i-people"/></svg>식객</div>
+        <div><svg width="26" height="26"><use href="#i-heart"/></svg>인연</div>
+        <div><svg width="26" height="26"><use href="#i-flag"/></svg>원정</div>
+        <div><svg width="26" height="26"><use href="#i-crown"/></svg>순위</div>
+      </div>
+    </div>
+  </div>
+  <div>
+    <div class="cap">② 식객 모집 결과</div>
+    <div class="phone">
+      <div class="gbg"></div>
+      <div class="grade"><span>★★★ 전설</span></div>
+      <div class="card"><img src="../art/style-heroine.png"></div>
+      <div class="gain">권세 +48,200</div>
+      <div class="plate panel">
+        <div class="k">도깨비 무관</div>
+        <div class="nm">흑랑</div>
+        <div class="stats"><div>무력<b>2,840</b></div><div>지략<b>960</b></div><div>정치<b>1,120</b></div><div>매력<b>1,780</b></div></div>
+      </div>
+      <div class="gbtns"><div class="btn panel">한 번 더</div><div class="btn main">영입하기</div></div>
+    </div>
+  </div>
+</div>
+</body></html>

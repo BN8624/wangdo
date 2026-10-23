@@ -22,9 +22,8 @@ import {
 import { fmt, fmtDuration } from '../core/format';
 import { bondContent } from '../data/bond-content';
 import { RANKS } from '../data/ranks';
-import { CHAPTERS } from '../data/stages';
 import { BOND_LEVELS, GIFTS, WORKPLACE_BY_ID } from '../data/village';
-import { GRADE_LABEL, STAT_LABEL, STARTERS, YOKAI, YOKAI_BY_ID } from '../data/yokai';
+import { GRADE_LABEL, STAT_LABEL, YOKAI, YOKAI_BY_ID } from '../data/yokai';
 import type { GameState, StatKey } from '../core/types';
 import { Portrait } from './Portrait';
 import { act } from './store';
@@ -35,11 +34,12 @@ export const SPEC_COLOR: Record<StatKey, string> = { might: '#e2553f', wit: '#e0
 
 /** 아직 없는 식객이 언제 합류하는지 */
 export function joinCondition(id: string): string {
-  if (STARTERS.includes(id)) return '처음부터 함께';
+  const join = YOKAI_BY_ID[id]?.join ?? '';
   const rank = RANKS.findIndex((r) => r.recruit === id);
-  if (rank >= 0) return `칭호 〈${RANKS[rank].title}〉`;
-  const ch = CHAPTERS.find((c) => c.boss.yokai === id);
-  if (ch) return `${ch.title.split(' · ')[0]} 대장`;
+  if (rank >= 0) return `관직 〈${RANKS[rank].title}〉`;
+  if (join === 'recruit') return '모집';
+  const m = join.match(/^story:s(\d+)/);
+  if (m) return `${m[1]}부 이야기`;
   return '???';
 }
 

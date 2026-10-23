@@ -4,14 +4,13 @@
 // 화풍 기준 그림(art/style-anchor.webp)을 첨부해 모든 그림의 화풍을 맞춘다. 이미 있는 그림은 건너뛴다.
 
 import { execFileSync } from 'node:child_process';
-import { copyFileSync, existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
-import { ART_ASSETS, ASPECT, artPrompt, type ArtAsset } from '../src/data/art';
+import { ANCHOR, ART_ASSETS, ASPECT, artPrompt, type ArtAsset } from '../src/data/art';
 
 const CODEX = process.env.CODEX_BIN ?? 'codex';
 const ROOT = resolve(import.meta.dirname, '..');
-const ANCHOR = resolve(ROOT, 'art/style-anchor.webp');
 
 const args = process.argv.slice(2);
 const force = args.includes('--force');
@@ -36,37 +35,11 @@ function instructions(a: ArtAsset, withReference: boolean): string {
 
 const magick = (...a: string[]) => execFileSync('convert', a);
 
-/** 종류별로 크기를 줄이고 형식을 맞춘다. */
+/** 종류별로 크기를 줄이고 형식을 맞춘다(투명 배경은 그대로 둔다). */
 function finish(a: ArtAsset, png: string, out: string) {
   mkdirSync(dirname(out), { recursive: true });
-  switch (a.kind) {
-    case 'portrait':
-    case 'npc':
-      return magick(png, '-resize', '768x1152', '-quality', '82', out);
-    case 'map':
-      return magick(png, '-resize', '960x1440', '-quality', '82', out);
-    case 'scene':
-    case 'cg':
-      return magick(png, '-resize', '1200x800', '-quality', '80', out);
-    case 'square':
-      return magick(png, '-resize', '512x512', '-quality', '82', out);
-    case 'icon':
-      // 크림색 바탕을 네 귀퉁이에서부터 투명하게 지우고 여백을 잘라 낸다.
-      return magick(
-        png, '-alpha', 'set', '-fuzz', '12%', '-fill', 'none',
-        '-draw', 'color 0,0 floodfill', '-draw', 'color 1023,0 floodfill',
-        '-draw', 'color 0,1023 floodfill', '-draw', 'color 1023,1023 floodfill',
-        '-trim', '+repage', '-resize', '160x160', '-background', 'none', '-gravity', 'center', '-extent', '160x160',
-        '-quality', '90', out,
-      );
-    case 'appicon': {
-      const dir = dirname(out);
-      magick(png, '-resize', '512x512', out);
-      magick(png, '-resize', '192x192', join(dir, 'icon-192.png'));
-      magick(png, '-resize', '180x180', join(dir, 'apple-touch-icon.png'));
-      return magick(png, '-resize', '64x64', join(dir, 'favicon.png'));
-    }
-  }
+  const size = { full: '800x1200', card: '768x1152', cg: '1200x800', bg: '900x1350', banner: '1200x800', foe: '640x640' }[a.kind];
+  magick(png, '-resize', size, '-quality', '82', out);
 }
 
 function draw(a: ArtAsset, out: string, reference: string | null) {
@@ -88,22 +61,13 @@ function draw(a: ArtAsset, out: string, reference: string | null) {
 
 const targets = ART_ASSETS.filter((a) => only.length === 0 || only.includes(a.id));
 
-if (!existsSync(ANCHOR)) {
-  const first = ART_ASSETS[0];
-  const out = resolve(ROOT, 'public', first.out);
-  console.log(`화풍 기준 그림 생성: ${first.id}`);
-  draw(first, out, null);
-  mkdirSync(dirname(ANCHOR), { recursive: true });
-  copyFileSync(out, ANCHOR);
-}
-
 let failed = 0;
 for (const a of targets) {
   const out = resolve(ROOT, 'public', a.out);
   if (existsSync(out) && !force) continue;
   console.log(`그리는 중: ${a.id}`);
   try {
-    draw(a, out, ANCHOR);
+    draw(a, out, resolve(ROOT, ANCHOR[a.kind]));
   } catch (err) {
     failed++;
     console.error(`실패: ${a.id} — ${(err as Error).message.split('\n')[0]}`);

@@ -41,6 +41,7 @@ export function deserialize(text: string, now: number): GameState | null {
     combosSeen: data.combosSeen ?? [],
     guide: data.guide ?? 0,
     story: { done: data.story?.done ?? [], flags: data.story?.flags ?? [] },
+    favorite: data.favorite ?? base.favorite,
     totals: { ...base.totals, ...data.totals },
   } as GameState;
 }

@@ -1,35 +1,25 @@
 import { CHAPTERS } from './stages';
-import { WISHES } from './wishes';
 import { YOKAI } from './yokai';
-import type { YokaiDef } from '../core/types';
 
 // 게임에 쓰는 모든 그림의 목록과 프롬프트. `npm run art:generate`가 이 목록을 보고 없는 그림을 그린다.
-// 화풍이 흔들리지 않도록 BASE는 고정하고, 종류별 틀 + 대상 묘사만 바꾼다.
+// 화풍이 흔들리지 않도록 STYLE은 고정하고 종류별 틀 + 대상 묘사만 바꾼다.
 
-const BASE = [
-  'Bright, warm Korean folk-tale picture book illustration.',
-  'Soft watercolor and gouache on hanji paper texture, gentle brown ink outlines, cute rounded shapes.',
-  'Palette: warm cream, jade green, vermilion, saffron yellow and soft indigo, like Korean dancheong accents.',
-  'No text, no letters, no watermark, no frame, no border.',
-].join(' ');
+const STYLE =
+  'Premium Korean mobile game illustration in polished Korean webtoon / modern anime style: clean confident lineart, ' +
+  'soft cel shading with rich lighting, saturated colors with gold accents. Joseon-era fantasy kingdom. No text, no letters, no watermark, no frame.';
+
+const HEROINE =
+  'The character is clearly an adult woman, glamorous and alluring, wearing a fashionable fantasy fusion-hanbok in her own colors and motifs, ' +
+  'with a form-fitting silhouette that shows bare shoulders, collarbones and arms and a high side slit in the skirt showing her legs. ' +
+  'Tasteful and non-explicit: no nudity, no underwear visible.';
 
 const FRAME = {
-  portrait:
-    'Every character is an adult young woman in her twenties, drawn in a wholesome, modest, family-friendly way. ' +
-    'Upper-body character portrait, centered, three-quarter view, cheerful friendly expression. Plain warm cream background with no scenery.',
-  npc: 'Upper-body character portrait, centered, three-quarter view, friendly expressive face. Plain warm cream background with no scenery.',
-  scene:
-    'Wide landscape illustration with no people. Keep the main subject in the middle horizontal band so the image can be cropped into a wide banner.',
-  square: 'Square illustration, the subjects centered and filling most of the frame, plain warm cream background with no scenery.',
-  icon:
-    'A single game item icon, centered, filling about 80% of the frame, isolated on a plain flat solid cream background (#FBF5E6), no shadow, no other objects.',
-  map:
-    'Tall illustrated village map seen from a high three-quarter bird-eye view, no people, no text, no labels. Every area named below must be clearly separate and easy to recognize.',
-  cg:
-    'Wide story illustration (CG) of one heroine, an adult young woman in her twenties, drawn in a wholesome, modest, family-friendly way. ' +
-    'Seen from the point of view of the viewer who is with her (the viewer is not drawn). Warm, emotional, softly lit, with a scenic background.',
-  appicon:
-    'Mobile app icon artwork, square, bold simple composition that reads well at small sizes, full-bleed saffron-yellow background.',
+  full: `${HEROINE} Full body standing pose facing slightly to the side, confident and charming. Isolated on a fully transparent background (PNG with alpha), no scenery, no floor, no shadow.`,
+  card: `${HEROINE} Three-quarter body shot, dynamic pose, with a scenic background that suits her story.`,
+  cg: `${HEROINE} Wide romantic story illustration (event CG) of her alone, seen from the point of view of the viewer who is with her (the viewer is not drawn). Warm emotional lighting and a detailed background.`,
+  bg: 'Background art with no people. Tall vertical composition for a phone screen, the lower third fairly open.',
+  banner: 'Wide background art with no people, the main subject in the middle horizontal band so it can be cropped into a wide banner.',
+  foe: 'A group of adversaries for a battle screen, centered, plain dark background. Menacing but stylish, no gore.',
 } as const;
 
 export type ArtKind = keyof typeof FRAME;
@@ -43,117 +33,76 @@ export interface ArtAsset {
 }
 
 export const ASPECT: Record<ArtKind, 'portrait' | 'landscape' | 'square'> = {
-  portrait: 'portrait',
-  npc: 'portrait',
-  scene: 'landscape',
-  square: 'square',
+  full: 'portrait',
+  card: 'portrait',
   cg: 'landscape',
-  map: 'portrait',
-  icon: 'square',
-  appicon: 'square',
+  bg: 'portrait',
+  banner: 'landscape',
+  foe: 'square',
 };
 
-export const artPrompt = (a: ArtAsset) => `${BASE} ${FRAME[a.kind]}\nSubject: ${a.subject}.`;
+/** 화풍 기준 그림: 인물은 구미호 시안, 배경은 궁궐 시안 */
+export const ANCHOR: Record<ArtKind, string> = {
+  full: 'art/style-heroine.png',
+  card: 'art/style-heroine.png',
+  cg: 'art/style-heroine.png',
+  bg: 'art/style-scene.png',
+  banner: 'art/style-scene.png',
+  foe: 'art/style-scene.png',
+};
 
-// ── 식객 초상화 ──
-export const portraitPath = (id: string) => `portraits/${id}.webp`;
-export const portraitPrompt = (def: YokaiDef) => artPrompt(portraitAsset(def));
-const portraitAsset = (def: YokaiDef): ArtAsset => ({ id: def.id, kind: 'portrait', out: portraitPath(def.id), subject: def.artSubject });
+export const artPrompt = (a: ArtAsset) => `${STYLE} ${FRAME[a.kind]}\nSubject: ${a.subject}.`;
 
-// ── 그 밖의 그림 경로 ──
 export const ART = {
-  village: (tier: number) => `art/scene/village-${tier}.webp`,
-  map: 'art/scene/village-map.webp',
-  chapter: (id: string) => `art/scene/ch-${id}.webp`,
-  foe: (chapterId: string) => `art/foe/${chapterId}.webp`,
-  npc: (wishId: string) => `art/npc/${wishId}.webp`,
-  icon: (name: string) => `art/icon/${name}.webp`,
-  story: (id: string) => `art/scene/story-${id}.webp`,
+  card: (id: string) => `art/card/${id}.webp`,
+  full: (id: string) => `art/full/${id}.webp`,
   cg: (id: string, level: number) => `art/cg/${id}-${level}.webp`,
+  bg: (key: string) => `art/bg/${key}.webp`,
+  chapter: (id: string) => `art/banner/${id}.webp`,
+  foe: (id: string) => `art/foe/${id}.webp`,
 };
 
-/** 소원 손님 중 식객 초상화를 그대로 쓰는 경우 */
-export const WISH_USES_YOKAI: Record<string, string> = { trial: 'haechi' };
+/** 카드·목록에 쓰는 초상(카드 그림) */
+export const portraitPath = ART.card;
 
-const NPC: Record<string, string> = {
-  yeot: 'a cheerful old Korean taffy (yeot) peddler grandfather with a white beard, straw hat and white hanbok, holding big iron taffy scissors and a wooden tray of taffy',
-  heungbu: 'a cute small boy from a poor but kind family, patched hanbok, holding an empty rice bowl, hopeful big eyes',
-  hokbu: 'a jolly old man with a big round lump on his cheek, white topknot and white hanbok, singing happily with his mouth open',
-  axe: 'a sturdy friendly young woodcutter man with a headband, carrying an A-frame back rack of firewood, holding an iron axe, surprised expression',
-  kongjwi: 'a kind hardworking young girl with a long braid, simple cream hanbok, holding a clay water jar, worried but brave',
-  frog: 'a motherly green frog wearing a little apron and a headscarf, sighing with a gentle tired smile',
-  salt: 'a middle-aged salt peddler man in a straw rain cape, carrying sacks of salt on an A-frame back rack, glancing worriedly at the rain',
-  magpie: 'a cute black-and-white magpie bird with a tiny red ribbon, holding a few seeds in its beak',
-  patjuk: 'a feisty old grandmother with white hair in a bun, holding a big ladle over a pot of red bean porridge, determined smile',
-  brothers: 'two friendly farmer brothers carrying rice sheaves on their backs, laughing together',
-  rabbit: 'a clever white rabbit with a sly grin, wearing a tiny blue vest, ears perked up',
-  'sun-moon': 'a young brother and his little sister holding hands and looking up hopefully, simple hanbok, a thick rope hanging down from above',
-  fart: 'a cheerful, embarrassed young bride in a pink hanbok, holding a basket of round Korean pears, blushing comically',
-  millstone: 'a flustered merchant man hugging a magic hand millstone that keeps pouring out white salt',
-  spring: 'a baby with a tiny white beard and an old man topknot, wrapped in an oversized hanbok, comically grumpy',
-  gotgam: 'a big but timid tiger trembling and hiding its eyes at the sight of a string of dried persimmons',
-  ojak: 'a gentle young cowherd man with a straw hat, holding a cow rope, looking longingly up at the starry sky',
-  gamtu: 'a suspicious peddler man in a tall black horsehair hat, grinning slyly and holding out another black hat',
-  beads: 'a loyal dog and a cat sitting proudly together, the cat holding a glowing magic bead in its mouth',
-  millet: 'a cheerful young bachelor holding up a single grain of millet between his fingers, a cow behind him',
-  feather: 'a young celestial maiden in a pastel hanbok holding a shimmering feather robe, worried expression',
-  'dokkaebi-night': 'three rowdy, cheerful dokkaebi goblins with horns and knobby clubs, rolling up their sleeves for a ssireum wrestling match',
-  sanshin: 'a kindly old mountain spirit with a long white beard and a gnarled wooden staff, holding a ginseng root, a small tiger peeking beside him',
+const BG: Record<string, string> = {
+  palace: 'the grand courtyard of a fantasy Korean palace at dusk, dancheong-painted halls with sweeping tiled roofs, rows of glowing red lanterns, a purple-gold sunset sky, floating blue spirit lights, drifting petals',
+  village: 'Dalgol, a cozy mountain village with thatched and tiled roofs, persimmon trees and a big zelkova tree at the crossroads, warm afternoon light',
+  market: 'a lively market street in the capital with colorful stall awnings, hanging goods and lanterns, late afternoon',
+  tavern: 'the inside of an elegant tavern (jumak) at night, wooden beams, low tables, warm lamplight and paper screens',
+  field: 'terraced rice paddies and a granary under a wide blue sky, a stream and a footbridge',
+  night: 'a moonlit palace garden at night with a lotus pond, a stone bridge and fireflies',
+  forest: 'a deep misty pine forest with shafts of light and an old shrine',
+  hall: 'the interior of a county magistrate office (gwana) with a raised dais, folding screen and petition desk',
+  court: 'the royal throne hall with a sun-and-moon folding screen behind the empty throne, red pillars and gold light',
 };
 
-const CHAPTER_SCENE: Record<string, string> = {
-  market: 'a bustling Korean traditional market street with stalls of iron pots, hoes, rice cakes and taffy, a few iron pots scattered playfully, bright daytime',
-  'dark-pass': 'a winding mountain pass at dusk with old wooden totem poles (jangseung) and paper lanterns, soft indigo shadows creeping in, a little spooky but cute',
-  'night-market': 'a magical dokkaebi night market under a big full moon, floating blue dokkaebi fire lights, stalls selling hats and strange goods, purple night sky',
-  'lotus-pond': 'a misty lotus pond with big lily pads, a stone arch bridge and mist spilling over rice paddies, soft morning light',
-  'red-peak': 'a hot red mountain peak above dry cracked fields, heat shimmer in the air, warm orange sky',
+const BANNER: Record<string, string> = {
+  backhill: 'a mountain pass road through dense pine forest at dusk, a crude wooden toll barricade with torches and bandit flags',
+  ferry: 'a busy river ferry crossing at sunset with grain barges, warehouses and lanterns on the docks',
+  alley: 'narrow back alleys of the capital at night, rain-wet stone, lanterns and shadowy rooftops',
+  pleasure: 'a street of elegant gisaeng houses with red lanterns, silk curtains and music pavilions at night',
+  north: 'a bandit fortress on a snowy northern mountain pass under a stormy sky, black banners',
 };
 
-const CHAPTER_FOES: Record<string, string> = {
-  market: 'three tiny mischievous dokkaebi goblin kids with stubby horns, running off with rice cakes and taffy scissors, cheeky grins',
-  'dark-pass': 'three cute little blue will-o-the-wisp fire spirits with tiny faces, and a shy little shadow bat',
-  'night-market': 'two sly raccoon-dog peddlers and a small goblin swapping coins for leaves, mischievous grins',
-  'lotus-pond': 'a choir of three cheeky green frogs and a grumpy carp splashing water',
-  'red-peak': 'three little fire imps with flame-shaped hair playing with sparks, and a startled grasshopper',
-};
-
-const ICONS: Record<string, string> = {
-  coin: 'a single traditional Korean brass coin (yeopjeon) with a square hole in the middle, shiny gold',
-  grain: 'a single bundle of golden rice stalks tied with a red string',
-  stamina: 'a small red gourd bottle of energy tonic with a glowing golden heart on it',
-  fame: 'a vermilion plum-blossom shaped medallion with gold trim and a small red tassel',
-  club: 'a magical knobby wooden dokkaebi club (bangmangi) with a few golden sparkles',
-  'nav-home': 'a small cozy hanok house with a curved tiled roof',
-  'nav-yokai': 'a cute fox-eared folk mask with a small horn, like a yokai face',
-  'nav-stage': 'a bright blue dokkaebi fire wisp',
-  'nav-record': 'a rolled paper scroll tied with a red ribbon',
+const FOES: Record<string, string> = {
+  backhill: 'three rough mountain bandits with clubs and a horned goblin brute, torchlight',
+  ferry: 'smugglers in straw hats with hooks and ledgers, a scheming merchant boss in the back',
+  alley: 'masked private soldiers of a noble clan in black, a sly steward with a fan',
+  pleasure: 'beautiful but dangerous fox-masked spies in red with hidden blades',
+  north: 'snow-covered bandit warriors with black banners and a giant horned chieftain',
 };
 
 export const ART_ASSETS: ArtAsset[] = [
-  ...YOKAI.map(portraitAsset),
-  { id: 'village-1', kind: 'scene', out: ART.village(1), subject: 'a small humble mountain hamlet in old Korea with two thatched-roof houses, a stone wall, a persimmon tree, green hills, blue sky with fluffy clouds' },
-  { id: 'village-2', kind: 'scene', out: ART.village(2), subject: 'a lively old Korean village with several thatched and tiled-roof hanok houses, a small market street with colorful awnings, rice paddies and green hills under a blue sky' },
-  { id: 'village-3', kind: 'scene', out: ART.village(3), subject: 'a grand, prosperous fantasy Korean town where people and dokkaebi live together, many tiled-roof hanok houses painted in dancheong colors, festive paper lanterns, a big wooden gate, soft glowing dokkaebi fire lights floating in the daylight sky' },
-  {
-    id: 'village-map',
-    kind: 'map',
-    out: ART.map,
-    subject:
-      'a cozy old Korean mountain village called Dalgol. Upper left quarter: a lively market street with colorful stall awnings. ' +
-      'Upper right quarter: a tavern (jumak) with a big thatched roof, wooden benches and paper lanterns. ' +
-      'Lower left quarter: a woodcutting yard with stacked firewood logs and a chopping block. ' +
-      'Lower right quarter: green terraced rice paddies. Center: a dirt crossroads with a huge old zelkova tree. ' +
-      'Top edge: soft green mountains and sky. A small stream runs along the bottom edge',
-  },
-  ...Object.entries(ICONS).map(([id, subject]): ArtAsset => ({ id: `icon-${id}`, kind: 'icon', out: ART.icon(id), subject })),
-  { id: 'app-icon', kind: 'appicon', out: 'icon-512.png', subject: 'a magical knobby wooden dokkaebi club with gold brass coins bursting out of it' },
-  ...CHAPTERS.map((c): ArtAsset => ({ id: `ch-${c.id}`, kind: 'scene', out: ART.chapter(c.id), subject: CHAPTER_SCENE[c.id] })),
-  ...CHAPTERS.map((c): ArtAsset => ({ id: `foe-${c.id}`, kind: 'square', out: ART.foe(c.id), subject: CHAPTER_FOES[c.id] })),
-  ...WISHES.filter((w) => !WISH_USES_YOKAI[w.id]).map((w): ArtAsset => ({ id: `npc-${w.id}`, kind: 'npc', out: ART.npc(w.id), subject: NPC[w.id] })),
   ...YOKAI.flatMap((y): ArtAsset[] => [
-    { id: `cg-${y.id}-3`, kind: 'cg', out: ART.cg(y.id, 3), subject: `${y.artSubject}; she is on a sunny outing by a mountain stream near a Korean village, smiling shyly as she shares a secret` },
-    { id: `cg-${y.id}-5`, kind: 'cg', out: ART.cg(y.id, 5), subject: `${y.artSubject}; at a lantern festival night in a Korean village, paper lanterns and fireflies glowing, looking at the viewer with a warm happy smile` },
+    { id: `full-${y.id}`, kind: 'full', out: ART.full(y.id), subject: `${y.kind}. ${y.artSubject}` },
+    { id: `card-${y.id}`, kind: 'card', out: ART.card(y.id), subject: `${y.kind}. ${y.artSubject}` },
   ]),
-  { id: 'story-lost', kind: 'scene', out: ART.story('lost'), subject: 'a lost young woodcutter seen from behind, carrying an A-frame back rack of firewood, standing in a deep misty pine forest with warm rays of light' },
-  { id: 'story-club', kind: 'scene', out: ART.story('club'), subject: 'a magical knobby wooden dokkaebi club lying on mossy ground in a forest clearing, golden sparkles and a few brass coins popping out of it' },
+  ...Object.entries(BG).map(([key, subject]): ArtAsset => ({ id: `bg-${key}`, kind: 'bg', out: ART.bg(key), subject })),
+  ...CHAPTERS.map((c): ArtAsset => ({ id: `banner-${c.id}`, kind: 'banner', out: ART.chapter(c.id), subject: BANNER[c.id] })),
+  ...CHAPTERS.map((c): ArtAsset => ({ id: `foe-${c.id}`, kind: 'foe', out: ART.foe(c.id), subject: FOES[c.id] })),
+  ...YOKAI.flatMap((y): ArtAsset[] => [
+    { id: `cg-${y.id}-3`, kind: 'cg', out: ART.cg(y.id, 3), subject: `${y.kind}. ${y.artSubject}; she shares a secret with a shy smile during a stroll along a lantern-lit riverside market` },
+    { id: `cg-${y.id}-5`, kind: 'cg', out: ART.cg(y.id, 5), subject: `${y.kind}. ${y.artSubject}; on a palace balcony during a festival night with fireworks and lanterns, leaning close with a tender, happy smile` },
+  ]),
 ];

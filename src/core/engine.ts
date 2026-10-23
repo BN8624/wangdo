@@ -51,6 +51,7 @@ export function newGame(now: number, seed: number = now): GameState {
     introSeen: false,
     guide: 0,
     story: { done: [], flags: [] },
+    favorite: STARTERS[0] ?? '',
   };
 }
 
@@ -324,6 +325,11 @@ export function unseenScene(s: GameState, id: string): number {
   return y && bondLevel(y.bond) > y.seen ? y.seen + 1 : 0;
 }
 
+/** 궁궐 화면에 세울 대표 식객을 바꾼다. */
+export function setFavorite(s: GameState, id: string): GameState {
+  return s.yokai[id] ? { ...s, favorite: id } : s;
+}
+
 export function markSceneSeen(s: GameState, id: string, level: number): GameState {
   const next = clone(s);
   next.yokai[id].seen = Math.max(next.yokai[id].seen, level);
@@ -464,7 +470,7 @@ export function stageInfo(index: number): StageInfo | null {
   };
   const stats = [...STAT_KEYS];
   if (isBoss) {
-    const sp = YOKAI_BY_ID[chapter.boss.yokai].specialty;
+    const sp = chapter.boss.stat;
     stats.splice(stats.indexOf(sp), 1);
     stats.unshift(sp);
   } else {
@@ -568,10 +574,5 @@ export function fight(s: GameState, now: number, party: string[]): [GameState, F
   next.totals.wins += 1;
   const gift = GIFTS[Math.floor(roll(next) * GIFTS.length)].id;
   next.gifts[gift] = (next.gifts[gift] ?? 0) + 1;
-  let recruit: string | null = null;
-  if (info.isBoss && !next.yokai[info.chapter.boss.yokai]) {
-    next.yokai[info.chapter.boss.yokai] = freshYokai();
-    recruit = info.chapter.boss.yokai;
-  }
-  return [next, { ok: true, won, stage: info, rounds, fame: info.fame, coin: info.coin, gift, recruit }];
+  return [next, { ok: true, won, stage: info, rounds, fame: info.fame, coin: info.coin, gift, recruit: null }];
 }

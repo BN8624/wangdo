@@ -1,8 +1,7 @@
-import type { Episode } from '../core/types';
 import { sortEpisodes } from '../core/story';
+import type { Episode } from '../core/types';
+import { EPISODE_FILES } from './story-index';
 
-// content/story/<부>/<화>.json을 모두 읽는다. 새 화 파일을 넣기만 하면 게임에 붙는다.
-const files = import.meta.glob<Episode>('../../content/story/*/*.json', { eager: true, import: 'default' });
-
-export const EPISODES: Episode[] = sortEpisodes(Object.values(files));
+// 이야기 화 목록. content/story에 파일을 넣으면 story-index.ts가 자동으로 다시 만들어진다.
+export const EPISODES: Episode[] = sortEpisodes(EPISODE_FILES);
 export const EPISODE_BY_ID: Record<string, Episode> = Object.fromEntries(EPISODES.map((e) => [e.id, e]));

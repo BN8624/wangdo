@@ -12,7 +12,13 @@
     "simulate": "tsx scripts/simulate.ts",
     "art:prompts": "tsx scripts/art-prompts.ts",
     "art:generate": "tsx scripts/gen-art.ts",
-    "story:next": "tsx scripts/story-next.ts"
+    "story:next": "tsx scripts/story-next.ts",
+    "story:index": "tsx scripts/story-index.ts",
+    "predev": "tsx scripts/story-index.ts",
+    "prebuild": "tsx scripts/story-index.ts",
+    "pretest": "tsx scripts/story-index.ts",
+    "presimulate": "tsx scripts/story-index.ts",
+    "pretypecheck": "tsx scripts/story-index.ts"
   },
   "dependencies": {
     "react": "^18.3.1",

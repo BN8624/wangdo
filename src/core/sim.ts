@@ -36,6 +36,8 @@ import {
   yokaiStats,
 } from './engine';
 import { RANKS } from '../data/ranks';
+import { EPISODES } from '../data/story';
+import { completeEpisode, isUnlocked, nextEpisode } from './story';
 import { WORKPLACES } from '../data/village';
 import { WISH_BY_ID } from '../data/wishes';
 import { YOKAI_BY_ID } from '../data/yokai';
@@ -64,11 +66,11 @@ export interface SimReport {
   final: GameState;
 }
 
-/** 일터 배치: 칸마다 그 일터 능력치(적성 포함)가 가장 높은 식객을 넣는다. 주막을 먼저 채운다. */
+/** 일터 배치: 칸마다 그 일터 능력치(적성 포함)가 가장 높은 식객을 넣는다. 엽전 일터를 먼저 채운다. */
 function arrange(s: GameState, now: number): GameState {
   // 정산을 한 번 해 두고, 배치는 사본을 직접 고친다(시뮬레이션 속도를 위해).
   const next = settle(s, now);
-  const order: WorkplaceId[] = ['tavern', 'market', 'field', 'woodyard'];
+  const order: WorkplaceId[] = ['market', 'woodyard', 'tavern', 'field'];
   const work: Record<WorkplaceId, string[]> = { market: [], woodyard: [], field: [], tavern: [] };
   const free = new Set(Object.keys(next.yokai));
   const stats = Object.fromEntries([...free].map((id) => [id, statsOf(next, id)]));
@@ -113,6 +115,9 @@ function step(s: GameState, now: number): GameState {
   }
   const [afterWish, wishRes] = useWish(s, now);
   if (wishRes.ok) return afterWish;
+
+  const ep = nextEpisode(s, EPISODES);
+  if (ep && isUnlocked(s, ep)) return arrange(completeEpisode(s, ep, ep.scenes.map((sc) => (sc.choice ? 0 : null)))[0], now);
 
   const [afterPromote, promoteRes] = promote(s, now);
   if (promoteRes.ok) return arrange(afterPromote, now);
@@ -164,8 +169,9 @@ export function simulate(profile: PlayProfile, days: number, seed = 7): SimRepor
   const blockedBy = RANKS.map(() => ({ power: 0, fame: 0 }));
   const record = (now: number) => {
     const check = promoteCheck(s);
-    if (!check.ok && check.reason === 'need-power') blockedBy[s.rank].power++;
-    if (!check.ok && check.reason === 'need-fame') blockedBy[s.rank].fame++;
+    const b = (blockedBy[s.rank] ??= { power: 0, fame: 0 });
+    if (!check.ok && check.reason === 'need-power') b.power++;
+    if (!check.ok && check.reason === 'need-fame') b.fame++;
     const h = (now - start) / HOUR;
     for (let r = rankReachedAt.length; r <= s.rank; r++) rankReachedAt[r] = h;
     const bosses = Math.floor(s.stage.index / 8);

@@ -1,0 +1,226 @@
+[
+ {
+  "id": "baekseol",
+  "name": "백설",
+  "kind": "구미호",
+  "grade": 3,
+  "specialty": "charm",
+  "likes": [
+   "norigae",
+   "mirror"
+  ],
+  "join": "story:s1e01",
+  "intro": "웃음으로 문을 열고 침묵으로 값을 매기는 구미호. 빼앗긴 이름을 되찾으려 달골에 머문다.",
+  "personality": "독립을 갈망하며 버림받는 일을 두려워한다. 송씨 가문의 이름 계약에 묶였다는 비밀이 있다.",
+  "voice": "나른하고 정중한 존댓말로 상대를 나리라 부르며 뼈 있는 농담을 한다.",
+  "art": "Adult woman aged 29 in human appearance, long silver hair, amber eyes, fox ears and nine spectral tails, ornate ivory and crimson fusion hanbok, jade ornament and folding mirror, knowing smile."
+ },
+ {
+  "id": "muyeong",
+  "name": "무영",
+  "kind": "도깨비 무관",
+  "grade": 2,
+  "specialty": "might",
+  "likes": [
+   "makgeolli",
+   "tteok"
+  ],
+  "join": "story:s1e02",
+  "intro": "흑운채의 군율을 버리고 자기 맹세를 택한 무관. 지킬 사람은 스스로 정한다.",
+  "personality": "독자적인 군대를 꿈꾸지만 명령을 의심하는 데 서툴다. 흑운채 무기 반출을 묵인한 전력이 있다.",
+  "voice": "짧고 단단한 하오체를 쓰며 상대를 임자라 부른다.",
+  "art": "Adult woman aged 34, dark cropped hair, bronze eyes, small goblin horns, elaborate navy fusion hanbok over full coverage armor and trousers, iron mace, stern expression."
+ },
+ {
+  "id": "sodam",
+  "name": "소담",
+  "kind": "우렁각시",
+  "grade": 1,
+  "specialty": "politics",
+  "likes": [
+   "tteok",
+   "book"
+  ],
+  "join": "story:s1e03",
+  "intro": "집안 살림부터 고을 창고까지 숫자로 다스리는 식객. 밥을 빚으로 만드는 자를 싫어한다.",
+  "personality": "공동 곡간을 원하며 남의 몫까지 떠안는다. 송씨 창고 장부를 몰래 베껴 두었다.",
+  "voice": "차분한 존댓말을 쓰고 수량과 근거를 분명히 밝힌다.",
+  "art": "Adult woman aged 31, chestnut braided hair, green eyes, subtle spiral shell marking on hands, richly layered teal fusion hanbok, ledger and shell pendant, composed smile."
+ },
+ {
+  "id": "haeryun",
+  "name": "해륜",
+  "kind": "해태 혈통 판관",
+  "grade": 2,
+  "specialty": "politics",
+  "likes": [
+   "book",
+   "brush"
+  ],
+  "join": "recruit",
+  "intro": "불의는 냄새로 알지만 판결은 증거로 내린다. 자신의 옛 오판까지 법정으로 가져오려 한다.",
+  "personality": "독립된 재판소를 원하지만 타협에 서툴다. 누명을 쓴 이를 추방한 과거가 있다.",
+  "voice": "격식 있는 존댓말로 사실과 추정을 구별한다.",
+  "art": "Adult woman aged 38, black hair in a high bun, gold eyes, small haetae horn, ornate charcoal fusion hanbok with full coverage, seal case and brush, grave expression."
+ },
+ {
+  "id": "oryeon",
+  "name": "오련",
+  "kind": "삼족오 상단 행수",
+  "grade": 3,
+  "specialty": "wit",
+  "likes": [
+   "binyeo",
+   "book"
+  ],
+  "join": "story:s2",
+  "intro": "세 길의 소식을 한 장부에 모으는 행수. 누구의 깃발에도 매이지 않는 교역로를 찾는다.",
+  "personality": "자유 교역을 원하며 손해를 인정하지 못한다. 이웃 나라에 숨겨 둔 지분이 있다.",
+  "voice": "매끈한 존댓말로 거래 조건을 먼저 밝힌다.",
+  "art": "Adult woman aged 36, raven black hair, copper eyes, three legged raven shadow and feather accents, abacus and fan, calculating smile."
+ },
+ {
+  "id": "yeonhwa",
+  "name": "연화",
+  "kind": "이무기 무희",
+  "grade": 2,
+  "specialty": "charm",
+  "likes": [
+   "kkotsin",
+   "norigae"
+  ],
+  "join": "recruit",
+  "intro": "춤으로 물길의 기억을 읽는 이무기. 승천보다 제 무대를 먼저 고른다.",
+  "personality": "자신의 극장을 원하나 박수에 쉽게 흔들린다. 승천 시험을 스스로 거부했다.",
+  "voice": "여유로운 존댓말에 박자와 물결의 비유를 섞는다.",
+  "art": "Adult woman aged 30, flowing blue black hair, turquoise eyes, fine scales at temples, flowing violet fusion hanbok with opaque sleeves and full length skirt, ribbon fan, wistful smile."
+ },
+ {
+  "id": "bulsae",
+  "name": "불새",
+  "kind": "불을 다루는 강철이",
+  "grade": 2,
+  "specialty": "might",
+  "likes": [
+   "yeot",
+   "makgeolli"
+  ],
+  "join": "recruit",
+  "intro": "메마른 땅의 열을 거두어 화로에 가두는 장인. 부수던 힘으로 살림을 만들려 한다.",
+  "personality": "안전한 대장간을 원하며 분노 조절에 약하다. 옛 가뭄의 원인 중 하나였다.",
+  "voice": "담백한 반말을 쓰며 잘못은 짧게 인정한다.",
+  "art": "Adult woman aged 33, red braided hair, ember eyes, subtle steel colored scales and horns, ornate rust fusion hanbok with full coverage work apron, fire tongs, resolute expression."
+ },
+ {
+  "id": "cheongyeon",
+  "name": "청연",
+  "kind": "선녀",
+  "grade": 2,
+  "specialty": "wit",
+  "likes": [
+   "binyeo",
+   "mirror"
+  ],
+  "join": "recruit",
+  "intro": "하늘의 명령을 고쳐 쓰려 내려온 서기관. 돌아갈 길보다 남을 이유를 찾는다.",
+  "personality": "하늘 법의 개정을 원하지만 결정을 미룬다. 천문을 여는 문서를 훔쳐 왔다.",
+  "voice": "고른 존댓말로 조심스럽게 묻다가 결론에서는 단호해진다.",
+  "art": "Adult woman aged 32, pale lavender hair, silver eyes, floating cloud ribbons, elaborate sky blue fusion hanbok, scroll tube, thoughtful expression."
+ },
+ {
+  "id": "seorin",
+  "name": "서린",
+  "kind": "백호 혈통 호위무사",
+  "grade": 1,
+  "specialty": "might",
+  "likes": [
+   "gotgam",
+   "kkotsin"
+  ],
+  "join": "recruit",
+  "intro": "호위 계약에 주인의 책임도 적는 무사. 북방에 남겨 둔 동료를 데려오려 한다.",
+  "personality": "동료의 귀환을 원하지만 도움 청하기를 꺼린다. 북방 통행패를 위조했다.",
+  "voice": "절제된 존댓말로 거리와 위험을 구체적으로 말한다.",
+  "art": "Adult woman aged 28, white hair tied back, icy blue eyes, tiger ears and striped tail, sheathed saber, alert expression."
+ },
+ {
+  "id": "geumyeong",
+  "name": "금영",
+  "kind": "어둑시니 그림자 첩자",
+  "grade": 1,
+  "specialty": "wit",
+  "likes": [
+   "yeot",
+   "mirror"
+  ],
+  "join": "recruit",
+  "intro": "등불 바깥에서 권력의 말을 줍는다. 남의 비밀을 팔아 자기 신분을 사려 한다.",
+  "personality": "공적인 신분을 원하지만 신뢰를 거래로 여긴다. 왕실 밀서의 사본을 지녔다.",
+  "voice": "낮은 존댓말로 핵심만 말하고 질문으로 상대를 떠본다.",
+  "art": "Adult woman aged 29, ink black bob, violet eyes, shadow edges around silhouette, dark plum fusion hanbok, sealed letter and lantern, faint smile."
+ },
+ {
+  "id": "danhui",
+  "name": "단희",
+  "kind": "도깨비 감투 상인",
+  "grade": 1,
+  "specialty": "charm",
+  "likes": [
+   "norigae",
+   "yeot"
+  ],
+  "join": "recruit",
+  "intro": "보이지 않는 물건에도 영수증을 써 주는 상인. 언젠가 제 이름으로 큰 가게를 열겠다고 말한다.",
+  "personality": "정식 상점을 원하지만 허풍이 앞선다. 파는 감투 하나에 옛 주인의 기억이 남아 있다.",
+  "voice": "친근한 존댓말로 값을 흥정하며 자기 실수도 농담으로 받는다.",
+  "art": "Adult woman aged 35, curly brown hair, hazel eyes, small goblin horns, colorful, magical cap and merchant pouch, mischievous smile."
+ },
+ {
+  "id": "haejin",
+  "name": "해진",
+  "kind": "용왕의 딸",
+  "grade": 3,
+  "specialty": "politics",
+  "likes": [
+   "binyeo",
+   "gotgam"
+  ],
+  "join": "story:s3",
+  "intro": "물길 조약을 들고 육지에 온 용궁의 협상가. 아버지의 명령과 백성의 물 사이에서 선택한다.",
+  "personality": "물길 자치권을 원하지만 체면에 약하다. 용궁의 수문 봉쇄 명령을 숨겼다.",
+  "voice": "위엄 있는 존댓말로 상대의 지위보다 약속을 따진다.",
+  "art": "Adult woman aged 37, deep teal hair, pearl eyes, elegant dragon horns, ornate ocean green full coverage fusion hanbok, pearl seal and tide map, dignified expression."
+ },
+ {
+  "id": "wolha",
+  "name": "월하",
+  "kind": "저승차사",
+  "grade": 3,
+  "specialty": "might",
+  "likes": [
+   "makgeolli",
+   "brush"
+  ],
+  "join": "story:s3",
+  "intro": "잘못 적힌 죽음의 기한을 조사하는 차사. 산 자의 관청에도 해명을 요구한다.",
+  "personality": "명부의 진실을 원하지만 규정에 집착한다. 자신의 기한이 지워져 있다.",
+  "voice": "낮고 정중한 존댓말로 기한과 책임을 정확히 고지한다.",
+  "art": "Adult woman aged 40, long black hair, pale gray eyes, spectral mist at feet, registry and dark staff, impassive expression."
+ },
+ {
+  "id": "bari",
+  "name": "바리",
+  "kind": "바리데기 무녀",
+  "grade": 2,
+  "specialty": "wit",
+  "likes": [
+   "tteok",
+   "brush"
+  ],
+  "join": "recruit",
+  "intro": "버려진 혼의 청원을 받아 길을 여는 무녀. 구하는 일에도 대가와 한계가 있다고 말한다.",
+  "personality": "망자의 쉼터를 원하며 구하지 못한 이를 놓지 못한다. 방망이의 첫 맹세를 꿈에서 들었다.",
+  "voice": "따뜻하고 단정한 존댓말로 위로와 경고를 함께 건넨다.",
+  "art": "Adult woman aged 34, dark auburn hair, warm brown eyes, faint spirit lights, richly embroidered full coverage fusion hanbok, ritual bells and walking staff, compassionate but firm expression."
+ }
+]

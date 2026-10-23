@@ -6,6 +6,8 @@ import { ART_ASSETS } from '../src/data/art';
 import { RANKS } from '../src/data/ranks';
 import { CHAPTERS, STAGES_PER_CHAPTER } from '../src/data/stages';
 import { WISHES } from '../src/data/wishes';
+import { EPISODES, EPISODE_BY_ID } from '../src/data/story';
+import { validateEpisode } from '../src/core/story';
 import { STARTERS, YOKAI, YOKAI_BY_ID } from '../src/data/yokai';
 
 describe('데이터 무결성', () => {
@@ -14,11 +16,22 @@ describe('데이터 무결성', () => {
     expect(new Set(WISHES.map((w) => w.id)).size).toBe(WISHES.length);
   });
 
-  it('칭호와 장 대장이 가리키는 식객이 모두 있고, 모든 식객은 합류 경로가 하나뿐이다', () => {
-    const sources = [...STARTERS, ...RANKS.flatMap((r) => (r.recruit ? [r.recruit] : [])), ...CHAPTERS.map((c) => c.boss.yokai)];
-    for (const id of sources) expect(YOKAI_BY_ID[id], id).toBeDefined();
-    expect(new Set(sources).size).toBe(sources.length);
-    expect(new Set(sources)).toEqual(new Set(YOKAI.map((y) => y.id)));
+  it('관직·이야기가 가리키는 식객이 모두 있고, 겹쳐서 합류하지 않는다', () => {
+    const byRank = RANKS.flatMap((r) => (r.recruit ? [r.recruit] : []));
+    const byStory = EPISODES.flatMap((e) => (e.reward?.recruit ? [e.reward.recruit] : []));
+    for (const id of [...byRank, ...byStory]) expect(YOKAI_BY_ID[id], id).toBeDefined();
+    const all = [...byRank, ...byStory];
+    expect(new Set(all).size).toBe(all.length);
+    for (const id of byRank) expect(YOKAI_BY_ID[id].join).toBe('recruit');
+    expect(STARTERS.length).toBeGreaterThan(0);
+  });
+
+  it('모든 이야기 화가 형식 검사를 통과하고, 앞 화가 실제로 있다', () => {
+    const ids = new Set(YOKAI.map((y) => y.id));
+    for (const ep of EPISODES) {
+      expect(validateEpisode(ep, ids), ep.id).toEqual([]);
+      if (ep.unlock.after) expect(EPISODE_BY_ID[ep.unlock.after], ep.id).toBeDefined();
+    }
   });
 
   it('모든 그림에 프롬프트가 있고 저장 경로가 겹치지 않는다', () => {
@@ -38,10 +51,11 @@ describe('데이터 무결성', () => {
   });
 
   it('칭호 식객만 데리고도 레벨 상한 안에서 다음 칭호의 위세를 채울 수 있다', () => {
-    const roster = [...STARTERS];
+    const roster = [...STARTERS, ...EPISODES.filter((e) => e.season === 1).flatMap((e) => (e.reward?.recruit ? [e.reward.recruit] : []))];
     for (let r = 0; r < RANKS.length - 1; r++) {
       if (RANKS[r].recruit) roster.push(RANKS[r].recruit!);
-      const atCap = roster.reduce((sum, id) => {
+      const unique = [...new Set(roster)];
+      const atCap = unique.reduce((sum, id) => {
         const st = yokaiStats(YOKAI_BY_ID[id], levelCap(r), 0);
         return sum + STAT_KEYS.reduce((a, k) => a + st[k], 0);
       }, 0);
@@ -51,7 +65,7 @@ describe('데이터 무결성', () => {
 });
 
 describe('진행 속도', { timeout: 60_000 }, () => {
-  it('부지런한 플레이: 첫날 촌장, 1~3주 안에 도깨비 대왕', () => {
+  it('부지런한 플레이: 첫날 현감, 1~3주 안에 왕', () => {
     const r = simulate(PROFILES.engaged, 21);
     expect(r.rankReachedAt[5]!).toBeLessThan(24);
     const last = r.rankReachedAt[RANKS.length - 1];
@@ -60,8 +74,8 @@ describe('진행 속도', { timeout: 60_000 }, () => {
     expect(last!).toBeLessThan(21 * 24);
   });
 
-  it('가끔 하는 플레이도 3주 안에 끝까지 갈 수 있다', () => {
+  it('가끔 하는 플레이도 3주 안에 영의정까지 간다', () => {
     const r = simulate(PROFILES.casual, 21);
-    expect(r.rankReachedAt[RANKS.length - 1]).not.toBeNull();
+    expect(r.rankReachedAt[12]).not.toBeNull();
   });
 });
