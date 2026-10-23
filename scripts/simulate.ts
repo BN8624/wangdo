@@ -1,7 +1,7 @@
 // npm run simulate — 플레이 성향별로 칭호·소동 진행 시점을 표로 출력한다.
 import { RANKS } from '../src/data/ranks';
 import { CHAPTERS } from '../src/data/stages';
-import { ownedYokai, power, ratesPerMinute } from '../src/core/engine';
+import { bondLevel, ownedYokai, power, ratesPerMinute } from '../src/core/engine';
 import { fmt } from '../src/core/format';
 import { PROFILES, simulate } from '../src/core/sim';
 
@@ -29,8 +29,8 @@ for (const profile of Object.values(PROFILES)) {
   const rates = ratesPerMinute(s);
   console.log(
     `\n${DAYS}일 뒤: 칭호 ${s.rank}, 위세 ${fmt(power(s))}, 소동 ${s.stage.index}, ` +
-      `분당 엽전 ${fmt(rates.coin)} 곡식 ${fmt(rates.grain)} 일손 ${fmt(rates.hands)}, ` +
-      `남은 엽전 ${fmt(s.res.coin)} 곡식 ${fmt(s.res.grain)} 일손 ${fmt(s.res.hands)} 명성 ${fmt(s.res.fame)}`,
+      `분당 엽전 ${fmt(rates.coin)} 곡식 ${fmt(rates.grain)} 명성 ${rates.fame.toFixed(2)}, ` +
+      `남은 엽전 ${fmt(s.res.coin)} 곡식 ${fmt(s.res.grain)} 명성 ${fmt(s.res.fame)} · 승 ${s.totals.wins} 패 ${s.totals.losses}`,
   );
-  console.log('식객: ' + ownedYokai(s).map((y) => `${y.def.name} Lv${y.level}`).join(', '));
+  console.log('식객: ' + ownedYokai(s).map((y) => `${y.def.name} Lv${y.state.level}·인연${bondLevel(y.state.bond)}`).join(', '));
 }

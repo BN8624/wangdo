@@ -3,13 +3,15 @@ import { ART } from '../data/art';
 import type { ResourceKey } from '../core/types';
 import { Art } from './Portrait';
 
-export function ResIcon({ kind, size = 20 }: { kind: ResourceKey; size?: number }) {
+export type IconKind = ResourceKey | 'stamina';
+
+export function ResIcon({ kind, size = 20 }: { kind: IconKind; size?: number }) {
   return (
     <Art className="res-icon" src={ART.icon(kind)} fallback={<ResIconSvg kind={kind} size={size} />} />
   );
 }
 
-function ResIconSvg({ kind, size }: { kind: ResourceKey; size: number }) {
+function ResIconSvg({ kind, size }: { kind: IconKind; size: number }) {
   const p = { width: size, height: size, viewBox: '0 0 20 20', 'aria-hidden': true };
   switch (kind) {
     case 'coin':
@@ -32,13 +34,10 @@ function ResIconSvg({ kind, size }: { kind: ResourceKey; size: number }) {
           </g>
         </svg>
       );
-    case 'hands':
+    case 'stamina':
       return (
         <svg {...p}>
-          <circle cx="7" cy="6" r="3" fill="#f0c49a" stroke="#3d5a9e" strokeWidth="1.2" />
-          <circle cx="14" cy="7" r="2.6" fill="#f0c49a" stroke="#3d5a9e" strokeWidth="1.2" />
-          <path d="M1.5 18 Q2 10.5 7 10.5 Q12 10.5 12.5 18Z" fill="#3d5a9e" />
-          <path d="M10 18 Q10.5 11.5 14 11.5 Q18 11.5 18.5 18Z" fill="#6f8cc8" />
+          <path d="M10 17.5 C3 12.5 1.5 9 3.5 5.8 C5.5 3 8.6 3.6 10 6.2 C11.4 3.6 14.5 3 16.5 5.8 C18.5 9 17 12.5 10 17.5Z" fill="#e2553f" stroke="#a83a28" strokeWidth="1" />
         </svg>
       );
     case 'fame':
@@ -55,7 +54,7 @@ function ResIconSvg({ kind, size }: { kind: ResourceKey; size: number }) {
   }
 }
 
-export const RES_LABEL: Record<ResourceKey, string> = { coin: '엽전', grain: '곡식', hands: '일손', fame: '명성' };
+export const RES_LABEL: Record<IconKind, string> = { coin: '엽전', grain: '곡식', fame: '명성', stamina: '기력' };
 
 const NAV_PATHS = {
   home: (

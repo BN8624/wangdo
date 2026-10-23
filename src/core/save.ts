@@ -1,7 +1,9 @@
 // 저장·불러오기. 저장 형식이 바뀌면 version을 올리고 migrate()에 변환을 추가한다.
 
 import { newGame } from './engine';
-import type { GameState } from './types';
+import type { GameState, YokaiState } from './types';
+
+const FRESH: YokaiState = { level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0 };
 
 export const SAVE_KEY = 'wangdo.save';
 
@@ -19,7 +21,7 @@ export function deserialize(text: string, now: number): GameState | null {
   }
   if (!raw || typeof raw !== 'object') return null;
   const data = raw as Partial<GameState>;
-  if (data.version !== 1) return null;
+  if (data.version !== 2) return null;
   if (typeof data.rank !== 'number' || !data.res || !data.yokai) return null;
 
   // 나중에 필드가 늘어나도 예전 저장이 깨지지 않도록 기본값 위에 덮어쓴다.
@@ -28,9 +30,15 @@ export function deserialize(text: string, now: number): GameState | null {
     ...base,
     ...data,
     res: { ...base.res, ...data.res },
-    store: { ...base.store, ...data.store },
+    stamina: { ...base.stamina, ...data.stamina },
+    work: { ...base.work, ...data.work },
+    gifts: { ...data.gifts },
+    yokai: Object.fromEntries(
+      Object.entries(data.yokai).map(([id, y]) => [id, { ...FRESH, ...(y as Partial<YokaiState>) }]),
+    ),
     wish: { ...base.wish, ...data.wish },
     stage: { ...base.stage, ...data.stage },
+    combosSeen: data.combosSeen ?? [],
     totals: { ...base.totals, ...data.totals },
   } as GameState;
 }

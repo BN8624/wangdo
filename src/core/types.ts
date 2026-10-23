@@ -3,10 +3,7 @@
 export type StatKey = 'might' | 'wit' | 'craft' | 'charm';
 export type Stats = Record<StatKey, number>;
 
-/** 창고에 쌓였다가 '거두기'로 들어오는 자원 */
-export type StoredKey = 'coin' | 'grain' | 'hands';
-/** 지갑에 들어 있는 모든 자원 */
-export type ResourceKey = StoredKey | 'fame';
+export type ResourceKey = 'coin' | 'grain' | 'fame';
 export type Resources = Record<ResourceKey, number>;
 
 export type Grade = 1 | 2 | 3;
@@ -22,10 +19,38 @@ export interface YokaiDef {
   /** 레벨 1당 오르는 능력치 */
   growth: Stats;
   intro: string;
+  /** 좋아하는 선물 id 두 개 */
+  likes: [string, string];
   /** AI 그림 프롬프트에 들어갈 캐릭터 묘사(영문) */
   artSubject: string;
-  /** 초상화가 없을 때 쓰는 대표 색 */
+  /** 그림이 없을 때 쓰는 대표 색 */
   color: string;
+}
+
+export type WorkplaceId = 'market' | 'woodyard' | 'field' | 'tavern';
+
+export interface WorkplaceDef {
+  id: WorkplaceId;
+  name: string;
+  stat: StatKey;
+  produces: ResourceKey;
+  /** 능력치 1당 분당 생산량 */
+  perStat: number;
+  flavor: string;
+}
+
+export interface ComboDef {
+  id: string;
+  pair: [string, string];
+  title: string;
+  text: string;
+}
+
+export interface GiftDef {
+  id: string;
+  name: string;
+  /** 칭호 0 기준 값(엽전). 칭호가 오르면 비싸진다 */
+  cost: number;
 }
 
 export interface RankDef {
@@ -40,9 +65,11 @@ export interface RankDef {
 }
 
 export type WishReward =
-  | { kind: StoredKey; minutes: number }
+  | { kind: 'coin' | 'grain'; minutes: number }
   /** 다음 승급 명성의 일정 비율(%) */
-  | { kind: 'fame'; pct: number };
+  | { kind: 'fame'; pct: number }
+  | { kind: 'stamina'; amount: number }
+  | { kind: 'gift' };
 
 export interface WishChoice {
   label: string;
@@ -73,9 +100,24 @@ export interface StageInfo {
   number: number;
   isBoss: boolean;
   foe: string;
-  hp: number;
+  /** 겨루기 세 판: 어떤 능력치로, 상대 수치는 얼마인지 */
+  rounds: { stat: StatKey; value: number }[];
   fame: number;
   coin: number;
+}
+
+export interface YokaiState {
+  level: number;
+  /** 호감도 점수 */
+  bond: number;
+  /** 마지막으로 대화한 시각 */
+  talkAt: number;
+  /** 마지막 나들이 시각 */
+  outingAt: number;
+  /** 지금까지 본 이야기 장면 단계 */
+  seen: number;
+  /** 지금까지 나눈 대화 수(다음 대화 주제를 고르는 데 쓴다) */
+  talks: number;
 }
 
 export interface PendingWish {
@@ -83,18 +125,21 @@ export interface PendingWish {
 }
 
 export interface GameState {
-  version: 1;
+  version: 2;
   createdAt: number;
-  /** 창고·뚝딱 충전이 마지막으로 정산된 시각 */
+  /** 생산·기력·뚝딱이 마지막으로 정산된 시각 */
   lastSettled: number;
   rank: number;
   res: Resources;
-  store: Record<StoredKey, number>;
-  /** 보유한 식객과 레벨 */
-  yokai: Record<string, { level: number }>;
+  stamina: { value: number; lastRegen: number };
+  yokai: Record<string, YokaiState>;
+  work: Record<WorkplaceId, string[]>;
+  gifts: Record<string, number>;
   wish: { charges: number; lastRegen: number; pending: PendingWish | null; recent: string[] };
-  stage: { index: number; damage: number };
+  stage: { index: number };
+  /** 처음 본 짝꿍 이야기 */
+  combosSeen: string[];
   rng: number;
-  totals: { wishes: number; feasts: number; stages: number; collected: number };
+  totals: { wishes: number; feasts: number; wins: number; losses: number; talks: number; gifts: number; earned: number };
   introSeen: boolean;
 }

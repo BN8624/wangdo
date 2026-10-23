@@ -1,40 +1,57 @@
-// 밸런스 수치 모음. 숫자를 바꾼 뒤에는 `npm run simulate`로 진행 속도를 꼭 확인한다.
+// 밸런스 수치 모음. 숫자를 바꾼 뒤에는 `npm run simulate`와 `npm test`로 진행 속도를 꼭 확인한다.
 export const BALANCE = {
-  /** 창고가 가득 차기까지 걸리는 시간(분) */
-  storageMinutes: 8 * 60,
-  /** 능력치 1당 분당 생산량 */
-  perStatPerMinute: { coin: 1, grain: 0.6, hands: 0.3 },
+  /** 자리를 비운 동안 쌓이는 최대 시간(분) */
+  offlineCapMinutes: 12 * 60,
   /** 칭호 하나당 생산량 증가율 */
   rankProdBonus: 0.2,
+  /** 적성(특기)이 일터와 맞으면 곱하는 값 */
+  aptitudeMult: 1.5,
+  /** 짝꿍이 같은 일터에 있으면 그 일터 생산량 증가율 */
+  comboBonus: 0.2,
+  /** 일터 칸이 늘어나는 칭호 */
+  slotRanks: [2, 6, 10],
 
-  start: { coin: 200, grain: 100, hands: 150, fame: 0 },
+  start: { coin: 300, grain: 120, fame: 0 },
 
   levelCapBase: 10,
   levelCapPerRank: 10,
-  levelCostBase: 6,
-  levelCostExp: 2.1,
+  levelCostBase: 5,
+  levelCostExp: 2,
   gradeCostMult: { 1: 1, 2: 1.5, 3: 2.2 } as Record<number, number>,
 
+  /** 호감도 단계당 능력치 보너스 */
+  bondStatBonus: 0.08,
+  talkCooldownMinutes: 3 * 60,
+  /** 대화 대답의 delta(1·4·8)에 곱하는 값 */
+  talkMult: 2,
+  giftBond: { liked: 30, normal: 12 },
+  outingBond: 45,
+  outingCooldownMinutes: 20 * 60,
+  /** 나들이 비용 = 칭호 0 기준 엽전 × 1.5^칭호 */
+  outingCost: 150,
+  /** 선물·나들이 값이 칭호마다 오르는 비율 */
+  priceGrowth: 1.5,
+  feastBond: 2,
+
   wishBaseCharges: 3,
-  /** 칭호 몇 개마다 뚝딱 최대 횟수 +1 */
   wishChargeEveryRanks: 4,
   wishRegenMinutes: 60,
-  /** 소원 보상이 너무 작아지지 않도록 하는 최소량 */
   wishMinReward: 20,
-  /** 소원 보상 전체 배율(분·% 모두에 곱한다) */
   wishRewardScale: 0.5,
 
   feastGrainBase: 80,
   feastGrainGrowth: 1.9,
-  /** 잔치 명성 = 매력 합 × 이 값 × (1 + 칭호 × feastFameRankBonus) */
-  feastFamePerCharm: 0.25,
+  feastFamePerCharm: 0.15,
   feastFameRankBonus: 0.05,
 
-  stageHpBase: 250,
-  stageHpGrowth: 1.36,
-  bossHpMult: 2.2,
-  /** 일손 한 명이 해결하는 소동 = 힘 합 ÷ 이 값 */
-  forcePerHand: 100,
+  staminaMax: 6,
+  staminaRegenMinutes: 30,
+  /** 소동 상대 수치 = foeBase × foeGrowth^순번 */
+  foeBase: 8,
+  foeGrowth: 1.09,
+  bossMult: 1.3,
+  /** 승률 = r^k / (r^k + 1), r = 내 능력치 ÷ 상대 수치 */
+  winSharpness: 4,
   stageFameBase: 5,
   stageFameGrowth: 1.2,
   stageCoinBase: 60,

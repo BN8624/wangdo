@@ -1,8 +1,8 @@
 // 게임 상태 저장소. 화면은 useGame()으로 {state, now}를 읽고, act()로 엔진 함수를 실행한다.
 import { useSyncExternalStore } from 'react';
-import { newGame, settle, MINUTE, STORED_KEYS } from '../core/engine';
+import { newGame, settle, MINUTE, RESOURCE_KEYS } from '../core/engine';
 import { SAVE_KEY, deserialize, serialize } from '../core/save';
-import type { GameState, StoredKey } from '../core/types';
+import type { GameState, ResourceKey } from '../core/types';
 
 export interface Snapshot {
   state: GameState;
@@ -11,7 +11,7 @@ export interface Snapshot {
 
 export interface OfflineSummary {
   minutes: number;
-  gained: Record<StoredKey, number>;
+  gained: Record<ResourceKey, number>;
 }
 
 const listeners = new Set<() => void>();
@@ -45,8 +45,8 @@ export function initStore() {
   const state = saved ?? newGame(now, Math.floor(Math.random() * 2 ** 31));
   if (saved && now - saved.lastSettled > 5 * MINUTE) {
     const after = settle(saved, now);
-    const gained = { coin: 0, grain: 0, hands: 0 };
-    for (const k of STORED_KEYS) gained[k] = Math.floor(after.store[k] - saved.store[k]);
+    const gained = { coin: 0, grain: 0, fame: 0 };
+    for (const k of RESOURCE_KEYS) gained[k] = Math.floor(after.res[k] - saved.res[k]);
     offline = { minutes: (now - saved.lastSettled) / MINUTE, gained };
   }
   snapshot = { state, now };

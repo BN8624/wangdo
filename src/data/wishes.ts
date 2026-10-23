@@ -1,7 +1,8 @@
 import type { WishDef } from '../core/types';
 
 // 방망이를 '뚝딱' 두드리면 누군가 소원을 들고 찾아온다. 두 선택지 모두 보상이 있고,
-// 무엇을 받을지만 다르다. minutes = 지금 생산량 기준 몇 분어치, pct = 다음 승급 명성의 %.
+// 무엇을 받을지만 다르다. minutes = 지금 생산량 기준 몇 분어치, pct = 다음 승급 명성의 %,
+// stamina = 기력, gift = 무작위 선물 하나.
 export const WISHES: WishDef[] = [
   {
     id: 'yeot',
@@ -40,7 +41,7 @@ export const WISHES: WishDef[] = [
     minRank: 0,
     choices: [
       { label: '"제 건 쇠도끼예요" 정직하게', reward: { kind: 'fame', pct: 7 } },
-      { label: '새 도끼를 뚝딱 만들어 준다', reward: { kind: 'hands', minutes: 40 } },
+      { label: '새 도끼를 뚝딱 만들어 준다', reward: { kind: 'stamina', amount: 1 } },
     ],
   },
   {
@@ -50,7 +51,7 @@ export const WISHES: WishDef[] = [
     minRank: 0,
     choices: [
       { label: '두꺼비를 불러 구멍을 막는다', reward: { kind: 'fame', pct: 6 } },
-      { label: '물동이 든 일꾼들을 뚝딱', reward: { kind: 'hands', minutes: 35 } },
+      { label: '물동이 든 일꾼들을 뚝딱', reward: { kind: 'stamina', amount: 1 } },
     ],
   },
   {
@@ -70,7 +71,7 @@ export const WISHES: WishDef[] = [
     minRank: 1,
     choices: [
       { label: '튼튼한 처마를 뚝딱', reward: { kind: 'coin', minutes: 50 } },
-      { label: '마을 사람들과 소금을 옮긴다', reward: { kind: 'hands', minutes: 45 } },
+      { label: '마을 사람들과 소금을 옮긴다', reward: { kind: 'stamina', amount: 1 } },
     ],
   },
   {
@@ -89,7 +90,7 @@ export const WISHES: WishDef[] = [
     text: '호랑이가 팥죽 먹으러 온다는구먼. 같이 막아 주겠나?',
     minRank: 1,
     choices: [
-      { label: '알밤·자라·멍석을 모은다', reward: { kind: 'hands', minutes: 50 } },
+      { label: '알밤·자라·멍석을 모은다', reward: { kind: 'stamina', amount: 1 } },
       { label: '팥죽을 넉넉히 끓여 호랑이도 먹인다', reward: { kind: 'fame', pct: 7 } },
     ],
   },
@@ -120,7 +121,7 @@ export const WISHES: WishDef[] = [
     minRank: 2,
     choices: [
       { label: '새 동아줄을 뚝딱', reward: { kind: 'fame', pct: 8 } },
-      { label: '마을 장정들이 사다리를 만든다', reward: { kind: 'hands', minutes: 55 } },
+      { label: '마을 장정들이 사다리를 만든다', reward: { kind: 'stamina', amount: 1 } },
     ],
   },
   {
@@ -150,7 +151,7 @@ export const WISHES: WishDef[] = [
     minRank: 4,
     choices: [
       { label: '할머니께 업혀 보낸다', reward: { kind: 'fame', pct: 7 } },
-      { label: '샘물을 지키는 일꾼을 둔다', reward: { kind: 'hands', minutes: 60 } },
+      { label: '샘물을 지키는 일꾼을 둔다', reward: { kind: 'stamina', amount: 1 } },
     ],
   },
   {
@@ -160,7 +161,7 @@ export const WISHES: WishDef[] = [
     minRank: 4,
     choices: [
       { label: '곶감을 나눠 먹으며 안심시킨다', reward: { kind: 'fame', pct: 8 } },
-      { label: '범에게 장작 패기를 맡긴다', reward: { kind: 'hands', minutes: 65 } },
+      { label: '범에게 장작 패기를 맡긴다', reward: { kind: 'stamina', amount: 1 } },
     ],
   },
   {
@@ -170,7 +171,7 @@ export const WISHES: WishDef[] = [
     minRank: 5,
     choices: [
       { label: '까치·까마귀를 불러 다리를 놓는다', reward: { kind: 'fame', pct: 9 } },
-      { label: '튼튼한 나무다리를 뚝딱', reward: { kind: 'hands', minutes: 70 } },
+      { label: '튼튼한 나무다리를 뚝딱', reward: { kind: 'stamina', amount: 1 } },
     ],
   },
   {
@@ -179,7 +180,7 @@ export const WISHES: WishDef[] = [
     text: '쓰면 안 보이는 감투, 단돈 엽전 서 푼! 안 사면 손해요!',
     minRank: 5,
     choices: [
-      { label: '흥정해서 되판다', reward: { kind: 'coin', minutes: 80 } },
+      { label: '감투 하나를 선물용으로 산다', reward: { kind: 'gift' } },
       { label: '감투로 몰래 선행을 한다', reward: { kind: 'fame', pct: 8 } },
     ],
   },
@@ -189,7 +190,7 @@ export const WISHES: WishDef[] = [
     text: '할아버지의 요술 구슬을 찾아왔어요! 상 주세요!',
     minRank: 6,
     choices: [
-      { label: '구슬로 곳간을 채운다', reward: { kind: 'grain', minutes: 80 } },
+      { label: '구슬을 식객 선물로 삼는다', reward: { kind: 'gift' } },
       { label: '둘에게 잔칫상을 차려 준다', reward: { kind: 'fame', pct: 9 } },
     ],
   },
@@ -229,7 +230,7 @@ export const WISHES: WishDef[] = [
     text: '오늘 밤 씨름판을 벌이려는데 판돈이 모자라오!',
     minRank: 10,
     choices: [
-      { label: '판돈을 뚝딱 대 준다', reward: { kind: 'hands', minutes: 90 } },
+      { label: '판돈을 뚝딱 대 준다', reward: { kind: 'stamina', amount: 1 } },
       { label: '직접 씨름판에 나간다', reward: { kind: 'fame', pct: 10 } },
     ],
   },

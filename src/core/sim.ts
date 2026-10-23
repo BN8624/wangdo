@@ -3,28 +3,43 @@
 
 import {
   MINUTE,
-  challengeStage,
+  settle,
+  bestParty,
   chooseWish,
-  collect,
   feast,
   feastCost,
-  handsNeeded,
+  fight,
+  giftPrice,
+  giveGift,
+  hasAptitude,
   levelCap,
   levelCost,
   levelUp,
-  nextRank,
   newGame,
+  nextRank,
+  outing,
+  outingPrice,
   ownedYokai,
+  partyChance,
+  partyChances,
   power,
   promote,
   promoteCheck,
+  slotsPerWorkplace,
+  stageInfo,
+  statsOf,
+  talk,
+  talkReadyIn,
+  outingReadyIn,
   useWish,
+  STAT_KEYS,
   yokaiStats,
 } from './engine';
 import { RANKS } from '../data/ranks';
+import { WORKPLACES } from '../data/village';
 import { WISH_BY_ID } from '../data/wishes';
-import { STAT_KEYS } from './engine';
-import type { GameState } from './types';
+import { YOKAI_BY_ID } from '../data/yokai';
+import type { GameState, WorkplaceId } from './types';
 
 const HOUR = 60 * MINUTE;
 
@@ -43,24 +58,48 @@ export const PROFILES: Record<string, PlayProfile> = {
 
 export interface SimReport {
   profile: string;
-  /** rankReachedAt[r] = r번째 칭호에 오른 시각(시간 단위, 시작 기준) */
   rankReachedAt: (number | null)[];
-  /** 각 장의 대장을 달랜 시각(시간) */
   bossClearedAt: (number | null)[];
-  /** blockedBy[r] = 칭호 r에서 승급을 못 한 접속 횟수(위세 부족 / 명성 부족) */
   blockedBy: { power: number; fame: number }[];
   final: GameState;
 }
 
+/** 일터 배치: 칸마다 그 일터 능력치(적성 포함)가 가장 높은 식객을 넣는다. 주막을 먼저 채운다. */
+function arrange(s: GameState, now: number): GameState {
+  // 정산을 한 번 해 두고, 배치는 사본을 직접 고친다(시뮬레이션 속도를 위해).
+  const next = settle(s, now);
+  const order: WorkplaceId[] = ['tavern', 'market', 'field', 'woodyard'];
+  const work: Record<WorkplaceId, string[]> = { market: [], woodyard: [], field: [], tavern: [] };
+  const free = new Set(Object.keys(next.yokai));
+  const stats = Object.fromEntries([...free].map((id) => [id, statsOf(next, id)]));
+  for (let slot = 0; slot < slotsPerWorkplace(next.rank); slot++) {
+    for (const wpId of order) {
+      const wp = WORKPLACES.find((w) => w.id === wpId)!;
+      let best: string | null = null;
+      let bestV = -1;
+      for (const id of free) {
+        const v = stats[id][wp.stat] * (hasAptitude(YOKAI_BY_ID[id], wp) ? 1.5 : 1);
+        if (v > bestV) [best, bestV] = [id, v];
+      }
+      if (best) {
+        work[wpId].push(best);
+        free.delete(best);
+      }
+    }
+  }
+  next.work = work;
+  return next;
+}
+
 /** 한 번 접속했을 때 할 수 있는 걸 다 한다. */
 export function playSession(s: GameState, now: number): GameState {
-  [s] = collect(s, now);
+  for (const id of Object.keys(s.yokai)) if (talkReadyIn(s, id, now) === 0) s = talk(s, now, id, 8)[0];
   for (let guard = 0; guard < 10_000; guard++) {
     const before = s;
     s = step(s, now);
     if (s === before) break;
   }
-  return s;
+  return arrange(s, now);
 }
 
 function step(s: GameState, now: number): GameState {
@@ -76,24 +115,39 @@ function step(s: GameState, now: number): GameState {
   if (wishRes.ok) return afterWish;
 
   const [afterPromote, promoteRes] = promote(s, now);
-  if (promoteRes.ok) return afterPromote;
+  if (promoteRes.ok) return arrange(afterPromote, now);
 
-  const need = handsNeeded(s);
-  if (need !== null && s.res.hands >= Math.min(need, 1)) {
-    const [afterStage, stageRes] = challengeStage(s, now);
-    if (stageRes.ok) return afterStage;
+  const info = stageInfo(s.stage.index);
+  if (info && s.stamina.value >= 1) {
+    const party = bestParty(s, info);
+    if (partyChance(partyChances(s, info, party)) >= 0.45) {
+      const [after, r] = fight(s, now, party);
+      if (r.ok) return arrange(after, now);
+    }
   }
 
   if (s.res.grain >= feastCost(s.rank)) return feast(s, now)[0];
 
+  // 선물·나들이: 엽전이 넉넉할 때만(레벨업 비용의 몇 배)
+  const cheapestLevel = Math.min(...ownedYokai(s).filter((o) => o.state.level < levelCap(s.rank)).map((o) => levelCost(o.def, o.state.level)), Infinity);
+  for (const { def } of ownedYokai(s)) {
+    if (outingReadyIn(s, def.id, now) === 0 && s.res.coin > outingPrice(s.rank) * 10 && s.res.coin > cheapestLevel * 6) {
+      return outing(s, now, def.id)[0];
+    }
+  }
+  for (const { def } of ownedYokai(s)) {
+    const g = def.likes[0];
+    if (s.res.coin > giftPrice(g, s.rank) * 20 && s.res.coin > cheapestLevel * 10) return giveGift(s, now, def.id, g)[0];
+  }
+
   // 엽전은 '위세 1당 비용'이 가장 싼 식객부터 올린다.
   let best: { id: string; value: number } | null = null;
-  for (const { def, level } of ownedYokai(s)) {
-    if (level >= levelCap(s.rank)) continue;
-    const cost = levelCost(def, level);
+  for (const { def, state } of ownedYokai(s)) {
+    if (state.level >= levelCap(s.rank)) continue;
+    const cost = levelCost(def, state.level);
     if (cost > s.res.coin) continue;
-    const a = yokaiStats(def, level);
-    const b = yokaiStats(def, level + 1);
+    const a = yokaiStats(def, state.level, state.bond);
+    const b = yokaiStats(def, state.level + 1, state.bond);
     const gain = STAT_KEYS.reduce((sum, k) => sum + b[k] - a[k], 0);
     const value = cost / Math.max(gain, 0.5);
     if (!best || value < best.value) best = { id: def.id, value };
@@ -118,13 +172,11 @@ export function simulate(profile: PlayProfile, days: number, seed = 7): SimRepor
     for (let b = bossClearedAt.length; b < bosses; b++) bossClearedAt[b] = h;
   };
 
-  // 첫 접속: 1분마다 확인하며 연속 플레이
   for (let m = 0; m <= profile.firstSessionMinutes; m++) {
     const now = start + m * MINUTE;
     s = playSession(s, now);
     record(now);
   }
-  // 이후: 매일 정해진 시각에 접속
   for (let d = 0; d < days; d++) {
     for (const hour of profile.checkInHours) {
       const now = start + d * 24 * HOUR + (hour - 9) * HOUR;

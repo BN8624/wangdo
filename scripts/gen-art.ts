@@ -44,6 +44,7 @@ function finish(a: ArtAsset, png: string, out: string) {
     case 'npc':
       return magick(png, '-resize', '768x1152', '-quality', '82', out);
     case 'scene':
+    case 'cg':
       return magick(png, '-resize', '1200x800', '-quality', '80', out);
     case 'square':
       return magick(png, '-resize', '512x512', '-quality', '82', out);

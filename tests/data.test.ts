@@ -42,7 +42,7 @@ describe('데이터 무결성', () => {
     for (let r = 0; r < RANKS.length - 1; r++) {
       if (RANKS[r].recruit) roster.push(RANKS[r].recruit!);
       const atCap = roster.reduce((sum, id) => {
-        const st = yokaiStats(YOKAI_BY_ID[id], levelCap(r));
+        const st = yokaiStats(YOKAI_BY_ID[id], levelCap(r), 0);
         return sum + STAT_KEYS.reduce((a, k) => a + st[k], 0);
       }, 0);
       expect(RANKS[r + 1].powerReq, `${RANKS[r + 1].title}`).toBeLessThanOrEqual(atCap * 0.8);
@@ -50,10 +50,10 @@ describe('데이터 무결성', () => {
   });
 });
 
-describe('진행 속도', () => {
-  it('부지런한 플레이: 첫 접속에 두 번째 칭호, 1~3주 안에 도깨비 대왕', () => {
+describe('진행 속도', { timeout: 60_000 }, () => {
+  it('부지런한 플레이: 첫날 촌장, 1~3주 안에 도깨비 대왕', () => {
     const r = simulate(PROFILES.engaged, 21);
-    expect(r.rankReachedAt[2]!).toBeLessThan(1);
+    expect(r.rankReachedAt[5]!).toBeLessThan(24);
     const last = r.rankReachedAt[RANKS.length - 1];
     expect(last).not.toBeNull();
     expect(last!).toBeGreaterThan(7 * 24);

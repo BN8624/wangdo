@@ -23,6 +23,9 @@ const FRAME = {
   square: 'Square illustration, the subjects centered and filling most of the frame, plain warm cream background with no scenery.',
   icon:
     'A single game item icon, centered, filling about 80% of the frame, isolated on a plain flat solid cream background (#FBF5E6), no shadow, no other objects.',
+  cg:
+    'Wide story illustration (CG) of one heroine, an adult young woman in her twenties, drawn in a wholesome, modest, family-friendly way. ' +
+    'Seen from the point of view of the viewer who is with her (the viewer is not drawn). Warm, emotional, softly lit, with a scenic background.',
   appicon:
     'Mobile app icon artwork, square, bold simple composition that reads well at small sizes, full-bleed saffron-yellow background.',
 } as const;
@@ -42,6 +45,7 @@ export const ASPECT: Record<ArtKind, 'portrait' | 'landscape' | 'square'> = {
   npc: 'portrait',
   scene: 'landscape',
   square: 'square',
+  cg: 'landscape',
   icon: 'square',
   appicon: 'square',
 };
@@ -61,6 +65,7 @@ export const ART = {
   npc: (wishId: string) => `art/npc/${wishId}.webp`,
   icon: (name: string) => `art/icon/${name}.webp`,
   story: (id: string) => `art/scene/story-${id}.webp`,
+  cg: (id: string, level: number) => `art/cg/${id}-${level}.webp`,
 };
 
 /** 소원 손님 중 식객 초상화를 그대로 쓰는 경우 */
@@ -111,7 +116,7 @@ const CHAPTER_FOES: Record<string, string> = {
 const ICONS: Record<string, string> = {
   coin: 'a single traditional Korean brass coin (yeopjeon) with a square hole in the middle, shiny gold',
   grain: 'a single bundle of golden rice stalks tied with a red string',
-  hands: 'three cheerful little villagers in hanbok holding a hoe, a basket and a rake, standing together',
+  stamina: 'a small red gourd bottle of energy tonic with a glowing golden heart on it',
   fame: 'a vermilion plum-blossom shaped medallion with gold trim and a small red tassel',
   club: 'a magical knobby wooden dokkaebi club (bangmangi) with a few golden sparkles',
   'nav-home': 'a small cozy hanok house with a curved tiled roof',
@@ -130,6 +135,10 @@ export const ART_ASSETS: ArtAsset[] = [
   ...CHAPTERS.map((c): ArtAsset => ({ id: `ch-${c.id}`, kind: 'scene', out: ART.chapter(c.id), subject: CHAPTER_SCENE[c.id] })),
   ...CHAPTERS.map((c): ArtAsset => ({ id: `foe-${c.id}`, kind: 'square', out: ART.foe(c.id), subject: CHAPTER_FOES[c.id] })),
   ...WISHES.filter((w) => !WISH_USES_YOKAI[w.id]).map((w): ArtAsset => ({ id: `npc-${w.id}`, kind: 'npc', out: ART.npc(w.id), subject: NPC[w.id] })),
+  ...YOKAI.flatMap((y): ArtAsset[] => [
+    { id: `cg-${y.id}-3`, kind: 'cg', out: ART.cg(y.id, 3), subject: `${y.artSubject}; she is on a sunny outing by a mountain stream near a Korean village, smiling shyly as she shares a secret` },
+    { id: `cg-${y.id}-5`, kind: 'cg', out: ART.cg(y.id, 5), subject: `${y.artSubject}; at a lantern festival night in a Korean village, paper lanterns and fireflies glowing, looking at the viewer with a warm happy smile` },
+  ]),
   { id: 'story-lost', kind: 'scene', out: ART.story('lost'), subject: 'a lost young woodcutter seen from behind, carrying an A-frame back rack of firewood, standing in a deep misty pine forest with warm rays of light' },
   { id: 'story-club', kind: 'scene', out: ART.story('club'), subject: 'a magical knobby wooden dokkaebi club lying on mossy ground in a forest clearing, golden sparkles and a few brass coins popping out of it' },
 ];

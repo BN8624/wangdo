@@ -1,10 +1,22 @@
 import { useEffect, useMemo, useState } from 'react';
-import { RESOURCE_KEYS, handsNeeded, promoteCheck, settle, type StageResult } from '../core/engine';
+import { RESOURCE_KEYS, bestParty, partyChance, partyChances, promoteCheck, settle, stageInfo, talkReadyIn, unseenScene, type FightResult } from '../core/engine';
 import { fmt } from '../core/format';
 import type { HintTarget } from '../core/hints';
+import type { ComboDef } from '../core/types';
 import { HomeView } from './HomeView';
 import { NavIcon, ResIcon } from './icons';
-import { IntroModal, OfflineModal, PromoteModal, StageResultModal, WishModal } from './modals';
+import {
+  BondUpModal,
+  ComboModal,
+  FightModal,
+  IntroModal,
+  OfflineModal,
+  PromoteModal,
+  ReactModal,
+  SceneViewer,
+  TalkModal,
+  WishModal,
+} from './modals';
 import { RecordView } from './RecordView';
 import { StageView } from './StageView';
 import { act, takeOfflineSummary, useGame, type OfflineSummary } from './store';
@@ -14,9 +26,14 @@ import { YokaiSheet, YokaiView } from './YokaiView';
 export type ModalRequest =
   | { kind: 'wish' }
   | { kind: 'promote'; rank: number; recruit: string | null }
-  | { kind: 'stage'; result: Extract<StageResult, { ok: true }> }
+  | { kind: 'fight'; result: Extract<FightResult, { ok: true }> }
   | { kind: 'offline'; summary: OfflineSummary }
-  | { kind: 'intro' };
+  | { kind: 'intro' }
+  | { kind: 'talk'; id: string }
+  | { kind: 'react'; id: string; text: string; gained: number; levelUp: number; outing?: boolean }
+  | { kind: 'bondup'; id: string; level: number }
+  | { kind: 'scene'; id: string; level: number }
+  | { kind: 'combo'; combo: ComboDef };
 
 type Tab = 'home' | 'yokai' | 'stage' | 'record';
 
@@ -43,7 +60,6 @@ export function App() {
     if (offline) first.push({ kind: 'offline', summary: offline });
     if (state.wish.pending) first.push({ kind: 'wish' });
     if (first.length) setQueue(first);
-    // 처음 한 번만
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -56,13 +72,18 @@ export function App() {
   const go = (t: HintTarget) => setTab(t);
   const top = queue[0];
 
-  const need = handsNeeded(view);
-  const badges: Record<Tab, boolean> = {
-    home: promoteCheck(view).ok || view.wish.charges > 0,
-    yokai: false,
-    stage: need !== null && view.res.hands >= need,
-    record: false,
-  };
+  const badges = useMemo(() => {
+    const ids = Object.keys(view.yokai);
+    const info = stageInfo(view.stage.index);
+    return {
+      home: promoteCheck(view).ok || view.wish.charges > 0,
+      yokai: ids.some((id) => unseenScene(view, id) > 0 || talkReadyIn(view, id, now) === 0),
+      stage: !!info && view.stamina.value > 0 && partyChance(partyChances(view, info, bestParty(view, info))) >= 0.5,
+      record: false,
+    } satisfies Record<Tab, boolean>;
+    // 1초마다 다시 계산하지 않도록 분 단위로만 갱신한다.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, Math.floor(now / 60_000)]);
 
   return (
     <div className="app">
@@ -73,11 +94,15 @@ export function App() {
             {fmt(view.res[k])}
           </div>
         ))}
+        <div className="chip">
+          <ResIcon kind="stamina" />
+          {view.stamina.value}
+        </div>
       </div>
 
       {tab === 'home' && <HomeView view={view} now={now} open={open} go={go} />}
-      {tab === 'yokai' && <YokaiView view={view} onOpen={setSheet} />}
-      {tab === 'stage' && <StageView view={view} open={open} />}
+      {tab === 'yokai' && <YokaiView view={view} now={now} onOpen={setSheet} />}
+      {tab === 'stage' && <StageView view={view} now={now} open={open} />}
       {tab === 'record' && <RecordView view={view} now={now} />}
 
       <nav className="nav">
@@ -90,7 +115,7 @@ export function App() {
         ))}
       </nav>
 
-      {sheet && <YokaiSheet view={view} id={sheet} onClose={() => setSheet(null)} />}
+      {sheet && !top && <YokaiSheet view={view} now={now} id={sheet} open={open} onClose={() => setSheet(null)} />}
 
       {top?.kind === 'intro' && (
         <IntroModal
@@ -103,7 +128,12 @@ export function App() {
       {top?.kind === 'offline' && <OfflineModal summary={top.summary} onClose={closeTop} />}
       {top?.kind === 'wish' && <WishModal view={view} onClose={closeTop} />}
       {top?.kind === 'promote' && <PromoteModal rank={top.rank} recruit={top.recruit} onClose={closeTop} />}
-      {top?.kind === 'stage' && <StageResultModal result={top.result} onClose={closeTop} />}
+      {top?.kind === 'fight' && <FightModal result={top.result} onClose={closeTop} />}
+      {top?.kind === 'talk' && <TalkModal view={view} id={top.id} open={open} onClose={closeTop} />}
+      {top?.kind === 'react' && <ReactModal {...top} open={open} onClose={closeTop} />}
+      {top?.kind === 'bondup' && <BondUpModal id={top.id} level={top.level} open={open} onClose={closeTop} />}
+      {top?.kind === 'scene' && <SceneViewer key={`${top.id}-${top.level}`} id={top.id} level={top.level} onClose={closeTop} />}
+      {top?.kind === 'combo' && <ComboModal combo={top.combo} onClose={closeTop} />}
 
       <div className="toasts">
         {toasts.map((t) => (

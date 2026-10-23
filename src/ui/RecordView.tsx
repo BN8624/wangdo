@@ -59,8 +59,16 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
           </b>
         </div>
         <div>
-          <span>해결한 소동</span>
-          <b>{fmt(view.totals.stages)}</b>
+          <span>소동 겨루기</span>
+          <b>
+            {fmt(view.totals.wins)}승 {fmt(view.totals.losses)}패
+          </b>
+        </div>
+        <div>
+          <span>나눈 대화 · 건넨 선물</span>
+          <b>
+            {fmt(view.totals.talks)} · {fmt(view.totals.gifts)}
+          </b>
         </div>
         <div>
           <span>방망이를 두드린 횟수</span>
@@ -71,8 +79,8 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
           <b>{fmt(view.totals.feasts)}</b>
         </div>
         <div>
-          <span>거둬들인 자원</span>
-          <b>{fmt(view.totals.collected)}</b>
+          <span>벌어들인 엽전·곡식</span>
+          <b>{fmt(view.totals.earned)}</b>
         </div>
       </div>
 

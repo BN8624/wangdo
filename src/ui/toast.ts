@@ -1,11 +1,11 @@
 // 화면 위로 잠깐 떠오르는 알림("+1,234 엽전" 같은 것).
 import { useSyncExternalStore } from 'react';
-import type { ResourceKey } from '../core/types';
+import type { IconKind } from './icons';
 
 export interface Toast {
   id: number;
   text: string;
-  res?: ResourceKey;
+  res?: IconKind;
   warn?: boolean;
 }
 
