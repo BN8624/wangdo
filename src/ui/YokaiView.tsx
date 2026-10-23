@@ -85,7 +85,7 @@ export function YokaiView({ view, now, onOpen }: { view: GameState; now: number;
           const news = unseenScene(view, def.id) > 0;
           const chat = talkReadyIn(view, def.id, now) === 0;
           return (
-            <button className="ycard" key={def.id} onClick={() => onOpen(def.id)}>
+            <button className="ycard" key={def.id} data-guide={`ycard-${def.id}`} onClick={() => onOpen(def.id)}>
               <span className="stars">{'★'.repeat(def.grade)}</span>
               <span className="spec" style={{ background: SPEC_COLOR[def.specialty] }}>
                 {STAT_LABEL[def.specialty]}
@@ -177,7 +177,7 @@ export function YokaiSheet({ view, now, id, open, onClose }: { view: GameState; 
           <button className={tab === 'bond' ? 'on' : ''} onClick={() => setTab('bond')}>
             인연
           </button>
-          <button className={tab === 'grow' ? 'on' : ''} onClick={() => setTab('grow')}>
+          <button className={tab === 'grow' ? 'on' : ''} data-guide="grow" onClick={() => setTab('grow')}>
             능력·레벨
           </button>
         </div>
@@ -201,7 +201,7 @@ export function YokaiSheet({ view, now, id, open, onClose }: { view: GameState; 
               {nextNeed ? `다음 단계 〈${BOND_LEVELS[lv + 1].name}〉까지 ${nextNeed - y.bond}` : '가장 깊은 인연이에요'}
             </div>
             <div className="bond-btns">
-              <button className="btn hong" disabled={talkWait > 0} onClick={() => open({ kind: 'talk', id })}>
+              <button className="btn hong" data-guide="talk" disabled={talkWait > 0} onClick={() => open({ kind: 'talk', id })}>
                 대화<span>{talkWait > 0 ? fmtDuration(talkWait) : '말 걸기'}</span>
               </button>
               <button className="btn hwang" onClick={() => setGifting((g) => !g)}>
@@ -253,7 +253,7 @@ export function YokaiSheet({ view, now, id, open, onClose }: { view: GameState; 
               ))}
             </div>
             <div className="lvbtns">
-              <button className="btn hwang" disabled={one === null || view.res.coin < one} onClick={() => up(1)}>
+              <button className="btn hwang" data-guide="grow" disabled={one === null || view.res.coin < one} onClick={() => up(1)}>
                 +1<span>{one === null ? '상한' : `엽전 ${fmt(one)}`}</span>
               </button>
               <button className="btn hwang" disabled={ten.levels === 0} onClick={() => up(10)}>

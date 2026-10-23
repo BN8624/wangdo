@@ -32,6 +32,7 @@ import {
   winChance,
   workplaceRate,
 } from '../src/core/engine';
+import { GUIDE, advanceGuide } from '../src/core/guide';
 import { deserialize, exportCode, importCode, serialize } from '../src/core/save';
 import { BALANCE } from '../src/data/balance';
 import { RANKS } from '../src/data/ranks';
@@ -41,9 +42,16 @@ import { YOKAI_BY_ID } from '../src/data/yokai';
 
 const T0 = Date.UTC(2026, 0, 1, 9);
 
+/** 시작 식객 셋을 적성 일터에 보낸 새 게임 */
+function game() {
+  const s = newGame(T0, 1);
+  s.work = { market: ['bangul'], woodyard: ['dudu'], field: ['sora'], tavern: [] };
+  return s;
+}
+
 describe('일터와 생산', () => {
   it('배치된 식객만큼 자원이 저절로 들어오고, 자리를 비운 시간은 상한까지만 센다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     const rate = ratesPerMinute(s);
     expect(rate.coin).toBeGreaterThan(0);
     expect(settle(s, T0 + 10 * MINUTE).res.coin).toBeCloseTo(s.res.coin + rate.coin * 10);
@@ -52,7 +60,7 @@ describe('일터와 생산', () => {
   });
 
   it('적성이 맞는 일터에서 더 많이 만든다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     const market = WORKPLACE_BY_ID.market;
     expect(workplaceRate(s, market)).toBeCloseTo(statsOf(s, 'bangul').wit * BALANCE.aptitudeMult * market.perStat);
     const [resting] = assign(s, T0, 'bangul', null);
@@ -61,13 +69,13 @@ describe('일터와 생산', () => {
   });
 
   it('칸이 차면 더 보낼 수 없고, 칭호가 오르면 칸이 늘어난다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     expect(assign(s, T0, 'dudu', 'market')[1]).toEqual({ ok: false, reason: 'full' });
     expect(slotsPerWorkplace(BALANCE.slotRanks[0])).toBe(2);
   });
 
   it('짝꿍을 같은 일터에 두면 처음 한 번 이야기가 나온다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     s.rank = 2;
     s.yokai.kkulkkeok = { level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0 };
     const [a, r] = assign(s, T0, 'kkulkkeok', 'woodyard');
@@ -77,12 +85,12 @@ describe('일터와 생산', () => {
   });
 
   it('시계가 뒤로 가면 아무것도 주지 않는다', () => {
-    const s = settle(newGame(T0, 1), T0 + 10 * MINUTE);
+    const s = settle(game(), T0 + 10 * MINUTE);
     expect(settle(s, T0).res).toEqual(s.res);
   });
 
   it('정산은 입력 상태를 바꾸지 않는다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     const snapshot = serialize(s);
     settle(s, T0 + 60 * MINUTE);
     expect(serialize(s)).toBe(snapshot);
@@ -91,7 +99,7 @@ describe('일터와 생산', () => {
 
 describe('식객 레벨업', () => {
   it('엽전을 내고 능력치가 오르며, 칭호 상한을 넘지 못한다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     const cost = levelCost(YOKAI_BY_ID.dudu, 1);
     const [next, r] = levelUp(s, T0, 'dudu', 1);
     expect(r).toEqual({ ok: true, levels: 1, spent: cost });
@@ -103,7 +111,7 @@ describe('식객 레벨업', () => {
 
 describe('인연', () => {
   it('대화는 대답 점수만큼 호감도를 올리고, 한동안 다시 할 수 없다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     const [a, r] = talk(s, T0, 'dudu', 8);
     expect(r.ok && r.gained).toBe(8 * BALANCE.talkMult);
     expect(talk(a, T0 + MINUTE, 'dudu', 8)[1]).toEqual({ ok: false, reason: 'cooldown' });
@@ -111,7 +119,7 @@ describe('인연', () => {
   });
 
   it('좋아하는 선물은 더 기뻐하고, 없으면 엽전으로 사서 준다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     s.res.coin = 10_000;
     const liked = YOKAI_BY_ID.dudu.likes[0];
     const [a, r] = giveGift(s, T0, 'dudu', liked);
@@ -126,7 +134,7 @@ describe('인연', () => {
   });
 
   it('호감도 단계가 오르면 능력치가 오르고 새 이야기가 열린다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     s.res.coin = 1e6;
     const before = statsOf(s, 'sora').craft;
     const [a, r] = outing(s, T0, 'sora');
@@ -140,7 +148,7 @@ describe('인연', () => {
 
 describe('잔치와 승급', () => {
   it('잔치는 곡식을 내고 명성과 모두의 호감도를 준다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     s.res.grain = feastCost(0);
     const [next, r] = feast(s, T0);
     expect(r.ok).toBe(true);
@@ -149,7 +157,7 @@ describe('잔치와 승급', () => {
   });
 
   it('위세와 명성이 모두 차야 승급하고, 칭호 식객이 합류한다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     s.rank = 1;
     s.res.fame = RANKS[2].fameCost;
     expect(promote(s, T0)[1]).toEqual({ ok: false, reason: 'need-power' });
@@ -162,7 +170,7 @@ describe('잔치와 승급', () => {
 
 describe('뚝딱 소원', () => {
   it('횟수를 쓰고 소원을 하나 받는다. 새로고침해도 같은 소원이다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     const [a, r] = useWish(s, T0);
     const [again, r2] = useWish(a, T0);
     expect(again.wish.charges).toBe(s.wish.charges - 1);
@@ -173,7 +181,7 @@ describe('뚝딱 소원', () => {
   });
 
   it('횟수는 일정 시간마다 최대치까지 다시 찬다', () => {
-    let s = newGame(T0, 1);
+    let s = game();
     for (let i = 0; i < wishMaxCharges(0); i++) s = chooseWish(useWish(s, T0)[0], T0, 0)[0];
     expect(useWish(s, T0)[1]).toEqual({ ok: false, reason: 'no-charge' });
     expect(settle(s, T0 + BALANCE.wishRegenMinutes * MINUTE).wish.charges).toBe(1);
@@ -190,7 +198,7 @@ describe('소동 겨루기', () => {
   });
 
   it('추천 편성은 아무렇게나 고른 편성보다 낫다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     const info = stageInfo(0)!;
     const best = partyChance(partyChances(s, info, bestParty(s, info)));
     for (const p of [['dudu', 'bangul', 'sora'], ['sora', 'dudu', 'bangul']]) {
@@ -199,7 +207,7 @@ describe('소동 겨루기', () => {
   });
 
   it('기력을 쓰고, 이기면 다음 소동으로 넘어가 보상을 받는다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     for (const id of ['dudu', 'bangul', 'sora']) s.yokai[id].level = 10;
     const info = stageInfo(0)!;
     const [next, r] = fight(s, T0, bestParty(s, info));
@@ -210,13 +218,13 @@ describe('소동 겨루기', () => {
   });
 
   it('기력이 없으면 출동할 수 없다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     s.stamina.value = 0;
     expect(fight(s, T0, ['dudu', 'bangul', 'sora'])[1]).toEqual({ ok: false, reason: 'no-stamina' });
   });
 
   it('장의 대장을 이기면 식객으로 합류한다', () => {
-    const s = newGame(T0, 1);
+    const s = game();
     s.stage.index = STAGES_PER_CHAPTER - 1;
     for (const id of ['dudu', 'bangul', 'sora']) s.yokai[id].level = 200;
     const [next, r] = fight(s, T0, bestParty(s, stageInfo(s.stage.index)!));
@@ -236,5 +244,20 @@ describe('저장', () => {
     expect(deserialize('{', T0)).toBeNull();
     expect(deserialize('{"version":1}', T0)).toBeNull();
     expect(importCode('!!!', T0)).toBeNull();
+  });
+});
+
+describe('안내', () => {
+  it('할 일을 해내야 다음 단계로 가고, 보상을 받는다', () => {
+    let s = newGame(T0, 1);
+    expect(advanceGuide(s)[1]).toBeNull();
+    [s] = advanceGuide(s, true);
+    expect(s.guide).toBe(1);
+    expect(advanceGuide(s, true)[1]).toBeNull();
+    [s] = assign(s, T0, 'bangul', 'market');
+    const coin = s.res.coin;
+    [s] = advanceGuide(s);
+    expect(s.guide).toBe(2);
+    expect(s.res.coin).toBe(coin + (GUIDE[1].reward?.coin ?? 0));
   });
 });

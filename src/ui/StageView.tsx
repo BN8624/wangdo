@@ -160,7 +160,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
           <span>+ 선물</span>
           {info.isBoss && !view.yokai[info.chapter.boss.yokai] && <span>+ 새 식객</span>}
         </div>
-        <button className="btn hong wide go" disabled={view.stamina.value < 1 || party.length < 3} onClick={go}>
+        <button className="btn hong wide go" data-guide="go" disabled={view.stamina.value < 1 || party.length < 3} onClick={go}>
           출동! <small>기력 1</small>
         </button>
         <div className="cap-note">

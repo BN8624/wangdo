@@ -39,6 +39,7 @@ export function deserialize(text: string, now: number): GameState | null {
     wish: { ...base.wish, ...data.wish },
     stage: { ...base.stage, ...data.stage },
     combosSeen: data.combosSeen ?? [],
+    guide: data.guide ?? 0,
     totals: { ...base.totals, ...data.totals },
   } as GameState;
 }

@@ -41,7 +41,7 @@ export function newGame(now: number, seed: number = now): GameState {
     res: { ...B.start },
     stamina: { value: B.staminaMax, lastRegen: now },
     yokai: Object.fromEntries(STARTERS.map((id) => [id, freshYokai()])),
-    work: { market: ['bangul'], woodyard: ['dudu'], field: ['sora'], tavern: [] },
+    work: { market: [], woodyard: [], field: [], tavern: [] },
     gifts: {},
     wish: { charges: B.wishBaseCharges, lastRegen: now, pending: null, recent: [] },
     stage: { index: 0 },
@@ -49,6 +49,7 @@ export function newGame(now: number, seed: number = now): GameState {
     rng: seed | 0,
     totals: { wishes: 0, feasts: 0, wins: 0, losses: 0, talks: 0, gifts: 0, earned: 0 },
     introSeen: false,
+    guide: 0,
   };
 }
 

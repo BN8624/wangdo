@@ -23,6 +23,8 @@ const FRAME = {
   square: 'Square illustration, the subjects centered and filling most of the frame, plain warm cream background with no scenery.',
   icon:
     'A single game item icon, centered, filling about 80% of the frame, isolated on a plain flat solid cream background (#FBF5E6), no shadow, no other objects.',
+  map:
+    'Tall illustrated village map seen from a high three-quarter bird-eye view, no people, no text, no labels. Every area named below must be clearly separate and easy to recognize.',
   cg:
     'Wide story illustration (CG) of one heroine, an adult young woman in her twenties, drawn in a wholesome, modest, family-friendly way. ' +
     'Seen from the point of view of the viewer who is with her (the viewer is not drawn). Warm, emotional, softly lit, with a scenic background.',
@@ -46,6 +48,7 @@ export const ASPECT: Record<ArtKind, 'portrait' | 'landscape' | 'square'> = {
   scene: 'landscape',
   square: 'square',
   cg: 'landscape',
+  map: 'portrait',
   icon: 'square',
   appicon: 'square',
 };
@@ -60,6 +63,7 @@ const portraitAsset = (def: YokaiDef): ArtAsset => ({ id: def.id, kind: 'portrai
 // ── 그 밖의 그림 경로 ──
 export const ART = {
   village: (tier: number) => `art/scene/village-${tier}.webp`,
+  map: 'art/scene/village-map.webp',
   chapter: (id: string) => `art/scene/ch-${id}.webp`,
   foe: (chapterId: string) => `art/foe/${chapterId}.webp`,
   npc: (wishId: string) => `art/npc/${wishId}.webp`,
@@ -130,6 +134,17 @@ export const ART_ASSETS: ArtAsset[] = [
   { id: 'village-1', kind: 'scene', out: ART.village(1), subject: 'a small humble mountain hamlet in old Korea with two thatched-roof houses, a stone wall, a persimmon tree, green hills, blue sky with fluffy clouds' },
   { id: 'village-2', kind: 'scene', out: ART.village(2), subject: 'a lively old Korean village with several thatched and tiled-roof hanok houses, a small market street with colorful awnings, rice paddies and green hills under a blue sky' },
   { id: 'village-3', kind: 'scene', out: ART.village(3), subject: 'a grand, prosperous fantasy Korean town where people and dokkaebi live together, many tiled-roof hanok houses painted in dancheong colors, festive paper lanterns, a big wooden gate, soft glowing dokkaebi fire lights floating in the daylight sky' },
+  {
+    id: 'village-map',
+    kind: 'map',
+    out: ART.map,
+    subject:
+      'a cozy old Korean mountain village called Dalgol. Upper left quarter: a lively market street with colorful stall awnings. ' +
+      'Upper right quarter: a tavern (jumak) with a big thatched roof, wooden benches and paper lanterns. ' +
+      'Lower left quarter: a woodcutting yard with stacked firewood logs and a chopping block. ' +
+      'Lower right quarter: green terraced rice paddies. Center: a dirt crossroads with a huge old zelkova tree. ' +
+      'Top edge: soft green mountains and sky. A small stream runs along the bottom edge',
+  },
   ...Object.entries(ICONS).map(([id, subject]): ArtAsset => ({ id: `icon-${id}`, kind: 'icon', out: ART.icon(id), subject })),
   { id: 'app-icon', kind: 'appicon', out: 'icon-512.png', subject: 'a magical knobby wooden dokkaebi club with gold brass coins bursting out of it' },
   ...CHAPTERS.map((c): ArtAsset => ({ id: `ch-${c.id}`, kind: 'scene', out: ART.chapter(c.id), subject: CHAPTER_SCENE[c.id] })),

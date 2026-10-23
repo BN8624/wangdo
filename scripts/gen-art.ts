@@ -43,6 +43,8 @@ function finish(a: ArtAsset, png: string, out: string) {
     case 'portrait':
     case 'npc':
       return magick(png, '-resize', '768x1152', '-quality', '82', out);
+    case 'map':
+      return magick(png, '-resize', '960x1440', '-quality', '82', out);
     case 'scene':
     case 'cg':
       return magick(png, '-resize', '1200x800', '-quality', '80', out);

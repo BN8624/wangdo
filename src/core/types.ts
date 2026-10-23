@@ -142,4 +142,6 @@ export interface GameState {
   rng: number;
   totals: { wishes: number; feasts: number; wins: number; losses: number; talks: number; gifts: number; earned: number };
   introSeen: boolean;
+  /** 안내 단계(끝나면 안내 목록 길이 이상) */
+  guide: number;
 }

@@ -20,7 +20,9 @@ import {
 import { RecordView } from './RecordView';
 import { StageView } from './StageView';
 import { act, takeOfflineSummary, useGame, type OfflineSummary } from './store';
-import { useToasts } from './toast';
+import { pushToast, useToasts } from './toast';
+import { GuideBar, rewardText } from './Guide';
+import { advanceGuide, guideStep } from '../core/guide';
 import { YokaiSheet, YokaiView } from './YokaiView';
 
 export type ModalRequest =
@@ -71,6 +73,14 @@ export function App() {
   const closeTop = () => setQueue((q) => q.slice(1));
   const go = (t: HintTarget) => setTab(t);
   const top = queue[0];
+  const step = guideStep(state);
+
+  // 안내 단계의 할 일을 해냈으면 다음 단계로 넘긴다.
+  useEffect(() => {
+    if (!step?.done?.(state)) return;
+    const done = act((s) => advanceGuide(s));
+    if (done) pushToast({ text: `안내 완료! ${rewardText(done)}` });
+  }, [state, step]);
 
   const badges = useMemo(() => {
     const ids = Object.keys(view.yokai);
@@ -86,8 +96,8 @@ export function App() {
   }, [state, Math.floor(now / 60_000)]);
 
   return (
-    <div className="app">
-      <div className="res-bar">
+    <div className={`app ${step ? 'guiding' : ''}`}>
+      <div className="res-bar" data-guide="res">
         {RESOURCE_KEYS.map((k) => (
           <div className="chip" key={k}>
             <ResIcon kind={k} />
@@ -107,7 +117,7 @@ export function App() {
 
       <nav className="nav">
         {TABS.map((t) => (
-          <button key={t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
+          <button key={t.id} className={tab === t.id ? 'on' : ''} data-guide={`tab-${t.id}`} onClick={() => setTab(t.id)}>
             <NavIcon name={t.icon} />
             {t.label}
             {badges[t.id] && tab !== t.id && <span className="badge" />}
@@ -134,6 +144,8 @@ export function App() {
       {top?.kind === 'bondup' && <BondUpModal id={top.id} level={top.level} open={open} onClose={closeTop} />}
       {top?.kind === 'scene' && <SceneViewer key={`${top.id}-${top.level}`} id={top.id} level={top.level} onClose={closeTop} />}
       {top?.kind === 'combo' && <ComboModal combo={top.combo} onClose={closeTop} />}
+
+      {step && !top && !sheet && <GuideBar step={step} index={state.guide} tab={tab} />}
 
       <div className="toasts">
         {toasts.map((t) => (

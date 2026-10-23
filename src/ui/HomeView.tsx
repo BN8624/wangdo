@@ -23,13 +23,22 @@ import { fmt, fmtDuration, fmtRate } from '../core/format';
 import { nextHint, type HintTarget } from '../core/hints';
 import { RANKS } from '../data/ranks';
 import { WORKPLACES, WORKPLACE_BY_ID } from '../data/village';
-import { STAT_LABEL } from '../data/yokai';
+import { ART } from '../data/art';
+import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
 import type { GameState, WorkplaceId } from '../core/types';
 import { Club, ResIcon, VillageScene } from './icons';
-import { Portrait } from './Portrait';
+import { Art, Portrait } from './Portrait';
 import { act } from './store';
 import { buzz, pushToast } from './toast';
 import type { ModalRequest } from './App';
+
+/** 마을 지도에서 일터 현판의 위치(%) */
+const SPOTS: Record<WorkplaceId, [number, number]> = {
+  market: [27, 33],
+  tavern: [76, 40],
+  woodyard: [25, 70],
+  field: [76, 73],
+};
 
 interface Props {
   view: GameState;
@@ -77,68 +86,62 @@ export function HomeView({ view, now, open, go }: Props) {
 
   return (
     <div className="view">
-      <div className="scene">
-        <VillageScene rank={view.rank} />
-        <div className="banner">달골 · {day}일째</div>
-      </div>
-
-      <div className="card rank-card">
-        <div className="rank-top">
-          <div className="rank-title">
-            <small>칭호</small>
-            {RANKS[view.rank].title}
+      <div className="map">
+        <Art src={ART.map} alt="달골 마을" fallback={<VillageScene rank={view.rank} />} />
+        <div className="rank-plate">
+          <div className="rank-top">
+            <div className="rank-title">
+              <small>칭호</small>
+              {RANKS[view.rank].title}
+            </div>
+            <div className="next">{target ? <>다음 ▸ <b>{target.title}</b></> : '최고 칭호'}</div>
           </div>
-          <div className="next">{target ? <>다음 ▸ <b>{target.title}</b></> : '최고 칭호'}</div>
+          {target && (
+            <>
+              <Progress label="위세" have={pw} need={target.powerReq} color="var(--jade)" />
+              <Progress label="명성" have={view.res.fame} need={target.fameCost} color="var(--gold)" />
+              {canPromote && (
+                <button className="btn hong wide glow promote" data-guide="promote" onClick={doPromote}>
+                  〈{target.title}〉(으)로 승급!
+                </button>
+              )}
+            </>
+          )}
         </div>
-        {target && (
-          <>
-            <Progress label="위세" have={pw} need={target.powerReq} color="var(--cheong)" />
-            <Progress label="명성" have={view.res.fame} need={target.fameCost} color="var(--hwang)" />
-            {canPromote && (
-              <button className="btn hong wide glow promote" onClick={doPromote}>
-                〈{target.title}〉(으)로 승급!
-              </button>
-            )}
-          </>
-        )}
-      </div>
-
-      <div className="section-head">
-        <b>일터</b>
-        <span>식객을 보내면 저절로 벌어 와요 · 칸 {slots}개씩</span>
-      </div>
-      <div className="works">
         {WORKPLACES.map((wp) => {
           const ids = view.work[wp.id];
           const combos = activeCombos(ids);
+          const [x, y] = SPOTS[wp.id];
+          const rate = workplaceRate(view, wp);
           return (
-            <button key={wp.id} className="work" onClick={() => setPicking(wp.id)}>
-              <div className="work-top">
+            <button key={wp.id} className="hot" style={{ left: `${x}%`, top: `${y}%` }} data-guide={`wp-${wp.id}`} onClick={() => setPicking(wp.id)}>
+              <div className="plate">
                 <b>{wp.name}</b>
-                <span className="work-rate">
+                <span>
                   <ResIcon kind={wp.produces} size={16} />
-                  {wp.produces === 'fame' ? fmtRate(workplaceRate(view, wp) * 60) : fmtRate(workplaceRate(view, wp))}
-                  <small>/{wp.produces === 'fame' ? '시간' : '분'}</small>
+                  {wp.produces === 'fame' ? `${fmtRate(rate * 60)}/시간` : `${fmtRate(rate)}/분`}
                 </span>
+                {combos.length > 0 && <em>짝꿍 +{combos.length * 20}%</em>}
               </div>
-              <div className="work-sub">
-                {STAT_LABEL[wp.stat]} → {wp.produces === 'coin' ? '엽전' : wp.produces === 'grain' ? '곡식' : '명성'}
-                {combos.length > 0 && <em> · 짝꿍 +{combos.length * 20}%</em>}
-              </div>
-              <div className="work-slots">
-                {Array.from({ length: slots }, (_, i) => (
-                  <div key={i} className={`slot ${ids[i] ? '' : 'empty'}`}>
-                    {ids[i] ? <Portrait def={ownedYokai(view).find((o) => o.def.id === ids[i])!.def} /> : '+'}
-                  </div>
-                ))}
+              <div className="faces">
+                {Array.from({ length: slots }, (_, i) =>
+                  ids[i] ? (
+                    <div key={i} className="face">
+                      <Portrait def={YOKAI_BY_ID[ids[i]]} />
+                    </div>
+                  ) : (
+                    <div key={i} className="face empty">+</div>
+                  ),
+                )}
               </div>
             </button>
           );
         })}
+        <div className="day-seal">달골 {day}일째</div>
       </div>
 
       <div className="big-actions">
-        <button key={swing} className={`ttuk ${swing ? 'swing' : ''}`} disabled={!view.wish.pending && view.wish.charges <= 0} onClick={doWish}>
+        <button key={swing} className={`panel ttuk ${swing ? 'swing' : ''}`} data-guide="ttuk" disabled={!view.wish.pending && view.wish.charges <= 0} onClick={doWish}>
           <div className="t1">금 나와라 뚝딱!</div>
           <div className="t2">{view.wish.pending ? '손님이 기다리고 있어요' : '누군가 소원을 들고 찾아와요'}</div>
           <div className="dots">
@@ -149,14 +152,14 @@ export function HomeView({ view, now, open, go }: Props) {
           <div className="timer">{regen === null ? '가득 찼어요' : `다음 충전 ${fmtDuration(regen)}`}</div>
           <Club />
         </button>
-        <div className="feast">
+        <div className="panel feast">
           <div className="t1">잔치 열기</div>
           <div className="t2">
             곡식 {fmt(cost)} → 명성 +{fmt(feastFame(view))}
             <br />
             식객 모두 호감도 ↑
           </div>
-          <button className="btn hong" disabled={view.res.grain < cost} onClick={doFeast}>
+          <button className="btn hong" data-guide="feast" disabled={view.res.grain < cost} onClick={doFeast}>
             {view.res.grain < cost ? '곡식 부족' : '잔치!'}
           </button>
         </div>
