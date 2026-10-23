@@ -56,7 +56,8 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
   </div>
   <div className="heroine">
    <button key={taps} className={`heroine-art ${taps ? 'poked' : ''}`} aria-label={`${def.name}에게 말 걸기`} onClick={poke}>
-    <Art src={ART.full(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/>
+    <img className="heroine-shadow" src={ART.full(def.id)} alt="" aria-hidden="true"/>
+    <Art className="heroine-img" src={ART.full(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/>
    </button>
   </div>
   {line ? <div className="say" role="status"><b>{def.name}</b><span>{line}</span><button onClick={() => onHeroine(def.id)}>대화하기 ›</button></div> : !step && <button className="quest" onClick={() => go(hint.target)}><b>할 일</b><span>{hint.text}</span><em>가기 ›</em></button>}
