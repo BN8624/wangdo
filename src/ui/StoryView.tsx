@@ -2,11 +2,17 @@ import { useState, type ReactNode } from 'react';
 import { completeEpisode, lockReason, visibleLines } from '../core/story';
 import type { Episode, GameState, StoryLine } from '../core/types';
 import { EPISODES, EPISODE_BY_ID } from '../data/story';
-import { ART } from '../data/art';
+import { ART, HERO_CAST } from '../data/art';
 import { YOKAI_BY_ID } from '../data/yokai';
 import { Art, Portrait } from './Portrait';
 import { act } from './store';
 import type { ModalRequest } from './App';
+/** 장면에 보일 인물: 이미 말한 식객. 아직 식객이 말하지 않았고 주인공만 말했으면 주인공 전신. */
+function sceneCast(cast: string[], spoken: StoryLine[]): string[] {
+    const shown = cast.filter(id => spoken.some(l => l.who === id));
+    if (shown.length === 0 && spoken.some(l => l.who === 'me')) return [HERO_CAST];
+    return shown;
+}
 export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }: {
     title: string;
     bg: string;
@@ -22,9 +28,9 @@ export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }:
         onNext();
     } }}>
   <Art className="vn-bg scene-img" src={bg} fallback={<div className="art-placeholder vn-bg"/>}/>
-  <div className="vn-cast">{cast.map(id => <Art key={id} className="vn-full" src={ART.full(id)} alt={YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{YOKAI_BY_ID[id]?.name}</div>}/>)}</div>
+  <div className="vn-cast">{cast.map(id => <Art key={id} className="vn-full" src={ART.full(id)} alt={id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name}</div>}/>)}</div>
   <div className="vn-title">{title}</div>{onClose && <button className="vn-close panel" onClick={e => { e.stopPropagation(); onClose(); }}>닫기</button>}
-  <div className="vn-box panel">{name && line?.who !== 'narration' && <div className="vn-name">{name}</div>}<div className="vn-text">{line?.text}</div>{children ?? <div className="vn-more">화면을 눌러 계속 ▾</div>}</div>
+  <div className={`vn-box panel ${line?.who === 'me' ? 'with-face' : ''}`}>{line?.who === 'me' && <img className="vn-face" src={ART.heroFace} alt=""/>}{name && line?.who !== 'narration' && <div className="vn-name">{name}</div>}<div className="vn-text">{line?.text}</div>{children ?? <div className="vn-more">화면을 눌러 계속 ▾</div>}</div>
  </div>;
 }
 export function StoryView({ view, episode, onClose, open }: {
@@ -74,5 +80,5 @@ function EpisodeViewer({ ep, view, onClose, open }: {
     };
     if (finished)
         return <><div className="dim"/><div className="modal episode-reward" role="dialog" aria-label="이야기 보상"><div className="title">{ep.title} · 끝</div>{wasDone ? <div className="sub">다시 본 이야기</div> : <div className="reward-list"><span>엽전 +{ep.reward?.coin ?? 0}</span><span>곡식 +{ep.reward?.grain ?? 0}</span><span>명성 +{ep.reward?.fame ?? 0}</span></div>}{recruit && <><div className="recruit-card"><Portrait def={YOKAI_BY_ID[recruit]}/></div><div className="title">{YOKAI_BY_ID[recruit].name} 합류</div></>}<div className="actions"><button className="btn hong" onClick={() => { onClose(); ups.forEach(u => open({ kind: 'bondup', ...u })); }}>궁궐로</button></div></div></>;
-    return <NovelFrame title={`${ep.season}부 ${ep.no}화 · ${ep.title}`} bg={sc.cg ?? ART.bg(sc.bg)} cast={sc.cg ? [] : (sc.cast ?? []).filter(id => lines.slice(0, index + 1).some(l => l.who === id))} line={reply ? { who: 'narration', text: reply } : lines[index]} onNext={next} onClose={view.introSeen ? onClose : undefined}>{choosing ? <div className="vn-choices" onClick={e => e.stopPropagation()}><p>{sc.choice!.prompt}</p>{sc.choice!.options.map((o, i) => <button className="choice" key={i} onClick={() => { setChoices(c => c.map((v, j) => j === scene ? i : v)); setReply(o.reply ?? '선택을 마쳤습니다.'); }}>{o.text}</button>)}</div> : undefined}</NovelFrame>;
+    return <NovelFrame title={`${ep.season}부 ${ep.no}화 · ${ep.title}`} bg={sc.cg ?? ART.bg(sc.bg)} cast={sc.cg ? [] : sceneCast(sc.cast ?? [], lines.slice(0, index + 1))} line={reply ? { who: 'narration', text: reply } : lines[index]} onNext={next} onClose={view.introSeen ? onClose : undefined}>{choosing ? <div className="vn-choices" onClick={e => e.stopPropagation()}><p>{sc.choice!.prompt}</p>{sc.choice!.options.map((o, i) => <button className="choice" key={i} onClick={() => { setChoices(c => c.map((v, j) => j === scene ? i : v)); setReply(o.reply ?? '선택을 마쳤습니다.'); }}>{o.text}</button>)}</div> : undefined}</NovelFrame>;
 }
