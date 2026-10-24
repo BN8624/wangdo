@@ -6,7 +6,7 @@ import { BATTLE } from '../core/battle';
 import { STAGES_PER_CHAPTER } from '../data/stages';
 import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
 import type { GameState } from '../core/types';
-import { ART } from '../data/art';
+import { foeArtPath } from '../data/art';
 import { ChapterArt, FoeGroup, ResIcon } from './icons';
 import { Art, Portrait } from './Portrait';
 import { act } from './store';
@@ -96,7 +96,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
           <div className={`foe-pic ${info.isBoss ? 'boss' : ''}`}>
             <Art
               className="foe-face"
-              src={info.isBoss ? ART.boss(info.chapter.id) : ART.grunt(info.chapter.id)}
+              src={foeArtPath(info)}
               alt={info.foe}
               fallback={<FoeGroup chapterId={info.chapter.id} />}
             />

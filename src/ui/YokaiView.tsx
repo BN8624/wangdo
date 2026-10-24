@@ -23,6 +23,7 @@ import {
 import { fmt, fmtDuration } from '../core/format';
 import { bondContent } from '../data/bond-content';
 import { RANKS } from '../data/ranks';
+import { SKILL_LABEL, SKILLS, skillText } from '../data/skills';
 import { BOND_LEVELS, GIFTS, WORKPLACE_BY_ID } from '../data/village';
 import { GRADE_LABEL, STAT_LABEL, YOKAI, YOKAI_BY_ID } from '../data/yokai';
 import type { GameState, StatKey } from '../core/types';
@@ -175,6 +176,14 @@ export function YokaiSheet({ view, now, id, open, onClose }: { view: GameState; 
             <div className="sd-intro">{def.intro}</div>
           </div>
         </div>
+
+        {SKILLS[id] && (
+          <div className="sd-skill">
+            <span className="sd-skill-tag">고유 기술 · {SKILL_LABEL[SKILLS[id].kind]}</span>
+            <b>{SKILLS[id].name}</b>
+            <p>{skillText(SKILLS[id].kind)}</p>
+          </div>
+        )}
 
         <button className="btn wide" disabled={view.favorite===id} onClick={()=>act(s=>[setFavorite(s,id),null])}>{view.favorite===id?'대표 식객':'대표로 세우기'}</button>
         <div className="tabs">

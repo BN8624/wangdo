@@ -1,30 +1,76 @@
-// 토벌 자동 전투: 같은 씨앗이면 같은 전투, 기록이 규칙에 맞는지, 강할수록 잘 이기는지
+// 토벌 자동 전투: 같은 씨앗이면 같은 전투, 기록이 규칙에 맞는지, 강할수록 잘 이기는지, 고유 기술이 제대로 걸리는지
 import { describe, expect, it } from 'vitest';
-import { BATTLE, battleOdds, runBattle, type BattleSetup } from '../src/core/battle';
+import { BATTLE, battleOdds, isSkillTurn, runBattle, type BattleSetup, type SkillKind } from '../src/core/battle';
+import { SKILLS } from '../src/data/skills';
+import { YOKAI } from '../src/data/yokai';
 
-const setup = (ratio: number): BattleSetup => ({
-  allies: [85, 100, 115].map((v, i) => ({ id: `a${i}`, stat: 'might' as const, power: v * ratio })),
+const setup = (ratio: number, kinds: SkillKind[] = ['strike', 'heal', 'stun']): BattleSetup => ({
+  allies: [85, 100, 115].map((v, i) => ({ id: `a${i}`, stat: 'might' as const, power: v * ratio, skill: { name: `기술${i}`, kind: kinds[i] } })),
   foe: { name: '산적', values: [85, 100, 115] },
 });
+const ALL_KINDS: SkillKind[][] = [
+  ['strike', 'heal', 'stun'],
+  ['guard', 'weaken', 'rally'],
+  ['heal', 'heal', 'rally'],
+  ['stun', 'guard', 'strike'],
+];
 
 describe('토벌 자동 전투', () => {
   it('같은 씨앗이면 늘 같은 전투가 나온다', () => {
     expect(runBattle(setup(1), 42)).toEqual(runBattle(setup(1), 42));
   });
 
-  it('기록이 규칙에 맞는다: 체력은 0 아래로 내려가지 않고, 이기면 상대 체력이 0이다', () => {
-    for (let seed = 1; seed < 60; seed++) {
-      const log = runBattle(setup(0.7 + (seed % 7) * 0.12), seed);
-      expect(log.rounds).toBeLessThanOrEqual(BATTLE.maxRounds);
-      const hits = log.events.filter((e) => e.t === 'hit');
-      for (const e of hits) if (e.t === 'hit') expect(e.hp).toBeGreaterThanOrEqual(0);
-      const lastFoeHit = [...hits].reverse().find((e) => e.t === 'hit' && e.target < 0);
-      if (log.won) expect(lastFoeHit && lastFoeHit.t === 'hit' ? lastFoeHit.hp : -1).toBe(0);
-      // 쓰러진 식객은 다시 공격하지 않는다
-      const down = new Set<number>();
+  it('기록이 규칙에 맞는다: 체력은 0~최대 사이, 이기면 상대 체력이 0, 쓰러진 식객은 움직이지 않는다', () => {
+    for (const kinds of ALL_KINDS) {
+      for (let seed = 1; seed < 40; seed++) {
+        const log = runBattle(setup(0.7 + (seed % 7) * 0.12, kinds), seed);
+        expect(log.rounds).toBeLessThanOrEqual(BATTLE.maxRounds);
+        for (const e of log.events) {
+          if (e.t === 'hit') expect(e.hp).toBeGreaterThanOrEqual(0);
+          if (e.t === 'heal') expect(e.hp).toBeLessThanOrEqual(log.allies[e.target].maxHp);
+        }
+        const lastFoeHit = [...log.events].reverse().find((e) => e.t === 'hit' && e.target < 0);
+        if (log.won) expect(lastFoeHit && lastFoeHit.t === 'hit' ? lastFoeHit.hp : -1).toBe(0);
+        const down = new Set<number>();
+        for (const e of log.events) {
+          if (e.t === 'down') down.add(e.target);
+          if ((e.t === 'hit' || e.t === 'miss' || e.t === 'skill') && e.by >= 0) expect(down.has(e.by)).toBe(false);
+          if (e.t === 'heal') expect(down.has(e.target)).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('식객은 두 번째 차례부터 세 번에 한 번 기술을 쓴다', () => {
+    expect([1, 2, 3, 4, 5, 6, 7, 8].filter(isSkillTurn)).toEqual([2, 5, 8]);
+    for (let seed = 1; seed < 20; seed++) {
+      const log = runBattle(setup(0.9), seed);
+      const turns = [0, 0, 0];
       for (const e of log.events) {
-        if (e.t === 'down') down.add(e.target);
-        if ((e.t === 'hit' || e.t === 'miss') && e.by >= 0) expect(down.has(e.by)).toBe(false);
+        // 차례 하나 = 기술 외침 또는 기술이 아닌 평범한 공격·빗나감
+        const normal = (e.t === 'hit' || e.t === 'miss') && e.by >= 0 && !(e.t === 'hit' && e.skill);
+        if (e.t === 'skill' || normal) expect(isSkillTurn(++turns[e.by])).toBe(e.t === 'skill');
+      }
+    }
+  });
+
+  it('기절한 상대는 다음 차례를 쉬고, 걸린 효과는 켜진 만큼 꺼진다', () => {
+    for (let seed = 1; seed < 40; seed++) {
+      const log = runBattle(setup(1, ['stun', 'guard', 'weaken']), seed);
+      let stunned = false;
+      const on: Record<string, boolean> = {};
+      for (const e of log.events) {
+        if (e.t === 'status') {
+          expect(on[`${e.side}-${e.status}`] ?? false).toBe(!e.on);
+          on[`${e.side}-${e.status}`] = e.on;
+          if (e.status === 'stun' && e.on) stunned = true;
+        }
+        if (e.t === 'skip') {
+          expect(stunned).toBe(true);
+          stunned = false;
+        }
+        // 기절한 상대는 공격하지 않는다
+        if ((e.t === 'hit' || e.t === 'miss') && e.by < 0) expect(stunned).toBe(false);
       }
     }
   });
@@ -38,5 +84,9 @@ describe('토벌 자동 전투', () => {
     expect(even).toBeGreaterThan(0.3);
     expect(even).toBeLessThan(0.75);
     expect(strong).toBeGreaterThan(0.85);
+  });
+
+  it('식객 모두 고유 기술이 있다', () => {
+    for (const y of YOKAI) expect(SKILLS[y.id], y.id).toBeDefined();
   });
 });

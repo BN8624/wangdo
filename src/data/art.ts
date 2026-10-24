@@ -1,3 +1,4 @@
+import type { StageInfo } from '../core/types';
 import { CHAPTERS } from './stages';
 import { YOKAI } from './yokai';
 
@@ -65,11 +66,15 @@ export const ART = {
   /** 토벌 전투 배경(세로), 장마다 대장과 일반 졸개 그림 */
   battle: (id: string) => `art/battle/${id}.webp`,
   boss: (id: string) => `art/boss/${id}.webp`,
-  grunt: (id: string) => `art/grunt/${id}.webp`,
+  grunt: (id: string, v = 1) => (v > 1 ? `art/grunt/${id}-${v}.webp` : `art/grunt/${id}.webp`),
   item: (key: string) => `art/item/${key}.webp`,
   scene: (key: string) => `art/scene/${key}.webp`,
 };
 
+
+/** 토벌 상대 그림: 대장이면 대장, 아니면 그 상대에 맞는 졸개 */
+export const foeArtPath = (info: StageInfo) =>
+  info.isBoss ? ART.boss(info.chapter.id) : ART.grunt(info.chapter.id, info.chapter.grunts[info.number - 1] ?? 1);
 
 /** 카드·목록에 쓰는 초상(카드 그림) */
 export const portraitPath = ART.card;

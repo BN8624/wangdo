@@ -92,6 +92,8 @@ export interface ChapterDef {
   title: string;
   intro: string;
   foes: string[];
+  /** foes마다 쓸 졸개 그림 번호(1~3) */
+  grunts: number[];
   boss: { name: string; stat: StatKey; line: string };
 }
 

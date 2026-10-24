@@ -194,6 +194,10 @@ b, strong { font-weight: 700; }
 .sd-name span { font-family: var(--serif); font-size: 16px; color: var(--seal); font-weight: 700; }
 .sd-kind { font-size: 14px; color: var(--ink-2); }
 .sd-intro { font-size: 15px; line-height: 1.55; margin-top: 6px; }
+.sd-skill { margin: 12px 0 4px; padding: 10px 12px; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); }
+.sd-skill-tag { display: block; font-size: 12px; color: var(--ink-2); }
+.sd-skill b { font-family: var(--title); font-size: 18px; }
+.sd-skill p { margin: 2px 0 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
 .tabs { display: flex; margin: 14px 0 12px; border-bottom: 2px solid var(--line); }
 .tabs button { flex: 1; padding: 8px 0; text-align: center; font-family: var(--title); font-size: 18px; color: var(--ink-2); border-bottom: 3px solid transparent; margin-bottom: -2px; }
 .tabs button.on { color: var(--ink); border-bottom-color: var(--seal); }
@@ -708,6 +712,27 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .hpbar.ally .cur { background: linear-gradient(180deg, #8ff0b6, #36b874); }
 .hpnum { font: 12px var(--sans); opacity: .85; margin-top: 3px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
 
+.battle-dmg.skill { font-size: 62px; }
+.battle-pop { position: absolute; z-index: 7; font: 700 28px var(--title); color: #fff; -webkit-text-stroke: 1.5px rgba(30,10,20,.85); paint-order: stroke fill; text-shadow: 0 3px 10px rgba(0,0,0,.6); animation: dmg-pop .6s ease-out forwards; pointer-events: none; }
+.battle-pop.foe { right: 10%; top: 17%; }
+.battle-pop.party { left: 0; right: 0; bottom: 260px; text-align: center; }
+.battle-pop.stun { color: #ffe066; }
+.battle-pop.weak { color: #c9a0ff; }
+.battle-pop.guard { color: #8fd3ff; }
+.battle-pop.rally { color: #ffb36b; }
+.bchips { display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; }
+.bchip { font: 700 11px var(--sans); padding: 2px 7px; border-radius: 4px; color: #1b1420; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
+.bchip.stun { background: #ffe066; }
+.bchip.weak { background: #c9a0ff; }
+.bchip.guard { background: #8fd3ff; }
+.bchip.rally { background: #ffb36b; }
+.bcard-chips { position: absolute; top: 4px; right: 4px; display: grid; gap: 3px; justify-items: end; }
+.bcard-chips .bchip { font-size: 10px; padding: 1px 5px; }
+.bcard-dmg.heal { color: #7ff0a8; }
+/* 고유 기술 이름 띠 */
+.battle-skill { position: absolute; left: -6%; right: -6%; top: 33%; z-index: 7; padding: 10px 0 12px 18%; transform: skewY(-5deg); background: linear-gradient(90deg, rgba(10,8,12,.9) 10%, var(--c) 60%, rgba(10,8,12,0)); font: 700 32px var(--title); letter-spacing: 2px; color: #fff; text-shadow: 0 2px 8px rgba(0,0,0,.6); animation: skill-in .76s ease forwards; pointer-events: none; }
+.battle-skill small { display: block; font: 700 13px var(--sans); letter-spacing: 0; opacity: .9; margin-bottom: 2px; }
+@keyframes skill-in { 0% { opacity: 0; transform: skewY(-5deg) translateX(-40%); } 18% { opacity: 1; transform: skewY(-5deg) translateX(0); } 82% { opacity: 1; transform: skewY(-5deg) translateX(2%); } 100% { opacity: 0; transform: skewY(-5deg) translateX(8%); } }
 .battle-banner { position: absolute; left: 0; right: 0; top: 40%; z-index: 7; padding: 8px 0; text-align: center; font: 700 30px var(--title); letter-spacing: 6px; text-shadow: 0 2px 10px #000; background: linear-gradient(90deg, transparent, rgba(10,8,12,.65) 25% 75%, transparent); animation: banner .42s ease forwards; pointer-events: none; }
 @keyframes banner { 0% { opacity: 0; transform: scaleX(1.4); } 40% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 .battle-stamp { position: absolute; left: 0; right: 0; top: 28%; z-index: 8; text-align: center; font: 700 68px var(--title); letter-spacing: 8px; -webkit-text-stroke: 2px rgba(40,15,20,.8); paint-order: stroke fill; text-shadow: 0 6px 20px rgba(0,0,0,.6); animation: stamp .5s cubic-bezier(.2,1.6,.4,1); }

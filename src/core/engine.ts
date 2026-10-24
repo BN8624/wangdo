@@ -6,6 +6,7 @@ import { rankDef } from '../data/ranks';
 import { CHAPTERS, STAGES_PER_CHAPTER, TOTAL_STAGES } from '../data/stages';
 import { BOND_LEVELS, COMBOS, GIFTS, GIFT_BY_ID, WORKPLACES } from '../data/village';
 import { WISHES, WISH_BY_ID } from '../data/wishes';
+import { SKILLS } from '../data/skills';
 import { STARTERS, YOKAI, YOKAI_BY_ID } from '../data/yokai';
 import { nextRandom } from './rng';
 import { battleOdds, runBattle, type BattleLog, type BattleSetup } from './battle';
@@ -514,7 +515,12 @@ export function partyChances(s: GameState, info: StageInfo, party: string[]): nu
 /** 편성 순서대로 식객이 맡은 능력치로 상대와 싸운다 */
 export function battleSetup(s: GameState, info: StageInfo, party: string[]): BattleSetup {
   return {
-    allies: info.rounds.map((r, i) => ({ id: party[i], stat: r.stat, power: party[i] && s.yokai[party[i]] ? statsOf(s, party[i])[r.stat] : 0 })),
+    allies: info.rounds.map((r, i) => ({
+      id: party[i],
+      stat: r.stat,
+      power: party[i] && s.yokai[party[i]] ? statsOf(s, party[i])[r.stat] : 0,
+      skill: SKILLS[party[i]],
+    })),
     foe: { name: info.foe, values: info.rounds.map((r) => r.value) },
   };
 }
