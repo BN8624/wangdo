@@ -1,5 +1,5 @@
 // 토벌 전투 화면. 엔진이 미리 계산한 전투 기록(battle.events)을 한 칸씩 재생한다. 모두 자동이고, 2배속과 건너뛰기만 있다.
-// 고유 기술은 이름 띠로 외치고, 걸린 효과(기절·약화·방어·격려)는 상대 체력 줄 아래와 카드 위에 표시한다.
+// 공격하는 식객은 카드가 빛나고, 고유 기술은 얼굴 띠로 외친다. 걸린 효과(기절·약화·방어·격려)는 상대 체력 줄 아래와 카드 위에 표시한다.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { FightResult } from '../core/engine';
 import { BATTLE, type BattleEvent, type Status } from '../core/battle';
@@ -121,7 +121,6 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
     const down = new Set<number>();
     let round = 0;
     let last: BattleEvent | null = null;
-    let lastAlly: number | null = null;
     const foeStatus = new Set<Status>();
     const partyStatus = new Set<Status>();
     for (const ev of events.slice(0, shown)) {
@@ -137,10 +136,9 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
         else set.delete(ev.status);
       }
       if (ev.t === 'down') down.add(ev.target);
-      if ((ev.t === 'hit' || ev.t === 'miss' || ev.t === 'skill') && ev.by >= 0) lastAlly = ev.by;
       last = ev;
     }
-    return { foeHp, hp, down, round, last, lastAlly, foeStatus, partyStatus };
+    return { foeHp, hp, down, round, last, foeStatus, partyStatus };
   }, [shown, events, battle]);
 
   const last = state.last;
@@ -199,7 +197,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
       <div className="battle-top">
         <div className="battle-round">
           <small>남은 라운드</small>
-          <b>{leftRounds}</b>
+          <b key={state.round}>{leftRounds}</b>
         </div>
         <div className="battle-foebar">
           <div className="battle-foename">
@@ -223,37 +221,17 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
       </div>
 
       {last?.t === 'skill' && (
-        <div key={`skill-${shown}`} className="battle-skill" style={{ '--c': SPEC_COLOR[battle.allies[last.by].stat] } as CSSProperties}>
-          <small>{YOKAI_BY_ID[battle.allies[last.by].id]?.name}의 기술</small>
-          {last.name}
-        </div>
-      )}
-      {last?.t === 'round' && (
-        <div key={`round-${shown}`} className="battle-banner">
-          {last.n}라운드
+        <div key={`skill-${shown}`} className="battle-cutin" style={{ '--c': SPEC_COLOR[battle.allies[last.by].stat] } as CSSProperties}>
+          <Art className="battle-cutin-face" src={ART.card(battle.allies[last.by].id)} alt="" fallback={<div />} />
+          <div className="battle-cutin-text">
+            <small>{YOKAI_BY_ID[battle.allies[last.by].id]?.name}</small>
+            <b>{last.name}</b>
+          </div>
         </div>
       )}
       {done && <div className={`battle-stamp ${result.won ? 'win' : 'lose'}`}>{result.won ? '해결!' : '후퇴'}</div>}
 
       <div className="battle-bottom">
-        {/* 셋 다 미리 깔아 두고 마지막에 나선 식객만 보인다 */}
-        {!done &&
-          battle.allies.map((a, i) => (
-            <div
-              key={a.id}
-              className={`battle-actor ${state.lastAlly === i && !state.down.has(i) ? 'on' : ''}`}
-              style={{ '--c': SPEC_COLOR[a.stat] } as CSSProperties}
-            >
-              <div className="battle-actor-pic">
-                <Art src={ART.card(a.id)} alt={YOKAI_BY_ID[a.id]?.name} fallback={<div />} />
-              </div>
-              <div className="battle-actor-name">
-                <span>{STAT_LABEL[a.stat]}</span>
-                {YOKAI_BY_ID[a.id]?.name}
-              </div>
-            </div>
-          ))}
-
         {done ? (
           <div className="battle-result">
             <div className="title">{result.won ? `${stage.foe} 해결!` : '이번엔 물러났어요'}</div>
@@ -284,12 +262,10 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
           </div>
         ) : (
           <div className="battle-ctrl">
-            <button className={speed === 2 ? 'on' : ''} onClick={toggleSpeed} aria-label="2배속">
-              x2
+            <button className={speed === 2 ? 'on' : ''} onClick={toggleSpeed}>
+              2배속
             </button>
-            <button onClick={() => setShown(events.length)} aria-label="건너뛰기">
-              ▶▶
-            </button>
+            <button onClick={() => setShown(events.length)}>건너뛰기</button>
           </div>
         )}
         <div className="battle-party">
