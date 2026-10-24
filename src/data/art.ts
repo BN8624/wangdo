@@ -62,6 +62,9 @@ export const ART = {
   bg: (key: string) => `art/bg/${key}.webp`,
   chapter: (id: string) => `art/banner/${id}.webp`,
   foe: (id: string) => `art/foe/${id}.webp`,
+  /** 토벌 전투 배경(세로)과 장마다 대장 그림 */
+  battle: (id: string) => `art/battle/${id}.webp`,
+  boss: (id: string) => `art/boss/${id}.webp`,
   item: (key: string) => `art/item/${key}.webp`,
   scene: (key: string) => `art/scene/${key}.webp`,
 };

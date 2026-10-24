@@ -1,8 +1,9 @@
 // 토벌 전투 화면. 엔진이 미리 계산한 전투 기록(battle.events)을 한 칸씩 재생한다. 모두 자동이고, 2배속과 건너뛰기만 있다.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { FightResult } from '../core/engine';
 import type { BattleEvent } from '../core/battle';
 import { BATTLE } from '../core/battle';
+import type { StatKey } from '../core/types';
 import { fmt } from '../core/format';
 import { ART } from '../data/art';
 import { GIFT_BY_ID } from '../data/village';
@@ -13,6 +14,9 @@ import { buzz } from './toast';
 import { SPEC_COLOR } from './YokaiView';
 
 const PACE: Record<BattleEvent['t'], number> = { round: 420, hit: 560, miss: 480, down: 700 };
+
+/** 맡은 능력치마다 다른 타격 효과 */
+const FX: Record<StatKey, string> = { might: 'slash', wit: 'burst', politics: 'seal', charm: 'bloom' };
 
 // 맞거나 덤빌 때 흔들림. key로 다시 그리면 그림이 깜빡여서 Web Animations로 그 자리에서 다시 튼다.
 const FOE_HIT: Keyframe[] = [
@@ -28,6 +32,15 @@ const CARD_HURT: Keyframe[] = [
   { transform: 'translateX(4px)', offset: 0.7 },
   { transform: 'none', filter: 'none' },
 ];
+const SHAKE: Keyframe[] = [
+  { transform: 'none' },
+  { transform: 'translate(-7px, 4px)' },
+  { transform: 'translate(6px, -4px)' },
+  { transform: 'translate(-3px, 2px)' },
+  { transform: 'none' },
+];
+
+const reducedMotion = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function loadSpeed(): 1 | 2 {
   try {
@@ -37,12 +50,24 @@ function loadSpeed(): 1 | 2 {
   }
 }
 
+function HpBar({ kind, value, max }: { kind: 'foe' | 'ally'; value: number; max: number }) {
+  const width = `${(value / max) * 100}%`;
+  return (
+    <div className={`hpbar ${kind}`}>
+      <i className="lag" style={{ width }} />
+      <i className="cur" style={{ width }} />
+    </div>
+  );
+}
+
 export function BattleView({ result, onClose }: { result: Extract<FightResult, { ok: true }>; onClose: () => void }) {
   const { battle, stage } = result;
   const events = battle.events;
+  const chapterId = stage.chapter.id;
   const [shown, setShown] = useState(0);
   const [speed, setSpeed] = useState<1 | 2>(loadSpeed);
   const done = shown >= events.length;
+  const stageRef = useRef<HTMLDivElement>(null);
   const foeRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -58,12 +83,13 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
 
   useEffect(() => {
     const ev = events[shown - 1];
-    if (!ev || ev.t === 'round' || ev.t === 'down' || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (!ev || ev.t === 'round' || ev.t === 'down' || reducedMotion()) return;
     if (ev.t === 'hit' && ev.target < 0) foeRef.current?.animate(FOE_HIT, 320);
     if (ev.by < 0) {
       foeRef.current?.animate(FOE_LUNGE, 400);
       if (ev.t === 'hit') cardRefs.current[ev.target]?.animate(CARD_HURT, 350);
     }
+    if (ev.t === 'hit' && ev.crit) stageRef.current?.animate(SHAKE, 280);
   }, [shown, events]);
 
   const toggleSpeed = () => {
@@ -102,45 +128,57 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
   const foeDown = state.down.has(-1);
   const leftRounds = Math.max(0, BATTLE.maxRounds - Math.max(0, state.round - 1));
   const recruit = result.recruit ? YOKAI_BY_ID[result.recruit] : null;
+  const actorStat = actor !== null ? battle.allies[actor].stat : null;
+  const groupFoe = <Art className="group" src={ART.foe(chapterId)} alt={stage.foe} fallback={<div className="portrait-fallback">{stage.foe}</div>} />;
 
   return (
     <div className="battle" role="dialog" aria-label={`${stage.foe} 토벌`}>
-      <Art className="battle-bg" src={ART.chapter(stage.chapter.id)} fallback={<div className="battle-bg" />} />
-      <div className="battle-shade" />
+      <div ref={stageRef} className="battle-stage">
+        <Art
+          className="battle-bg"
+          src={ART.battle(chapterId)}
+          fallback={<Art className="battle-bg banner" src={ART.chapter(chapterId)} fallback={<div className="battle-bg" />} />}
+        />
+        <div className="battle-shade" />
+
+        <div ref={foeRef} className={`battle-foe ${foeDown ? 'down' : ''}`}>
+          {stage.isBoss ? <Art className="solo" src={ART.boss(chapterId)} alt={stage.foe} fallback={groupFoe} /> : groupFoe}
+        </div>
+
+        {last?.t === 'hit' && last.target < 0 && actorStat && (
+          <div key={`fx-${shown}`} className={`battle-fx ${FX[actorStat]} ${last.crit ? 'crit' : ''}`} style={{ '--c': SPEC_COLOR[actorStat] } as CSSProperties} />
+        )}
+        {last?.t === 'hit' && (last.crit || last.target >= 0) && <div key={`flash-${shown}`} className={`battle-flash ${last.target >= 0 ? 'hurt' : ''}`} />}
+        {last?.t === 'hit' && last.target < 0 && (
+          <div key={`dmg-${shown}`} className={`battle-dmg ${last.crit ? 'crit' : ''}`}>
+            {last.crit && <small>치명타!</small>}
+            {fmt(last.dmg)}
+          </div>
+        )}
+        {last?.t === 'miss' && last.target < 0 && (
+          <div key={`miss-${shown}`} className="battle-dmg miss">
+            빗나감
+          </div>
+        )}
+      </div>
 
       <div className="battle-top">
         <div className="battle-round">
-          남은 {leftRounds}라운드
-          <small>{state.round > 0 ? `${state.round}라운드` : '준비'}</small>
+          <small>남은 라운드</small>
+          <b>{leftRounds}</b>
         </div>
         <div className="battle-foebar">
           <div className="battle-foename">
             {stage.isBoss && <em>대장</em>}
             {stage.foe}
           </div>
-          <div className="hpbar foe">
-            <i style={{ width: `${(state.foeHp / battle.foe.maxHp) * 100}%` }} />
-          </div>
+          <HpBar kind="foe" value={state.foeHp} max={battle.foe.maxHp} />
           <div className="hpnum">
             {fmt(state.foeHp)} / {fmt(battle.foe.maxHp)}
           </div>
         </div>
       </div>
 
-      <div ref={foeRef} className={`battle-foe ${foeDown ? 'down' : ''}`}>
-        <Art src={ART.foe(stage.chapter.id)} alt={stage.foe} fallback={<div className="portrait-fallback">{stage.foe}</div>} />
-      </div>
-
-      {last?.t === 'hit' && last.target < 0 && (
-        <div key={`dmg-${shown}`} className={`battle-dmg ${last.crit ? 'crit' : ''}`}>
-          {last.crit && <small>치명!</small>}-{fmt(last.dmg)}
-        </div>
-      )}
-      {last?.t === 'miss' && last.target < 0 && (
-        <div key={`miss-${shown}`} className="battle-dmg miss">
-          빗나감
-        </div>
-      )}
       {last?.t === 'round' && (
         <div key={`round-${shown}`} className="battle-banner">
           {last.n}라운드
@@ -148,14 +186,25 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
       )}
       {done && <div className={`battle-stamp ${result.won ? 'win' : 'lose'}`}>{result.won ? '해결!' : '후퇴'}</div>}
 
-      {/* 셋 다 미리 깔아 두고 마지막에 나선 식객만 보인다 */}
-      {battle.allies.map((a, i) => (
-        <div key={a.id} className={`battle-actor ${state.lastAlly === i && !state.down.has(i) ? 'on' : ''}`}>
-          <Art src={ART.full(a.id)} alt={YOKAI_BY_ID[a.id]?.name} fallback={<div />} />
-        </div>
-      ))}
-
       <div className="battle-bottom">
+        {/* 셋 다 미리 깔아 두고 마지막에 나선 식객만 보인다 */}
+        {!done &&
+          battle.allies.map((a, i) => (
+            <div
+              key={a.id}
+              className={`battle-actor ${state.lastAlly === i && !state.down.has(i) ? 'on' : ''}`}
+              style={{ '--c': SPEC_COLOR[a.stat] } as CSSProperties}
+            >
+              <div className="battle-actor-pic">
+                <Art src={ART.card(a.id)} alt={YOKAI_BY_ID[a.id]?.name} fallback={<div />} />
+              </div>
+              <div className="battle-actor-name">
+                <span>{STAT_LABEL[a.stat]}</span>
+                {YOKAI_BY_ID[a.id]?.name}
+              </div>
+            </div>
+          ))}
+
         {done ? (
           <div className="battle-result">
             <div className="title">{result.won ? `${stage.foe} 해결!` : '이번엔 물러났어요'}</div>
@@ -200,20 +249,20 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
             const hit = last?.t === 'hit' && last.by < 0 && last.target === i;
             const missed = last?.t === 'miss' && last.by < 0 && last.target === i;
             return (
-              <div key={a.id} className={`bcard ${actor === i ? 'act' : ''} ${state.down.has(i) ? 'down' : ''}`}>
+              <div
+                key={a.id}
+                className={`bcard ${actor === i ? 'act' : ''} ${state.down.has(i) ? 'down' : ''}`}
+                style={{ '--c': SPEC_COLOR[a.stat] } as CSSProperties}
+              >
                 <div ref={(el) => (cardRefs.current[i] = el)} className="bcard-pic">
                   <Art src={ART.card(a.id)} alt={def?.name} fallback={<div className="portrait-fallback">{def?.name}</div>} />
-                  <span className="bcard-stat" style={{ background: SPEC_COLOR[a.stat] }}>
-                    {STAT_LABEL[a.stat]}
-                  </span>
+                  <span className="bcard-stat">{STAT_LABEL[a.stat]}</span>
+                  <span className="bcard-name">{def?.name}</span>
                   {state.down.has(i) && <span className="bcard-down">쓰러짐</span>}
                   {hit && last?.t === 'hit' && <span className="bcard-dmg">-{fmt(last.dmg)}</span>}
                   {missed && <span className="bcard-dmg miss">빗나감</span>}
                 </div>
-                <div className="hpbar ally">
-                  <i style={{ width: `${(state.hp[i] / a.maxHp) * 100}%` }} />
-                </div>
-                <b>{def?.name}</b>
+                <HpBar kind="ally" value={state.hp[i]} max={a.maxHp} />
               </div>
             );
           })}
