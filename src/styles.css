@@ -647,3 +647,59 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .vn-cg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; z-index: 1; }
 @media (prefers-reduced-motion: no-preference) { .vn-cg { animation: cg-in .5s ease; } @keyframes cg-in { from { opacity: 0; transform: scale(1.03); } } }
 .vn-title, .vn-close, .vn-box, .vn-item { z-index: 4; }
+
+/* ── 토벌 전투 화면 ── */
+.battle { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 45; overflow: hidden; background: #17121a; color: #fff; user-select: none; }
+.battle-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: saturate(.8) brightness(.55); }
+.battle-shade { position: absolute; inset: 0; background: linear-gradient(112deg, rgba(20,14,24,.5) 0 34%, rgba(20,14,24,0) 34.3% 100%), linear-gradient(180deg, rgba(10,8,12,.6), transparent 20%, transparent 52%, rgba(10,8,12,.9)); }
+.battle-top { position: absolute; left: 0; right: 0; top: 0; padding: calc(10px + env(safe-area-inset-top)) 12px 0; display: flex; justify-content: space-between; gap: 12px; z-index: 3; }
+.battle-round { font: 700 15px var(--serif); text-shadow: 0 1px 3px #000; }
+.battle-round small { display: block; font: 12px var(--sans); opacity: .8; }
+.battle-foebar { flex: 1; max-width: 62%; text-align: right; }
+.battle-foename { font: 700 15px var(--title); text-shadow: 0 1px 3px #000; margin-bottom: 4px; }
+.battle-foename em { font-style: normal; font-size: 11px; background: var(--seal); padding: 1px 6px; border-radius: 6px; margin-right: 6px; vertical-align: 2px; }
+.hpbar { height: 8px; border-radius: 6px; background: rgba(255,255,255,.18); overflow: hidden; box-shadow: inset 0 0 0 1px rgba(0,0,0,.3); }
+.hpbar i { display: block; height: 100%; transition: width .35s ease; }
+.hpbar.foe i { background: linear-gradient(90deg, #ff7a8a, #e0405a); }
+.hpbar.ally { height: 6px; margin-top: 4px; }
+.hpbar.ally i { background: linear-gradient(90deg, #7fe0a8, #3fbf7f); }
+.hpnum { font: 12px var(--sans); opacity: .85; margin-top: 2px; font-variant-numeric: tabular-nums; }
+.battle-foe { position: absolute; right: -10%; top: 8%; width: 88%; aspect-ratio: 1; z-index: 1; }
+/* 상대 그림은 네모난 단체 그림이라 가장자리를 배경에 녹인다 */
+.battle-foe img { width: 100%; height: 100%; object-fit: cover; -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%); }
+.battle-foe.down { opacity: .35; filter: grayscale(1); transition: opacity .6s ease, filter .6s ease; }
+.battle-dmg { position: absolute; right: 18%; top: 22%; z-index: 4; font: 800 44px var(--serif); color: #fff; -webkit-text-stroke: 1.5px rgba(0,0,0,.65); paint-order: stroke fill; text-shadow: 0 3px 10px rgba(0,0,0,.8); animation: dmg-pop .6s ease-out forwards; font-variant-numeric: tabular-nums; }
+.battle-dmg small { display: block; font-size: 16px; color: #ffd166; text-align: right; }
+.battle-dmg.crit { color: #ffd166; font-size: 56px; }
+.battle-dmg.miss { font-size: 26px; color: #cfd6e6; }
+@keyframes dmg-pop { 0% { opacity: 0; transform: translateY(14px) scale(.7); } 25% { opacity: 1; transform: translateY(0) scale(1.08); } 100% { opacity: 1; transform: translateY(-14px) scale(1); } }
+.battle-banner { position: absolute; left: 0; right: 0; top: 42%; z-index: 4; padding: 6px 0; text-align: center; font: 700 30px var(--title); letter-spacing: 6px; text-shadow: 0 2px 10px #000; background: linear-gradient(90deg, transparent, rgba(10,8,12,.6) 25% 75%, transparent); animation: banner .42s ease forwards; }
+@keyframes banner { 0% { opacity: 0; transform: scaleX(1.4); } 40% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+.battle-stamp { position: absolute; left: 0; right: 0; top: 30%; z-index: 5; text-align: center; font: 800 64px var(--title); letter-spacing: 8px; animation: stamp .5s cubic-bezier(.2,1.6,.4,1); text-shadow: 0 4px 16px rgba(0,0,0,.6); }
+.battle-stamp.win { color: #ffd166; }
+.battle-stamp.lose { color: #c9c3d6; }
+@keyframes stamp { from { opacity: 0; transform: scale(2); } }
+.battle-actor { position: absolute; left: -10%; bottom: 150px; width: 72%; height: 62%; z-index: 2; opacity: 0; transform: translateX(-30px); transition: opacity .25s ease, transform .25s ease; pointer-events: none; }
+.battle-actor.on { opacity: 1; transform: none; }
+.battle-actor img { width: 100%; height: 100%; object-fit: contain; object-position: left bottom; filter: drop-shadow(0 8px 20px rgba(0,0,0,.55)); }
+.battle-bottom { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 10px calc(12px + env(safe-area-inset-bottom)); z-index: 3; }
+.battle-ctrl { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 8px; }
+.battle-ctrl button { width: 44px; height: 44px; border-radius: 50%; background: rgba(20,14,24,.6); border: 1px solid rgba(255,255,255,.35); color: #fff; font: 700 14px var(--sans); }
+.battle-ctrl button.on { background: var(--seal); border-color: var(--seal); }
+.battle-party { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.bcard { text-align: center; font-size: 12px; transition: transform .2s ease; }
+.bcard b { display: block; margin-top: 2px; font-weight: 700; text-shadow: 0 1px 2px #000; }
+.bcard.act { transform: translateY(-10px); }
+.bcard.act .bcard-pic { box-shadow: 0 0 0 2px #ffd166, 0 6px 16px rgba(0,0,0,.5); }
+.bcard-pic { position: relative; aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; background: #2a2230; box-shadow: 0 4px 12px rgba(0,0,0,.45); }
+.bcard-pic img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 10%; }
+.bcard.down .bcard-pic img { filter: grayscale(1) brightness(.5); }
+.bcard-stat { position: absolute; top: 4px; left: 4px; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 6px; color: #fff; }
+.bcard-down { position: absolute; inset: auto 0 40%; font: 700 14px var(--title); color: #fff; text-shadow: 0 1px 4px #000; }
+.bcard-dmg { position: absolute; inset: 30% 0 auto; font: 800 22px var(--serif); color: #ff8a8a; text-shadow: 0 0 2px #000, 0 2px 6px #000; animation: dmg-pop .55s ease-out forwards; }
+.bcard-dmg.miss { color: #cfd6e6; font-size: 14px; }
+.battle-result { position: relative; z-index: 6; margin: 0 4px 12px; background: rgba(255,251,246,.97); color: var(--ink); border-radius: 16px; padding: 16px; display: grid; gap: 10px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: rise .3s ease; }
+.battle-result .title { font: 700 20px var(--title); }
+.battle-result .reward-list { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; font-weight: 700; }
+.battle-result .sub { font-size: 14px; color: var(--ink-2); }
+@media (prefers-reduced-motion: reduce) { .battle * { animation: none !important; transition: none !important; } }

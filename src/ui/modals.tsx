@@ -1,13 +1,13 @@
 import { NovelFrame } from './StoryView';
-import { useEffect, useState } from 'react';
-import { chooseWish, levelCap, markSceneSeen, rankMultiplier, talk, wishRewardAmount, type FightResult } from '../core/engine';
+import { useState } from 'react';
+import { chooseWish, levelCap, markSceneSeen, rankMultiplier, talk, wishRewardAmount } from '../core/engine';
 import { fmt, fmtDuration } from '../core/format';
 import { ART } from '../data/art';
 import { bondContent } from '../data/bond-content';
 import { rankDef } from '../data/ranks';
 import { BOND_LEVELS, GIFT_BY_ID } from '../data/village';
 import { WISH_BY_ID } from '../data/wishes';
-import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
+import { YOKAI_BY_ID } from '../data/yokai';
 import type { ComboDef, GameState, ResourceKey } from '../core/types';
 import { Burst, LineIcon, RES_LABEL, ResIcon, VillageScene } from './icons';
 import { Portrait } from './Portrait';
@@ -115,67 +115,6 @@ export function PromoteModal({ rank, recruit, onClose }: { rank: number; recruit
 }
 
 /** 겨루기 결과. 세 판을 하나씩 보여 준다. */
-export function FightModal({ result, onClose }: { result: Extract<FightResult, { ok: true }>; onClose: () => void }) {
-  const [shown, setShown] = useState(0);
-  useEffect(() => {
-    if (shown >= result.rounds.length) return;
-    const t = setTimeout(() => {
-      setShown((n) => n + 1);
-      buzz(result.rounds[shown].won ? 15 : 40);
-    }, 650);
-    return () => clearTimeout(t);
-  }, [shown, result.rounds]);
-  const done = shown >= result.rounds.length;
-  const recruit = result.recruit ? YOKAI_BY_ID[result.recruit] : null;
-  return (
-    <Shell onClose={done ? onClose : undefined}>
-      <div className={`head ${done && result.won ? 'jade' : done ? 'night' : ''}`}>
-        <Burst />
-        <span className="ttuk-word">{!done ? '겨루기!' : result.won ? '해결!' : '아쉬워요'}</span>
-        {done && recruit ? <Frame id={recruit.id} /> : null}
-      </div>
-      <div className="title">{result.stage.foe}</div>
-      <div className="fight-rounds">
-        {result.rounds.map((r, i) => (
-          <div key={i} className={`fr ${i < shown ? (r.won ? 'win' : 'lose') : 'wait'}`}>
-            <span className="fr-pic">
-              <Portrait def={YOKAI_BY_ID[r.id]} />
-            </span>
-            <span className="fr-txt">
-              <b>{YOKAI_BY_ID[r.id].name}</b> · {STAT_LABEL[r.stat]} {fmt(r.mine)} vs {fmt(r.foe)}
-            </span>
-            <span className="fr-mark">{i < shown ? (r.won ? '승' : '패') : '…'}</span>
-          </div>
-        ))}
-      </div>
-      {done && result.won && (
-        <div className="reward-list">
-          <span>
-            <ResIcon kind="fame" />+{fmt(result.fame)}
-          </span>
-          <span>
-            <ResIcon kind="coin" />+{fmt(result.coin)}
-          </span>
-          {result.gift && <span style={{ fontSize: 15 }}>선물 〈{GIFT_BY_ID[result.gift].name}〉</span>}
-        </div>
-      )}
-      {done && !result.won && <div className="sub" style={{ marginTop: 10 }}>편성을 바꾸거나 식객을 더 키워서 다시 도전해요.</div>}
-      {done && recruit && (
-        <div className="bubble">
-          "{result.stage.chapter.boss.line}"
-          <br />
-          <b>{recruit.name}</b>이(가) 식객으로 합류했어요!
-        </div>
-      )}
-      <div className="actions">
-        <button className="btn hong wide" disabled={!done} onClick={onClose}>
-          확인
-        </button>
-      </div>
-    </Shell>
-  );
-}
-
 export function OfflineModal({ summary, onClose }: { summary: OfflineSummary; onClose: () => void }) {
   const keys = (Object.keys(summary.gained) as ResourceKey[]).filter((k) => summary.gained[k] > 0);
   return (

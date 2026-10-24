@@ -8,6 +8,7 @@ import { BOND_LEVELS, COMBOS, GIFTS, GIFT_BY_ID, WORKPLACES } from '../data/vill
 import { WISHES, WISH_BY_ID } from '../data/wishes';
 import { STARTERS, YOKAI, YOKAI_BY_ID } from '../data/yokai';
 import { nextRandom } from './rng';
+import { battleOdds, runBattle, type BattleLog, type BattleSetup } from './battle';
 import type {
   ComboDef,
   GameState,
@@ -510,6 +511,20 @@ export function partyChances(s: GameState, info: StageInfo, party: string[]): nu
   return info.rounds.map((r, i) => (party[i] && s.yokai[party[i]] ? winChance(statsOf(s, party[i])[r.stat], r.value) : 0));
 }
 
+/** 편성 순서대로 식객이 맡은 능력치로 상대와 싸운다 */
+export function battleSetup(s: GameState, info: StageInfo, party: string[]): BattleSetup {
+  return {
+    allies: info.rounds.map((r, i) => ({ id: party[i], stat: r.stat, power: party[i] && s.yokai[party[i]] ? statsOf(s, party[i])[r.stat] : 0 })),
+    foe: { name: info.foe, values: info.rounds.map((r) => r.value) },
+  };
+}
+
+/** 실제 전투를 여러 번 돌려 본 승률 */
+export function battleChance(s: GameState, info: StageInfo, party: string[]): number {
+  if (party.length !== 3 || party.some((id) => !s.yokai[id])) return 0;
+  return battleOdds(battleSetup(s, info, party));
+}
+
 /** 이길 확률이 가장 높은 편성 */
 export function bestParty(s: GameState, info: StageInfo): string[] {
   const ids = Object.keys(s.yokai);
@@ -533,17 +548,8 @@ export function bestParty(s: GameState, info: StageInfo): string[] {
   return best.map((i) => ids[i]).filter(Boolean);
 }
 
-export interface RoundResult {
-  stat: StatKey;
-  id: string;
-  mine: number;
-  foe: number;
-  chance: number;
-  won: boolean;
-}
-
 export type FightResult =
-  | { ok: true; won: boolean; stage: StageInfo; rounds: RoundResult[]; fame: number; coin: number; gift: string | null; recruit: string | null }
+  | { ok: true; won: boolean; stage: StageInfo; battle: BattleLog; fame: number; coin: number; gift: string | null; recruit: string | null }
   | Fail<'all-clear' | 'no-stamina' | 'bad-party'>;
 
 export function fight(s: GameState, now: number, party: string[]): [GameState, FightResult] {
@@ -558,15 +564,11 @@ export function fight(s: GameState, now: number, party: string[]): [GameState, F
   if (next.stamina.value >= B.staminaMax) next.stamina.lastRegen = now;
   next.stamina.value -= 1;
 
-  const rounds: RoundResult[] = info.rounds.map((r, i) => {
-    const mine = statsOf(next, party[i])[r.stat];
-    const chance = winChance(mine, r.value);
-    return { stat: r.stat, id: party[i], mine, foe: r.value, chance, won: roll(next) < chance };
-  });
-  const won = rounds.filter((r) => r.won).length >= 2;
+  const battle = runBattle(battleSetup(next, info, party), Math.floor(roll(next) * 4294967296));
+  const won = battle.won;
   if (!won) {
     next.totals.losses += 1;
-    return [next, { ok: true, won, stage: info, rounds, fame: 0, coin: 0, gift: null, recruit: null }];
+    return [next, { ok: true, won, stage: info, battle, fame: 0, coin: 0, gift: null, recruit: null }];
   }
   next.stage.index += 1;
   next.res.fame += info.fame;
@@ -574,5 +576,5 @@ export function fight(s: GameState, now: number, party: string[]): [GameState, F
   next.totals.wins += 1;
   const gift = GIFTS[Math.floor(roll(next) * GIFTS.length)].id;
   next.gifts[gift] = (next.gifts[gift] ?? 0) + 1;
-  return [next, { ok: true, won, stage: info, rounds, fame: info.fame, coin: info.coin, gift, recruit: null }];
+  return [next, { ok: true, won, stage: info, battle, fame: info.fame, coin: info.coin, gift, recruit: null }];
 }

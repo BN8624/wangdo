@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { bestParty, fight, ownedYokai, partyChance, partyChances, staminaRegenRemaining, stageInfo, statsOf, winChance } from '../core/engine';
+import { battleChance, bestParty, fight, ownedYokai, partyChances, staminaRegenRemaining, stageInfo, statsOf, winChance } from '../core/engine';
 import { fmt, fmtDuration } from '../core/format';
 import { BALANCE } from '../data/balance';
+import { BATTLE } from '../core/battle';
 import { STAGES_PER_CHAPTER } from '../data/stages';
 import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
 import type { GameState } from '../core/types';
@@ -40,7 +41,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
   }
 
   const chances = partyChances(view, info, party);
-  const total = partyChance(chances);
+  const total = battleChance(view, info, party);
   const regen = staminaRegenRemaining(view, now);
   const chapterStart = info.chapterIndex * STAGES_PER_CHAPTER;
 
@@ -99,7 +100,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
               {info.chapter.title.split(' · ')[0]} · {info.isBoss ? '대장' : `${info.number}번째 토벌`}
             </div>
             <div className="foe-name">{info.foe}</div>
-            <div className="soft" style={{ fontSize: 13 }}>세 판 중 두 판을 이기면 해결!</div>
+            <div className="soft" style={{ fontSize: 13 }}>{BATTLE.maxRounds}라운드 안에 쓰러뜨리면 해결!</div>
           </div>
         </div>
 
@@ -109,7 +110,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
             const def = id ? YOKAI_BY_ID[id] : null;
             return (
               <button key={i} className={`round ${choosing === i ? 'on' : ''}`} onClick={() => setChoosing(choosing === i ? null : i)}>
-                <span className="round-no">{i + 1}판</span>
+                <span className="round-no">{i + 1}번</span>
                 <span className="round-stat" style={{ background: SPEC_COLOR[r.stat] }}>
                   {STAT_LABEL[r.stat]}
                 </span>

@@ -1,4 +1,5 @@
 import { StoryView } from './StoryView';
+import { BattleView } from './BattleView';
 import { useEffect, useMemo, useState } from 'react';
 import { RESOURCE_KEYS, bestParty, partyChance, partyChances, power, promoteCheck, settle, stageInfo, talkReadyIn, unseenScene, type FightResult } from '../core/engine';
 import { fmt } from '../core/format';
@@ -10,7 +11,6 @@ import { IconSymbols, LineIcon, NavIcon, ResIcon } from './icons';
 import {
   BondUpModal,
   ComboModal,
-  FightModal,
   OfflineModal,
   PromoteModal,
   ReactModal,
@@ -143,7 +143,7 @@ export function App() {
       {top?.kind === 'offline' && <OfflineModal summary={top.summary} onClose={closeTop} />}
       {top?.kind === 'wish' && <WishModal view={view} onClose={closeTop} />}
       {top?.kind === 'promote' && <PromoteModal rank={top.rank} recruit={top.recruit} onClose={closeTop} />}
-      {top?.kind === 'fight' && <FightModal result={top.result} onClose={closeTop} />}
+      {top?.kind === 'fight' && <BattleView result={top.result} onClose={closeTop} />}
       {top?.kind === 'talk' && <TalkModal view={view} id={top.id} open={open} onClose={closeTop} />}
       {top?.kind === 'react' && <ReactModal {...top} open={open} onClose={closeTop} />}
       {top?.kind === 'bondup' && <BondUpModal id={top.id} level={top.level} open={open} onClose={closeTop} />}
