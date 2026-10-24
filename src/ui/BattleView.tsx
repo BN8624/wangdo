@@ -142,7 +142,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
         <div className="battle-shade" />
 
         <div ref={foeRef} className={`battle-foe ${foeDown ? 'down' : ''}`}>
-          {stage.isBoss ? <Art className="solo" src={ART.boss(chapterId)} alt={stage.foe} fallback={groupFoe} /> : groupFoe}
+          <Art className="solo" src={stage.isBoss ? ART.boss(chapterId) : ART.grunt(chapterId)} alt={stage.foe} fallback={groupFoe} />
         </div>
 
         {last?.t === 'hit' && last.target < 0 && actorStat && (

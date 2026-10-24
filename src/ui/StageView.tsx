@@ -6,8 +6,9 @@ import { BATTLE } from '../core/battle';
 import { STAGES_PER_CHAPTER } from '../data/stages';
 import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
 import type { GameState } from '../core/types';
+import { ART } from '../data/art';
 import { ChapterArt, FoeGroup, ResIcon } from './icons';
-import { Portrait } from './Portrait';
+import { Art, Portrait } from './Portrait';
 import { act } from './store';
 import { buzz, pushToast } from './toast';
 import type { ModalRequest } from './App';
@@ -93,7 +94,12 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
       <div className="card" style={{ marginTop: 14 }}>
         <div className="foe">
           <div className={`foe-pic ${info.isBoss ? 'boss' : ''}`}>
-            <FoeGroup chapterId={info.chapter.id} />
+            <Art
+              className="foe-face"
+              src={info.isBoss ? ART.boss(info.chapter.id) : ART.grunt(info.chapter.id)}
+              alt={info.foe}
+              fallback={<FoeGroup chapterId={info.chapter.id} />}
+            />
           </div>
           <div>
             <div className="foe-no">

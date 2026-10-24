@@ -302,6 +302,8 @@ b, strong { font-weight: 700; }
 .foe { display: flex; gap: 12px; align-items: center; }
 .foe-pic { width: 84px; height: 84px; border: 1.5px solid var(--line); overflow: hidden; flex: none; background: var(--paper); }
 .foe-pic.boss { background: var(--ink); }
+.foe-pic img.foe-face { width: 100%; height: 100%; object-fit: cover; object-position: 50% 0; transform: scale(1.45); transform-origin: 50% 4%; }
+.foe-pic:not(.boss):has(img.foe-face) { background: linear-gradient(160deg, #4a3a46, #231b24); }
 .foe-name { font-family: var(--title); font-size: 21px; line-height: 1.25; }
 .foe-no { font-size: 13px; color: var(--ink-2); }
 .rounds { display: grid; gap: 6px; margin-top: 12px; }
