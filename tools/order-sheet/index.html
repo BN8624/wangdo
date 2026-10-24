@@ -1,0 +1,364 @@
+<title>식객 주문서</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* 한지 바탕 위 먹색 글씨, 강조는 백설의 진홍. 위에서 아래로: 식객 고르기 → 시안 평가·표시 → 주문서 → 주문 내역 */
+:root {
+  --bg: #f6f1ea; --panel: #fffdf9; --ink: #2e2427; --ink-2: #77686a; --line: #e4d9d0;
+  --accent: #c43c4c; --accent-soft: #f7dfe2; --good: #3f8a6e; --good-soft: #dff0e8; --warn: #b07a26;
+  --display: 'Gowun Batang', 'Noto Serif KR', serif; --body: 'Noto Sans KR', 'Apple SD Gothic Neo', sans-serif;
+  --radius: 12px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #1b1618; --panel: #251f21; --ink: #f1e8e2; --ink-2: #b3a39f; --line: #3b3134;
+  --accent: #e2677a; --accent-soft: #4a2a30; --good: #6cc4a0; --good-soft: #20372e; --warn: #e0b060; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #1b1618; --panel: #251f21; --ink: #f1e8e2; --ink-2: #b3a39f; --line: #3b3134;
+  --accent: #e2677a; --accent-soft: #4a2a30; --good: #6cc4a0; --good-soft: #20372e; --warn: #e0b060; color-scheme: dark }
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--ink); font: 15px/1.6 var(--body); }
+.wrap { max-width: 880px; margin: 0 auto; padding-block: 20px 60px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 28px; }
+h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+h1 { font-size: 28px; }
+h2 { font-size: 21px; display: flex; align-items: baseline; gap: 10px; }
+h2 small { font: 13px var(--body); color: var(--ink-2); }
+p { margin: 0; }
+.lead { color: var(--ink-2); max-width: 60ch; }
+button, input, textarea, select { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tabs { display: flex; gap: 8px; flex-wrap: wrap; }
+.tab { border: 1px solid var(--line); background: var(--panel); border-radius: 999px; padding: 6px 16px; font-weight: 500; }
+.tab[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: #fff; }
+.status { font-size: 13px; color: var(--ink-2); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+.card { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); overflow: hidden; text-align: left; padding: 0; display: flex; flex-direction: column; }
+.card img { display: block; width: 100%; aspect-ratio: 2 / 3; object-fit: contain; background: color-mix(in srgb, var(--line) 35%, var(--panel)); }
+.card .meta { padding: 8px 10px 10px; display: grid; gap: 4px; }
+.card b { font-size: 14px; line-height: 1.35; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: var(--line); color: var(--ink); width: fit-content; }
+.chip.like { background: var(--good-soft); color: var(--good); }
+.chip.pick { background: var(--accent); color: #fff; }
+.chip.meh { background: var(--line); color: var(--ink-2); }
+.empty { border: 1px dashed var(--line); border-radius: var(--radius); padding: 18px; color: var(--ink-2); }
+.panel { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 16px; display: grid; gap: 16px; }
+.field { display: grid; gap: 8px; }
+.field > label, .field > .label { font-weight: 700; }
+.hint { font-size: 13px; color: var(--ink-2); }
+.seg { display: flex; flex-wrap: wrap; gap: 6px; }
+.seg button { border: 1px solid var(--line); background: var(--bg); border-radius: 999px; padding: 5px 12px; font-size: 14px; }
+.seg button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); font-weight: 700; }
+.slider { display: grid; grid-template-columns: 88px 1fr 34px; align-items: center; gap: 10px; }
+.slider span:first-child { font-weight: 500; }
+.slider output { font-variant-numeric: tabular-nums; text-align: right; font-weight: 700; }
+.slider output.changed { color: var(--accent); }
+.scale { display: grid; grid-template-columns: 88px 1fr 34px; gap: 10px; font-size: 12px; color: var(--ink-2); }
+.scale div { display: flex; justify-content: space-between; }
+input[type="range"] { width: 100%; accent-color: var(--accent); }
+textarea, input[type="text"] { width: 100%; border: 1px solid var(--line); background: var(--bg); border-radius: 10px; padding: 9px 11px; resize: vertical; }
+.base { display: flex; gap: 12px; align-items: center; }
+.base img { width: 64px; aspect-ratio: 2 / 3; object-fit: contain; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); }
+.btn { border: 1px solid var(--line); background: var(--panel); border-radius: 10px; padding: 8px 14px; font-weight: 500; }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 700; }
+.btn:disabled { opacity: .5; cursor: default; }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.refs { display: flex; gap: 8px; flex-wrap: wrap; }
+.refs img { width: 72px; height: 96px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+.orders { display: grid; gap: 10px; }
+.order { border: 1px solid var(--line); background: var(--panel); border-radius: var(--radius); padding: 12px 14px; display: grid; gap: 6px; }
+.order .top { display: flex; justify-content: space-between; gap: 8px; align-items: center; }
+.pill { font-size: 12px; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
+.pill.waiting { background: var(--accent-soft); color: var(--accent); }
+.pill.working { background: color-mix(in srgb, var(--warn) 20%, var(--panel)); color: var(--warn); }
+.pill.done { background: var(--good-soft); color: var(--good); }
+.order ul { margin: 0; padding-left: 18px; color: var(--ink-2); font-size: 14px; }
+.thumbs { display: flex; gap: 6px; flex-wrap: wrap; }
+.thumbs img { width: 54px; aspect-ratio: 2 / 3; object-fit: contain; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); }
+/* 시안 크게 보기 */
+dialog { border: none; padding: 0; background: transparent; max-width: min(760px, 100vw); width: 100%; }
+dialog::backdrop { background: rgba(20, 12, 14, .55); }
+.sheet { background: var(--panel); color: var(--ink); border-radius: 16px; padding: 14px; margin: 10px; display: grid; gap: 12px; max-height: calc(100dvh - 20px); overflow: auto; }
+.sheet .head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.stage { position: relative; width: 100%; max-width: 420px; margin: 0 auto; touch-action: none; }
+.stage img { display: block; width: 100%; height: auto; border-radius: 10px; background: color-mix(in srgb, var(--line) 35%, var(--panel)); user-select: none; -webkit-user-drag: none; }
+.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.stage.drawing { outline: 2px dashed var(--accent); outline-offset: 3px; border-radius: 10px; }
+.toast { position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 12px; font-size: 14px; max-width: calc(100vw - 32px); z-index: 20; }
+@media (prefers-reduced-motion: no-preference) { .toast { animation: rise .2s ease; } @keyframes rise { from { transform: translate(-50%, 8px); opacity: 0; } } }
+</style>
+
+<div class="wrap">
+  <header style="display:grid;gap:8px">
+    <h1>식객 주문서</h1>
+    <p class="lead">시안을 평가하고, 고칠 곳을 그림 위에 표시하고, 바꿀 정도를 숫자로 정해 보내 주세요. 보낸 주문은 Claude가 읽고 그대로 그려 와요.</p>
+    <p class="status" id="conn">불러오는 중…</p>
+  </header>
+
+  <nav class="tabs" id="tabs" aria-label="식객"></nav>
+
+  <section style="display:grid;gap:12px">
+    <h2>시안 <small id="candCount"></small></h2>
+    <p class="hint">눌러서 크게 보고, 좋아요·별로·이걸로를 고르거나 펜으로 고칠 곳에 표시하세요.</p>
+    <div class="grid" id="cands"></div>
+  </section>
+
+  <section style="display:grid;gap:12px" id="orderSection">
+    <h2>주문서</h2>
+    <form class="panel" id="orderForm" novalidate>
+      <div class="field">
+        <span class="label">기준 그림</span>
+        <div class="base" id="baseBox"></div>
+      </div>
+      <div class="field">
+        <span class="label">고치는 방식</span>
+        <div class="seg" id="modeSeg"></div>
+        <p class="hint" id="modeHint"></p>
+      </div>
+      <div class="field">
+        <span class="label">체형</span>
+        <p class="hint">5는 기준 그림 그대로예요. 숫자를 바꾼 것만 고쳐요.</p>
+        <div id="sliders" style="display:grid;gap:10px"></div>
+      </div>
+      <div id="picks" style="display:grid;gap:16px"></div>
+      <div class="field">
+        <label for="freeText">그 밖에 바꿀 것</label>
+        <textarea id="freeText" rows="3" placeholder="예: 꼬리를 조금 줄여 주세요 / 표정을 더 도도하게 / 부채 대신 담뱃대"></textarea>
+      </div>
+      <div class="field">
+        <span class="label">참고 그림</span>
+        <div class="row"><input type="file" id="refInput" accept="image/png,image/jpeg,image/webp" multiple><span class="hint" id="refHint"></span></div>
+        <div class="refs" id="refs"></div>
+      </div>
+      <div class="field">
+        <span class="label">몇 장 그릴까요</span>
+        <div class="seg" id="countSeg"></div>
+      </div>
+      <div class="row">
+        <button class="btn primary" type="submit" id="sendBtn">주문 보내기</button>
+        <button class="btn" type="button" id="resetBtn">처음대로</button>
+      </div>
+    </form>
+  </section>
+
+  <section style="display:grid;gap:12px">
+    <h2>주문 내역</h2>
+    <div class="orders" id="orders"></div>
+  </section>
+</div>
+
+<dialog id="viewer" aria-label="시안 크게 보기">
+  <div class="sheet">
+    <div class="head"><h3 id="vTitle"></h3><button class="btn" type="button" id="vClose">닫기</button></div>
+    <div class="stage" id="stage"><img id="vImg" alt=""><canvas id="vCanvas"></canvas></div>
+    <div class="row">
+      <button class="btn" type="button" id="penBtn" aria-pressed="false">펜으로 표시</button>
+      <button class="btn" type="button" id="undoBtn">한 획 지우기</button>
+      <button class="btn" type="button" id="clearBtn">표시 모두 지우기</button>
+    </div>
+    <div class="field">
+      <span class="label">평가</span>
+      <div class="seg" id="verdictSeg"></div>
+    </div>
+    <div class="field">
+      <label for="vNote">메모</label>
+      <textarea id="vNote" rows="3" placeholder="표시한 번호별로 적어 주세요. 예: 1 신발이 어색함 / 2 허벅지 조금 더"></textarea>
+    </div>
+    <div class="row">
+      <button class="btn primary" type="button" id="vSave">저장</button>
+      <button class="btn" type="button" id="vOrder">이 그림으로 주문하기</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+(() => {
+  const CHARS = [
+    { id: 'baekseol', name: '백설' }, { id: 'muyeong', name: '무영' }, { id: 'sodam', name: '소담' },
+  ];
+  const SLIDERS = [
+    { k: 'legs', label: '다리 길이', lo: '짧게', hi: '길게' },
+    { k: 'bust', label: '가슴', lo: '작게', hi: '크게' },
+    { k: 'waist', label: '허리', lo: '가늘게', hi: '굵게' },
+    { k: 'hips', label: '골반·엉덩이', lo: '작게', hi: '크게' },
+    { k: 'thighs', label: '허벅지', lo: '가늘게', hi: '굵게' },
+    { k: 'skin', label: '노출', lo: '덜', hi: '더' },
+  ];
+  const PICKS = [
+    { k: 'shoes', label: '신발', opts: ['그대로', '맨발', '꽃신', '버선과 꽃신', '낮은 샌들', '하이힐', '부츠', '메리제인'] },
+    { k: 'legwear', label: '다리 차림', opts: ['그대로', '맨다리', '흰 스타킹', '검은 스타킹', '니삭스', '살색 스타킹'] },
+    { k: 'face', label: '표정', opts: ['그대로', '놀리는 웃음', '도도함', '수줍음', '윙크', '차가움', '환한 웃음'] },
+    { k: 'pose', label: '자세', opts: ['그대로', '정면', '뒤돌아보기', '앉기', '걷기', '역동적으로'] },
+  ];
+  const MODES = [
+    { k: 'edit', label: '부분 수정', hint: '기준 그림을 그대로 두고, 표시한 곳과 바꾼 항목만 고쳐요. 나머지는 거의 안 바뀌어요.' },
+    { k: 'new', label: '새 시안', hint: '기준 그림의 캐릭터는 유지하고 새로 그려요. 자세·구도까지 바뀔 수 있어요.' },
+  ];
+  const VERDICTS = [{ k: 'like', label: '좋아요' }, { k: 'meh', label: '별로' }, { k: 'pick', label: '이걸로' }];
+  const VERDICT_LABEL = { like: '좋아요', meh: '별로', pick: '이걸로' };
+  const STATUS = { waiting: '대기', working: '그리는 중', done: '완료' };
+
+  const $ = (id) => document.getElementById(id);
+  let db = null, assets = null, canWrite = true;
+  let char = 'baekseol';
+  let cands = [], orders = [];
+  const blank = () => ({ base: null, mode: 'edit', sliders: Object.fromEntries(SLIDERS.map(s => [s.k, 5])), picks: Object.fromEntries(PICKS.map(p => [p.k, '그대로'])), freeText: '', refs: [], count: 2 });
+  let form = blank();
+
+  const imgUrl = (c) => c && c.asset ? '/_blob/' + c.asset : '';
+  function toast(text) { const t = document.createElement('div'); t.className = 'toast'; t.textContent = text; document.body.append(t); setTimeout(() => t.remove(), 3200); }
+  function el(tag, attrs = {}, ...kids) { const n = document.createElement(tag); for (const [k, v] of Object.entries(attrs)) { if (k === 'class') n.className = v; else if (k === 'text') n.textContent = v; else if (k.startsWith('on')) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v); } n.append(...kids.filter(Boolean)); return n; }
+  function seg(box, items, current, onPick) { box.replaceChildren(...items.map(it => el('button', { type: 'button', 'aria-pressed': String(it.k === current), onclick: () => onPick(it.k), text: it.label }))); }
+
+  // 식객 탭
+  function renderTabs() { $('tabs').replaceChildren(...CHARS.map(c => el('button', { class: 'tab', type: 'button', 'aria-pressed': String(c.id === char), text: c.name, onclick: () => { char = c.id; form = blank(); renderAll(); } }))); }
+
+  // 시안 목록
+  function renderCands() {
+    const list = cands.filter(c => c.char === char).sort((a, b) => (b.round || 0) - (a.round || 0) || String(a.label).localeCompare(String(b.label), 'ko'));
+    $('candCount').textContent = list.length ? list.length + '장' : '';
+    if (!list.length) { $('cands').replaceChildren(el('p', { class: 'empty', text: db ? '아직 시안이 없어요. 아래 주문서로 첫 주문을 넣으면 여기에 쌓여요.' : '시안을 불러오는 중이에요.' })); return; }
+    $('cands').replaceChildren(...list.map(c => el('button', { class: 'card', type: 'button', onclick: () => openViewer(c) },
+      el('img', { src: imgUrl(c), alt: c.label || '시안', loading: 'lazy' }),
+      el('div', { class: 'meta' },
+        el('b', { text: c.label || '시안' }),
+        el('span', { class: 'hint', text: (c.round ? c.round + '차' : '') + (c.marks && c.marks.length ? ' · 표시 ' + c.marks.length : '') }),
+        c.verdict ? el('span', { class: 'chip ' + c.verdict, text: VERDICT_LABEL[c.verdict] }) : null))));
+  }
+
+  // 주문서
+  function renderForm() {
+    const base = cands.find(c => c.id === form.base);
+    $('baseBox').replaceChildren(base ? el('img', { src: imgUrl(base), alt: '' }) : null,
+      el('div', {}, el('b', { text: base ? base.label : '고르지 않음' }), el('p', { class: 'hint', text: base ? '시안을 눌러 "이 그림으로 주문하기"로 바꿀 수 있어요.' : '시안을 눌러 "이 그림으로 주문하기"를 고르세요. 없으면 새로 그려요.' })));
+    seg($('modeSeg'), MODES, form.mode, (k) => { form.mode = k; renderForm(); });
+    $('modeHint').textContent = MODES.find(m => m.k === form.mode).hint;
+    $('sliders').replaceChildren(...SLIDERS.flatMap(s => {
+      const out = el('output', { class: form.sliders[s.k] !== 5 ? 'changed' : '', text: String(form.sliders[s.k]) });
+      const input = el('input', { type: 'range', min: '0', max: '10', step: '1', id: 's-' + s.k, value: String(form.sliders[s.k]), 'aria-label': s.label });
+      input.addEventListener('input', () => { form.sliders[s.k] = Number(input.value); out.textContent = input.value; out.className = form.sliders[s.k] !== 5 ? 'changed' : ''; });
+      return [el('div', { class: 'slider' }, el('span', { text: s.label }), input, out),
+              el('div', { class: 'scale' }, el('span'), el('div', {}, el('span', { text: s.lo }), el('span', { text: '그대로' }), el('span', { text: s.hi })), el('span'))];
+    }));
+    $('picks').replaceChildren(...PICKS.map(p => { const box = el('div', { class: 'seg' }); seg(box, p.opts.map(o => ({ k: o, label: o })), form.picks[p.k], (k) => { form.picks[p.k] = k; renderForm(); }); return el('div', { class: 'field' }, el('span', { class: 'label', text: p.label }), box); }));
+    $('freeText').value = form.freeText;
+    $('refs').replaceChildren(...form.refs.map(id => el('img', { src: '/_blob/' + id, alt: '참고 그림' })));
+    $('refHint').textContent = assets ? '' : '참고 그림 올리기는 이 그림의 편집자만 할 수 있어요.';
+    $('refInput').disabled = !assets;
+    seg($('countSeg'), [1, 2, 3, 4].map(n => ({ k: n, label: n + '장' })), form.count, (k) => { form.count = k; renderForm(); });
+    $('sendBtn').disabled = !db || !canWrite;
+  }
+
+  function summarize(o) {
+    const lines = [];
+    const base = cands.find(c => c.id === o.base);
+    lines.push((MODES.find(m => m.k === o.mode) || MODES[0]).label + (base ? ' · 기준: ' + base.label : ' · 기준 없음'));
+    for (const s of SLIDERS) { const v = o.sliders && o.sliders[s.k]; if (v != null && v !== 5) lines.push(s.label + ' ' + v + ' (' + (v > 5 ? s.hi : s.lo) + ')'); }
+    for (const p of PICKS) { const v = o.picks && o.picks[p.k]; if (v && v !== '그대로') lines.push(p.label + ': ' + v); }
+    if (o.freeText) lines.push(o.freeText);
+    if (o.refs && o.refs.length) lines.push('참고 그림 ' + o.refs.length + '장');
+    lines.push(o.count + '장 요청');
+    return lines;
+  }
+
+  function renderOrders() {
+    const list = orders.filter(o => o.char === char).sort((a, b) => String(b.createdAt).localeCompare(String(a.createdAt)));
+    if (!list.length) { $('orders').replaceChildren(el('p', { class: 'empty', text: '아직 보낸 주문이 없어요.' })); return; }
+    $('orders').replaceChildren(...list.map(o => el('article', { class: 'order' },
+      el('div', { class: 'top' }, el('b', { text: new Date(o.createdAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) }), el('span', { class: 'pill ' + (o.status || 'waiting'), text: STATUS[o.status] || '대기' })),
+      el('ul', {}, ...summarize(o).map(t => el('li', { text: t }))),
+      o.reply ? el('p', { class: 'hint', text: 'Claude: ' + o.reply }) : null,
+      o.results && o.results.length ? el('div', { class: 'thumbs' }, ...o.results.map(id => { const c = cands.find(x => x.id === id); return c ? el('img', { src: imgUrl(c), alt: c.label || '', title: c.label || '' }) : null; })) : null)));
+  }
+
+  function renderAll() { renderTabs(); renderCands(); renderForm(); renderOrders(); }
+
+  // 크게 보기 + 펜 표시
+  let cur = null, marks = [], drawing = false, stroke = null, penOn = false, verdict = null;
+  const canvas = $('vCanvas'), ctx = canvas.getContext('2d');
+  function sizeCanvas() { const r = $('vImg').getBoundingClientRect(); const dpr = window.devicePixelRatio || 1; canvas.width = Math.round(r.width * dpr); canvas.height = Math.round(r.height * dpr); drawMarks(); }
+  function drawMarks() {
+    const w = canvas.width, h = canvas.height; ctx.clearRect(0, 0, w, h);
+    const lw = Math.max(3, w / 120);
+    marks.forEach((m, i) => {
+      if (!m.length) return;
+      ctx.strokeStyle = '#e8243c'; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); m.forEach(([x, y], j) => j ? ctx.lineTo(x * w, y * h) : ctx.moveTo(x * w, y * h)); ctx.stroke();
+      const [x0, y0] = m[0]; const r = lw * 3.2;
+      ctx.fillStyle = '#e8243c'; ctx.beginPath(); ctx.arc(x0 * w, y0 * h, r, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(r * 1.3)}px sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(String(i + 1), x0 * w, y0 * h + 1);
+    });
+  }
+  function pt(e) { const r = canvas.getBoundingClientRect(); return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))].map(v => Math.round(v * 1000) / 1000); }
+  canvas.addEventListener('pointerdown', (e) => { if (!penOn) return; drawing = true; stroke = [pt(e)]; marks.push(stroke); canvas.setPointerCapture(e.pointerId); drawMarks(); });
+  canvas.addEventListener('pointermove', (e) => { if (!drawing) return; const p = pt(e); const last = stroke[stroke.length - 1]; if (Math.hypot(p[0] - last[0], p[1] - last[1]) > 0.004) { stroke.push(p); drawMarks(); } });
+  const end = () => { drawing = false; if (stroke && stroke.length < 2) { marks.pop(); drawMarks(); } stroke = null; };
+  canvas.addEventListener('pointerup', end); canvas.addEventListener('pointercancel', end);
+  function setPen(on) { penOn = on; $('penBtn').setAttribute('aria-pressed', String(on)); $('penBtn').textContent = on ? '펜 끄기' : '펜으로 표시'; $('stage').classList.toggle('drawing', on); canvas.style.pointerEvents = on ? 'auto' : 'none'; }
+  function openViewer(c) {
+    cur = c; marks = (c.marks || []).map(m => m.map(p => p.slice())); verdict = c.verdict || null;
+    $('vTitle').textContent = c.label || '시안'; $('vNote').value = c.note || '';
+    const pick = (k) => { verdict = verdict === k ? null : k; seg($('verdictSeg'), VERDICTS, verdict, pick); };
+    seg($('verdictSeg'), VERDICTS, verdict, pick);
+    setPen(false);
+    $('vImg').onload = sizeCanvas; $('vImg').src = imgUrl(c); $('vImg').alt = c.label || '';
+    $('vSave').disabled = !db || !canWrite;
+    $('viewer').showModal(); requestAnimationFrame(sizeCanvas);
+  }
+  window.addEventListener('resize', () => { if ($('viewer').open) sizeCanvas(); });
+  $('penBtn').onclick = () => setPen(!penOn);
+  $('undoBtn').onclick = () => { marks.pop(); drawMarks(); };
+  $('clearBtn').onclick = () => { marks = []; drawMarks(); };
+  $('vClose').onclick = () => $('viewer').close();
+  $('vSave').onclick = async () => {
+    if (!db || !cur) return;
+    $('vSave').disabled = true;
+    try { await db.doc('cands/' + cur.id).update({ verdict: verdict, note: $('vNote').value.trim(), marks: marks, reviewedAt: new Date().toISOString() }); toast('저장했어요'); $('viewer').close(); }
+    catch (e) { toast(e && e.code === 'invalid_argument' ? '저장할 권한이 없어요' : '저장하지 못했어요. 잠시 뒤 다시 눌러 주세요'); }
+    finally { $('vSave').disabled = false; }
+  };
+  $('vOrder').onclick = () => { if (!cur) return; form.base = cur.id; $('viewer').close(); renderForm(); $('orderSection').scrollIntoView({ behavior: 'smooth' }); };
+
+  $('freeText').addEventListener('input', (e) => { form.freeText = e.target.value; });
+  $('resetBtn').onclick = () => { form = blank(); renderForm(); };
+  $('refInput').addEventListener('change', async (e) => {
+    if (!assets) return;
+    for (const f of [...e.target.files].slice(0, 6)) {
+      try { const r = await assets.upload(f); form.refs.push(r.id); renderForm(); }
+      catch (err) { toast(err && err.code === 'too_large' ? '그림이 너무 커요(20MB까지)' : '참고 그림을 올리지 못했어요'); }
+    }
+    e.target.value = '';
+  });
+  $('orderForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (!db) return;
+    const changed = SLIDERS.some(s => form.sliders[s.k] !== 5) || PICKS.some(p => form.picks[p.k] !== '그대로') || form.freeText.trim() || form.refs.length;
+    const base = cands.find(c => c.id === form.base);
+    if (!changed && !(base && base.marks && base.marks.length)) { toast('바꿀 것을 하나 이상 정해 주세요'); return; }
+    $('sendBtn').disabled = true;
+    try {
+      await db.collection('orders').add({ char, base: form.base, mode: form.mode, sliders: form.sliders, picks: form.picks, freeText: form.freeText.trim(), refs: form.refs, count: form.count, status: 'waiting', createdAt: new Date().toISOString(), results: [] });
+      toast('주문을 보냈어요. 대화창에 "주문 확인"이라고 말해 주세요');
+      form = blank(); renderForm();
+    } catch (err) { toast(err && err.code === 'invalid_argument' ? '주문할 권한이 없어요' : '보내지 못했어요. 잠시 뒤 다시 눌러 주세요'); }
+    finally { $('sendBtn').disabled = !db || !canWrite; }
+  });
+
+  renderAll();
+
+  (async () => {
+    const c = window.claude;
+    if (!c || !c.use) { $('conn').textContent = '이 화면에서는 저장소에 연결할 수 없어요. claude.ai에서 열어 주세요.'; return; }
+    db = await c.use('db');
+    if (!db) { $('conn').textContent = '저장소에 연결하지 못했어요. 로그인한 상태로 다시 열어 주세요.'; renderAll(); return; }
+    assets = await c.use('assets');
+    const user = await c.use('user');
+    const w = user ? await user.can('data.write') : null;
+    canWrite = w !== false;
+    $('conn').textContent = canWrite ? '연결됨 · 평가와 주문은 바로 저장돼요' : '보기 전용이에요. 평가와 주문은 편집 권한이 있는 사람만 할 수 있어요.';
+    db.collection('cands').onSnapshot((s) => { cands = s.docs.map(d => ({ id: d.id, ...d.data() })); renderCands(); renderForm(); renderOrders(); }, () => { $('conn').textContent = '시안을 불러오지 못했어요. 새로고침해 주세요.'; });
+    db.collection('orders').onSnapshot((s) => { orders = s.docs.map(d => ({ id: d.id, ...d.data() })); renderOrders(); }, () => {});
+    renderAll();
+  })();
+})();
+</script>
