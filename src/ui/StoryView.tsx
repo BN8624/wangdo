@@ -9,7 +9,10 @@ import { act } from './store';
 import type { ModalRequest } from './App';
 /** 장면에 보일 인물: 폰 화면에서 크게 보이도록 가장 최근에 말한 식객 한 명. 아직 식객이 말하지 않았고 주인공만 말했으면 주인공 전신. */
 function sceneCast(cast: string[], spoken: StoryLine[]): string[] {
-    for (let i = spoken.length - 1; i >= 0; i--) if (cast.includes(spoken[i].who)) return [spoken[i].who];
+    for (let i = spoken.length - 1; i >= 0; i--) {
+        const who = spoken[i].show ?? spoken[i].who;
+        if (cast.includes(who)) return [who];
+    }
     if (spoken.some(l => l.who === 'me')) return [HERO_CAST];
     return [];
 }
@@ -22,7 +25,7 @@ export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }:
     children?: ReactNode;
     onClose?: () => void;
 }) {
-    const name = line?.who === 'me' ? '나' : line?.who.startsWith('npc:') ? line.who.slice(4) : YOKAI_BY_ID[line?.who ?? '']?.name;
+    const name = line?.as ?? (line?.who === 'me' ? '나' : line?.who.startsWith('npc:') ? line.who.slice(4) : YOKAI_BY_ID[line?.who ?? '']?.name);
     return <div className="vn" role="dialog" aria-label={title} onClick={onNext} tabIndex={0} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         onNext();

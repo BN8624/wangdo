@@ -163,6 +163,10 @@ export interface StoryLine {
   if?: string;
   /** 이 줄에서 화면 가운데 크게 보여 줄 물건 그림(art/item/<이름>.webp) */
   img?: string;
+  /** 이름표에 대신 띄울 호칭(이름을 밝히기 전 '???' 등) */
+  as?: string;
+  /** 해설 줄에서 이 인물을 화면에 세운다(등장 묘사 등) */
+  show?: string;
 }
 
 export interface StoryEffects {
