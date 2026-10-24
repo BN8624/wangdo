@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { FightResult } from '../core/engine';
 import { BATTLE, type BattleEvent, type Status } from '../core/battle';
-import type { StatKey } from '../core/types';
 import { fmt } from '../core/format';
 import { ART, foeArtPath } from '../data/art';
 import { GIFT_BY_ID } from '../data/village';
@@ -16,9 +15,6 @@ import { SPEC_COLOR } from './YokaiView';
 const PACE: Record<BattleEvent['t'], number> = { round: 420, skill: 760, hit: 560, miss: 480, heal: 560, status: 460, skip: 640, down: 700 };
 
 const STATUS_LABEL: Record<Status, string> = { stun: '기절', weak: '약화', guard: '방어', rally: '격려' };
-
-/** 맡은 능력치마다 다른 타격 효과 */
-const FX: Record<StatKey, string> = { might: 'slash', wit: 'burst', politics: 'seal', charm: 'bloom' };
 
 // 맞거나 덤빌 때 흔들림. key로 다시 그리면 그림이 깜빡여서 Web Animations로 그 자리에서 다시 튼다.
 const FOE_HIT: Keyframe[] = [
@@ -163,12 +159,14 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
           <Art className="solo" src={foeArtPath(stage)} alt={stage.foe} fallback={groupFoe} />
         </div>
 
+        {/* 능력치마다 다른 타격 효과 그림. 미리 불러 두고, 맞을 때마다 새로 띄운다 */}
+        <div hidden>
+          {[...new Set(battle.allies.map((a) => a.stat))].map((st) => (
+            <img key={st} src={ART.fx(st)} alt="" />
+          ))}
+        </div>
         {last?.t === 'hit' && last.target < 0 && actorStat && (
-          <div
-            key={`fx-${shown}`}
-            className={`battle-fx ${FX[actorStat]} ${last.crit || last.skill ? 'crit' : ''}`}
-            style={{ '--c': SPEC_COLOR[actorStat] } as CSSProperties}
-          />
+          <img key={`fx-${shown}`} className={`battle-fx ${last.crit || last.skill ? 'big' : ''}`} src={ART.fx(actorStat)} alt="" draggable={false} />
         )}
         {last?.t === 'hit' && (last.crit || last.target >= 0) && <div key={`flash-${shown}`} className={`battle-flash ${last.target >= 0 ? 'hurt' : ''}`} />}
         {last?.t === 'hit' && last.target < 0 && (
