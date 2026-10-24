@@ -31,8 +31,9 @@ export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }:
         onNext();
     } }}>
   <Art className="vn-bg scene-img" src={bg} fallback={<div className="art-placeholder vn-bg"/>}/>
+  {line?.cg && <img key={line.cg} className="vn-cg" src={ART.scene(line.cg)} alt=""/>}
   {line?.img && <img key={line.img} className="vn-item" src={ART.item(line.img)} alt=""/>}
-  <div className={`vn-cast ${line?.img ? 'dim-cast' : ''}`} data-n={cast.length}>{cast.map(id => <Art key={id} className={`vn-full ${cast.length > 1 ? (line?.who === id ? 'on' : 'off') : ''}`} src={ART.full(id)} alt={id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name}</div>}/>)}</div>
+  <div className={`vn-cast ${line?.img ? 'dim-cast' : ''}`} data-n={cast.length} hidden={!!line?.cg}>{cast.map(id => <Art key={id} className={`vn-full ${cast.length > 1 ? (line?.who === id ? 'on' : 'off') : ''}`} src={ART.full(id)} alt={id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name}</div>}/>)}</div>
   <div className="vn-title">{title}</div>{onClose && <button className="vn-close panel" onClick={e => { e.stopPropagation(); onClose(); }}>닫기</button>}
   <div className={`vn-box panel ${line?.who === 'me' ? 'with-face' : ''}`}>{line?.who === 'me' && <img className="vn-face" src={ART.heroFace} alt=""/>}{name && line?.who !== 'narration' && <div className="vn-name">{name}</div>}<div className="vn-text">{line?.text}</div>{children ?? <div className="vn-more">화면을 눌러 계속 ▾</div>}</div>
  </div>;

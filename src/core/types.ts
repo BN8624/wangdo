@@ -167,6 +167,8 @@ export interface StoryLine {
   as?: string;
   /** 해설 줄에서 이 인물을 화면에 세운다(등장 묘사 등) */
   show?: string;
+  /** 이 줄에서 화면 가득 보여 줄 이벤트 그림(art/scene/<이름>.webp). 인물·배경 대신 보인다 */
+  cg?: string;
 }
 
 export interface StoryEffects {

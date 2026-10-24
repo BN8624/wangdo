@@ -78,6 +78,8 @@ export function completeEpisode(s: GameState, ep: Episode, choices: (number | nu
 
 /** 이야기에 띄울 수 있는 물건 그림 */
 export const ITEMS = ['bangmangi', 'iou', 'emblem', 'shell', 'ledger', 'crack'];
+/** 이야기에 띄울 수 있는 이벤트 그림 */
+export const SCENES = ['e1-tree', 'e1-ondol', 'e1-coins', 'e2-collar', 'e2-tavern', 'e2-walk-mu', 'e2-walk-bs', 'e3-hide', 'e3-shell', 'e3-measure'];
 
 const BGS = ['village', 'palace', 'market', 'tavern', 'field', 'night', 'forest', 'hall', 'court', 'hut', 'villagenight'];
 
@@ -97,6 +99,7 @@ export function validateEpisode(ep: Episode, heroineIds: Set<string>): string[] 
       if (!l.text) errs.push(`${i + 1}장면에 빈 대사가 있어요`);
       if (/[一-鿿]/.test(l.text ?? '')) errs.push(`${i + 1}장면 대사에 한자가 있어요: ${l.text}`);
       if (l.img && !ITEMS.includes(l.img)) errs.push(`${i + 1}장면 img가 목록에 없어요: ${l.img}`);
+      if (l.cg && !SCENES.includes(l.cg)) errs.push(`${i + 1}장면 cg가 목록에 없어요: ${l.cg}`);
       if (l.show && !(sc.cast ?? []).includes(l.show)) errs.push(`${i + 1}장면 show가 cast에 없어요: ${l.show}`);
     }
     for (const o of sc.choice?.options ?? []) {

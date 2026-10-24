@@ -649,3 +649,8 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .vn-item { position: absolute; left: 50%; top: 42%; width: min(78vw, 340px); aspect-ratio: 1; object-fit: contain; transform: translate(-50%, -50%); z-index: 3; filter: drop-shadow(0 10px 24px rgba(0,0,0,.45)); pointer-events: none; }
 @media (prefers-reduced-motion: no-preference) { .vn-item { animation: item-pop .45s cubic-bezier(.2,1.4,.4,1); } @keyframes item-pop { from { opacity: 0; transform: translate(-50%, -46%) scale(.82); } } }
 .vn-cast.dim-cast { opacity: .25; transition: opacity .2s ease; }
+
+/* 이벤트 그림: 배경과 인물 대신 화면 가득 */
+.vn-cg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 30%; z-index: 1; }
+@media (prefers-reduced-motion: no-preference) { .vn-cg { animation: cg-in .5s ease; } @keyframes cg-in { from { opacity: 0; transform: scale(1.03); } } }
+.vn-title, .vn-close, .vn-box, .vn-item { z-index: 4; }

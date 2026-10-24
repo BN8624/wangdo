@@ -125,20 +125,24 @@
         {
           "who": "narration",
           "text": "무영이 성큼 다가와 내 멱살을 잡아 일으켰다. 코끝이 닿을 만큼 가까웠다. 쇠 냄새 아래로 뜻밖에 풀꽃 같은 향이 났다.",
-          "show": "muyeong"
+          "show": "muyeong",
+          "cg": "e2-collar"
         },
         {
           "who": "muyeong",
-          "text": "일어나시오. 아직 안 끝났소."
+          "text": "일어나시오. 아직 안 끝났소.",
+          "cg": "e2-collar"
         },
         {
           "who": "me",
-          "text": "아니, 끝났소. 임자는 날 칠 이유가 없잖소. 임자 돈을 떼먹은 놈은 따로 있으니까."
+          "text": "아니, 끝났소. 임자는 날 칠 이유가 없잖소. 임자 돈을 떼먹은 놈은 따로 있으니까.",
+          "cg": "e2-collar"
         },
         {
           "who": "narration",
           "text": "멱살을 쥔 손에서 힘이 빠졌다. 그녀가 처음으로 내 눈을 똑바로 보았다. 그리고 왜인지 먼저 눈을 피했다.",
-          "show": "muyeong"
+          "show": "muyeong",
+          "cg": "e2-collar"
         },
         {
           "who": "me",
@@ -183,39 +187,48 @@
         },
         {
           "who": "narration",
-          "text": "방망이를 두드리자 주막 천장 가득 먹빛 글씨가 퍼졌다. 흑운채 졸개들이 술잔을 든 채 고개를 들었다."
+          "text": "방망이를 두드리자 주막 천장 가득 먹빛 글씨가 퍼졌다. 흑운채 졸개들이 술잔을 든 채 고개를 들었다.",
+          "cg": "e2-tavern"
         },
         {
           "who": "narration",
-          "text": "\"통행세 중 두목이 몰래 챙긴 몫: 엽전 이천 냥.\" \"부하들 겨울 군량을 송 대감 댁에 팔아넘긴 값: 쌀 마흔 섬.\""
+          "text": "\"통행세 중 두목이 몰래 챙긴 몫: 엽전 이천 냥.\" \"부하들 겨울 군량을 송 대감 댁에 팔아넘긴 값: 쌀 마흔 섬.\"",
+          "cg": "e2-tavern"
         },
         {
           "who": "npc:흑운채 졸개",
-          "text": "……우리 겨울 군량을 팔았다고?"
+          "text": "……우리 겨울 군량을 팔았다고?",
+          "cg": "e2-tavern"
         },
         {
           "who": "npc:흑운채 두목",
-          "text": "거, 거짓이다! 무영! 저놈을 베라!"
+          "text": "거, 거짓이다! 무영! 저놈을 베라!",
+          "cg": "e2-tavern"
         },
         {
           "who": "muyeong",
-          "text": "두목. 하나만 묻겠소. \"약한 자에게서는 걷지 않는다.\" 그 맹세, 아직 지키고 있소?"
+          "text": "두목. 하나만 묻겠소. \"약한 자에게서는 걷지 않는다.\" 그 맹세, 아직 지키고 있소?",
+          "cg": "e2-tavern"
         },
         {
           "who": "narration",
-          "text": "두목은 대답하지 못했다. 그 침묵이 대답이었다."
+          "text": "두목은 대답하지 못했다. 그 침묵이 대답이었다.",
+          "cg": "e2-tavern"
         },
         {
           "who": "me",
-          "text": "갚아라."
+          "text": "갚아라.",
+          "cg": "e2-tavern"
         },
         {
           "who": "narration",
-          "text": "두목의 전대가 터지며 숨겨 둔 엽전과 쌀 표가 졸개들 발치로 쏟아졌다. 졸개들의 눈이 일제히 두목에게 향했다."
+          "text": "두목의 전대가 터지며 숨겨 둔 엽전과 쌀 표가 졸개들 발치로 쏟아졌다. 졸개들의 눈이 일제히 두목에게 향했다.",
+          "cg": "e2-tavern"
         },
         {
           "who": "narration",
-          "text": "두목은 창고지기와 함께 뒷문으로 굴러 나갔다. 아무도 쫓지 않았다. 이제 흑운채 졸개 모두가 그에게 받을 빚이 있었으니까."
+          "text": "두목은 창고지기와 함께 뒷문으로 굴러 나갔다. 아무도 쫓지 않았다. 이제 흑운채 졸개 모두가 그에게 받을 빚이 있었으니까.",
+          "cg": "e2-tavern"
         },
         {
           "who": "muyeong",
@@ -290,52 +303,62 @@
         {
           "who": "muyeong",
           "text": "임자, 걸음이 그게 뭐요. 이리 오시오.",
-          "if": "first_cup_muyeong"
+          "if": "first_cup_muyeong",
+          "cg": "e2-walk-mu"
         },
         {
           "who": "narration",
           "text": "무영이 내 팔을 제 어깨에 걸치더니 허리를 단단히 감아 안았다. 갑옷 너머로 그녀의 심장 소리가 전해졌다.",
-          "if": "first_cup_muyeong"
+          "if": "first_cup_muyeong",
+          "cg": "e2-walk-mu"
         },
         {
           "who": "muyeong",
           "text": "……나 대신 누가 나서 준 건, 처음이오.",
-          "if": "first_cup_muyeong"
+          "if": "first_cup_muyeong",
+          "cg": "e2-walk-mu"
         },
         {
           "who": "me",
           "text": "나선 건 아니오. 굴렀지.",
-          "if": "first_cup_muyeong"
+          "if": "first_cup_muyeong",
+          "cg": "e2-walk-mu"
         },
         {
           "who": "muyeong",
           "text": "그러니까 더 고맙소.",
-          "if": "first_cup_muyeong"
+          "if": "first_cup_muyeong",
+          "cg": "e2-walk-mu"
         },
         {
           "who": "baekseol",
           "text": "나리, 넘어지시겠어요. 제 팔 잡으세요.",
-          "if": "first_cup_baekseol"
+          "if": "first_cup_baekseol",
+          "cg": "e2-walk-bs"
         },
         {
           "who": "narration",
           "text": "백설이 내 팔에 팔짱을 끼고 몸을 바싹 붙였다. 얇은 비단 너머로 그녀의 체온이 그대로 전해졌다.",
-          "if": "first_cup_baekseol"
+          "if": "first_cup_baekseol",
+          "cg": "e2-walk-bs"
         },
         {
           "who": "baekseol",
           "text": "오늘 밤 아랫목 빚, 잊지 않으셨죠?",
-          "if": "first_cup_baekseol"
+          "if": "first_cup_baekseol",
+          "cg": "e2-walk-bs"
         },
         {
           "who": "me",
           "text": "술 취한 사람한테 이자를 받는 건 반칙이오.",
-          "if": "first_cup_baekseol"
+          "if": "first_cup_baekseol",
+          "cg": "e2-walk-bs"
         },
         {
           "who": "baekseol",
           "text": "그래서 지금 받으려고요.",
-          "if": "first_cup_baekseol"
+          "if": "first_cup_baekseol",
+          "cg": "e2-walk-bs"
         },
         {
           "who": "narration",
