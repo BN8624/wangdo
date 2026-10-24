@@ -2,18 +2,17 @@ import { useState, type ReactNode } from 'react';
 import { completeEpisode, lockReason, visibleLines } from '../core/story';
 import type { Episode, GameState, StoryLine } from '../core/types';
 import { EPISODES, EPISODE_BY_ID } from '../data/story';
-import { ART, HERO_CAST } from '../data/art';
+import { ART } from '../data/art';
 import { YOKAI_BY_ID } from '../data/yokai';
 import { Art, Portrait } from './Portrait';
 import { act } from './store';
 import type { ModalRequest } from './App';
-/** 장면에 보일 인물: 폰 화면에서 크게 보이도록 가장 최근에 말한 식객 한 명. 아직 식객이 말하지 않았고 주인공만 말했으면 주인공 전신. */
+/** 장면에 보일 인물: 폰 화면에서 크게 보이도록 가장 최근에 말했거나 등장한 식객 한 명. 주인공은 1인칭이라 화면에 나오지 않는다. */
 function sceneCast(cast: string[], spoken: StoryLine[]): string[] {
     for (let i = spoken.length - 1; i >= 0; i--) {
         const who = spoken[i].show ?? spoken[i].who;
         if (cast.includes(who)) return [who];
     }
-    if (spoken.some(l => l.who === 'me')) return [HERO_CAST];
     return [];
 }
 export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }: {
@@ -33,9 +32,9 @@ export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }:
   <Art className="vn-bg scene-img" src={bg} fallback={<div className="art-placeholder vn-bg"/>}/>
   {line?.cg && <img key={line.cg} className="vn-cg" src={ART.scene(line.cg)} alt=""/>}
   {line?.img && <img key={line.img} className="vn-item" src={ART.item(line.img)} alt=""/>}
-  <div className={`vn-cast ${line?.img ? 'dim-cast' : ''}`} data-n={cast.length} hidden={!!line?.cg}>{cast.map(id => <Art key={id} className={`vn-full ${cast.length > 1 ? (line?.who === id ? 'on' : 'off') : ''}`} src={ART.full(id)} alt={id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name}</div>}/>)}</div>
+  <div className={`vn-cast ${line?.img ? 'dim-cast' : ''}`} data-n={cast.length} hidden={!!line?.cg}>{cast.map(id => <Art key={id} className={`vn-full ${cast.length > 1 ? (line?.who === id ? 'on' : 'off') : ''}`} src={ART.full(id)} alt={YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{YOKAI_BY_ID[id]?.name}</div>}/>)}</div>
   <div className="vn-title">{title}</div>{onClose && <button className="vn-close panel" onClick={e => { e.stopPropagation(); onClose(); }}>닫기</button>}
-  <div className={`vn-box panel ${line?.who === 'me' ? 'with-face' : ''}`}>{line?.who === 'me' && <img className="vn-face" src={ART.heroFace} alt=""/>}{name && line?.who !== 'narration' && <div className="vn-name">{name}</div>}<div className="vn-text">{line?.text}</div>{children ?? <div className="vn-more">화면을 눌러 계속 ▾</div>}</div>
+  <div className="vn-box panel">{name && line?.who !== 'narration' && <div className="vn-name">{name}</div>}<div className="vn-text">{line?.text}</div>{children ?? <div className="vn-more">화면을 눌러 계속 ▾</div>}</div>
  </div>;
 }
 export function StoryView({ view, episode, onClose, open }: {

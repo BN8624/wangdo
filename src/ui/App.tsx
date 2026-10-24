@@ -6,8 +6,7 @@ import type { HintTarget } from '../core/hints';
 import type { ComboDef } from '../core/types';
 import { HomeView, RankSheet } from './HomeView';
 import { rankDef } from '../data/ranks';
-import { ART } from '../data/art';
-import { IconSymbols, NavIcon, ResIcon } from './icons';
+import { IconSymbols, LineIcon, NavIcon, ResIcon } from './icons';
 import {
   BondUpModal,
   ComboModal,
@@ -103,7 +102,7 @@ export function App() {
       <IconSymbols />
       <header className="topbar" data-guide="res">
         <button className="rank-btn" data-guide="promote" onClick={() => setRankOpen(true)}>
-          <span className="emb"><img src={ART.heroFace} alt="" />{promoteCheck(view).ok && <i className="badge">↑</i>}</span>
+          <span className="emb"><LineIcon name="crown" size={22} />{promoteCheck(view).ok && <i className="badge">↑</i>}</span>
           <span className="rk"><small>{rankDef(view.rank).title}</small><b>권세 {fmt(power(view))}</b></span>
         </button>
         <div className="pills">

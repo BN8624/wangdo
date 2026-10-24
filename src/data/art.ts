@@ -64,13 +64,8 @@ export const ART = {
   foe: (id: string) => `art/foe/${id}.webp`,
   item: (key: string) => `art/item/${key}.webp`,
   scene: (key: string) => `art/scene/${key}.webp`,
-  /** 주인공 "나": 전신과 대사창·상태줄에 쓰는 얼굴 */
-  heroFull: 'art/full/hero.webp',
-  heroFace: 'art/face/hero.webp',
 };
 
-/** 이야기 장면에서 주인공 전신을 가리키는 배역 id */
-export const HERO_CAST = 'hero';
 
 /** 카드·목록에 쓰는 초상(카드 그림) */
 export const portraitPath = ART.card;
@@ -106,7 +101,6 @@ const FOES: Record<string, string> = {
 };
 
 export const ART_ASSETS: ArtAsset[] = [
-  { id: 'full-hero', kind: 'full', out: ART.heroFull, subject: 'the male protagonist, a handsome adult Korean woodcutter around 29 with messy black hair and a sly friendly grin, white shirt with rolled sleeves, brown hemp vest with a crossed collar, axe on his shoulder, a black dokkaebi club with a red tassel at his belt' },
   ...YOKAI.flatMap((y): ArtAsset[] => [
     { id: `full-${y.id}`, kind: 'full', out: ART.full(y.id), subject: `${y.kind}. ${y.artSubject}` },
     { id: `card-${y.id}`, kind: 'card', out: ART.card(y.id), subject: `${y.kind}. ${y.artSubject}` },
