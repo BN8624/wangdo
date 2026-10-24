@@ -83,6 +83,7 @@ const BG: Record<string, string> = {
   forest: 'a deep misty pine forest with shafts of light and an old shrine',
   hall: 'the interior of a county magistrate office (gwana) with a raised dais, folding screen and petition desk',
   hut: 'the inside of a modest thatched-roof cottage room at night, warm low oil-lamp light, paper sliding doors, a folded blanket on the heated floor',
+  villagenight: 'Dalgol mountain village at night, thatched houses around a dirt square, a big zelkova tree, torches and paper lanterns, full moon',
   court: 'the royal throne hall with a sun-and-moon folding screen behind the empty throne, red pillars and gold light',
 };
 

@@ -7,11 +7,11 @@ import { YOKAI_BY_ID } from '../data/yokai';
 import { Art, Portrait } from './Portrait';
 import { act } from './store';
 import type { ModalRequest } from './App';
-/** 장면에 보일 인물: 이미 말한 식객. 아직 식객이 말하지 않았고 주인공만 말했으면 주인공 전신. */
+/** 장면에 보일 인물: 폰 화면에서 크게 보이도록 가장 최근에 말한 식객 한 명. 아직 식객이 말하지 않았고 주인공만 말했으면 주인공 전신. */
 function sceneCast(cast: string[], spoken: StoryLine[]): string[] {
-    const shown = cast.filter(id => spoken.some(l => l.who === id));
-    if (shown.length === 0 && spoken.some(l => l.who === 'me')) return [HERO_CAST];
-    return shown;
+    for (let i = spoken.length - 1; i >= 0; i--) if (cast.includes(spoken[i].who)) return [spoken[i].who];
+    if (spoken.some(l => l.who === 'me')) return [HERO_CAST];
+    return [];
 }
 export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }: {
     title: string;
@@ -28,7 +28,7 @@ export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }:
         onNext();
     } }}>
   <Art className="vn-bg scene-img" src={bg} fallback={<div className="art-placeholder vn-bg"/>}/>
-  <div className="vn-cast">{cast.map(id => <Art key={id} className="vn-full" src={ART.full(id)} alt={id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name}</div>}/>)}</div>
+  <div className="vn-cast" data-n={cast.length}>{cast.map(id => <Art key={id} className={`vn-full ${cast.length > 1 ? (line?.who === id ? 'on' : 'off') : ''}`} src={ART.full(id)} alt={id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{id === HERO_CAST ? '나' : YOKAI_BY_ID[id]?.name}</div>}/>)}</div>
   <div className="vn-title">{title}</div>{onClose && <button className="vn-close panel" onClick={e => { e.stopPropagation(); onClose(); }}>닫기</button>}
   <div className={`vn-box panel ${line?.who === 'me' ? 'with-face' : ''}`}>{line?.who === 'me' && <img className="vn-face" src={ART.heroFace} alt=""/>}{name && line?.who !== 'narration' && <div className="vn-name">{name}</div>}<div className="vn-text">{line?.text}</div>{children ?? <div className="vn-more">화면을 눌러 계속 ▾</div>}</div>
  </div>;

@@ -635,3 +635,12 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .home .card-stage .heroine-art { position: absolute; inset: 0; display: block; }
 .home .card-stage .heroine-card { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
 .home .card-stage .nameplate { left: 10px; bottom: 12px; }
+
+/* 여러 명이 서면 줄이지 않고 겹쳐 세운다. 말하는 사람만 밝게 앞으로. */
+.vn-cast .vn-full { flex: 0 0 auto; transition: filter .2s ease; }
+.vn-cast[data-n="2"] .vn-full { width: 62%; }
+.vn-cast[data-n="2"] .vn-full + .vn-full { margin-left: -24%; }
+.vn-cast[data-n="3"] .vn-full { width: 56%; }
+.vn-cast[data-n="3"] .vn-full + .vn-full { margin-left: -28%; }
+.vn-cast .vn-full.on { position: relative; z-index: 2; }
+.vn-cast .vn-full.off { filter: brightness(.68) saturate(.85); }
