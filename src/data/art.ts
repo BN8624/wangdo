@@ -62,6 +62,7 @@ export const ART = {
   bg: (key: string) => `art/bg/${key}.webp`,
   chapter: (id: string) => `art/banner/${id}.webp`,
   foe: (id: string) => `art/foe/${id}.webp`,
+  item: (key: string) => `art/item/${key}.webp`,
   /** 주인공 "나": 전신과 대사창·상태줄에 쓰는 얼굴 */
   heroFull: 'art/full/hero.webp',
   heroFace: 'art/face/hero.webp',

@@ -76,6 +76,9 @@ export function completeEpisode(s: GameState, ep: Episode, choices: (number | nu
   return [next, { recruit, bondUps }];
 }
 
+/** 이야기에 띄울 수 있는 물건 그림 */
+export const ITEMS = ['bangmangi', 'iou', 'emblem'];
+
 const BGS = ['village', 'palace', 'market', 'tavern', 'field', 'night', 'forest', 'hall', 'court', 'hut', 'villagenight'];
 
 /** 화 파일이 형식에 맞는지 검사한다. 문제가 없으면 빈 배열 */
@@ -93,6 +96,7 @@ export function validateEpisode(ep: Episode, heroineIds: Set<string>): string[] 
       if (!ok) errs.push(`${i + 1}장면 who가 이상해요: ${l.who}`);
       if (!l.text) errs.push(`${i + 1}장면에 빈 대사가 있어요`);
       if (/[一-鿿]/.test(l.text ?? '')) errs.push(`${i + 1}장면 대사에 한자가 있어요: ${l.text}`);
+      if (l.img && !ITEMS.includes(l.img)) errs.push(`${i + 1}장면 img가 목록에 없어요: ${l.img}`);
     }
     for (const o of sc.choice?.options ?? []) {
       for (const id of Object.keys(o.effects?.bond ?? {})) if (!heroineIds.has(id)) errs.push(`선택지 bond에 없는 식객: ${id}`);

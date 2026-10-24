@@ -161,6 +161,8 @@ export interface StoryLine {
   text: string;
   /** 이 깃발이 있을 때만 나오는 줄 */
   if?: string;
+  /** 이 줄에서 화면 가운데 크게 보여 줄 물건 그림(art/item/<이름>.webp) */
+  img?: string;
 }
 
 export interface StoryEffects {
