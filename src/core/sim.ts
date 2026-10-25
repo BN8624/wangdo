@@ -4,8 +4,7 @@
 import {
   MINUTE,
   settle,
-  battleChance,
-  bestParty,
+  partyPlan,
   chooseWish,
   feast,
   feastCost,
@@ -40,7 +39,7 @@ import { completeEpisode, isUnlocked, nextEpisode } from './story';
 import { WORKPLACES } from '../data/village';
 import { WISH_BY_ID } from '../data/wishes';
 import { YOKAI_BY_ID } from '../data/yokai';
-import type { GameState, StageInfo, WorkplaceId } from './types';
+import type { GameState, WorkplaceId } from './types';
 
 const HOUR = 60 * MINUTE;
 
@@ -103,22 +102,6 @@ export function playSession(s: GameState, now: number): GameState {
   return arrange(s, now);
 }
 
-// 추천 편성 계산은 무거우므로, 토벌과 식객 능력치가 같으면 앞서 계산한 결과를 다시 쓴다.
-const plans = new Map<string, { party: string[]; chance: number }>();
-function planFight(s: GameState, info: StageInfo): { party: string[]; chance: number } {
-  const key = `${info.index}|${Object.keys(s.yokai)
-    .map((id) => Object.values(statsOf(s, id)).join(','))
-    .join('|')}`;
-  let plan = plans.get(key);
-  if (!plan) {
-    const party = bestParty(s, info);
-    plan = { party, chance: battleChance(s, info, party) };
-    if (plans.size > 5000) plans.clear();
-    plans.set(key, plan);
-  }
-  return plan;
-}
-
 function step(s: GameState, now: number): GameState {
   if (s.wish.pending) {
     const wish = WISH_BY_ID[s.wish.pending.id];
@@ -139,7 +122,7 @@ function step(s: GameState, now: number): GameState {
 
   const info = stageInfo(s.stage.index);
   if (info && s.stamina.value >= 1) {
-    const { party, chance } = planFight(s, info);
+    const { party, chance } = partyPlan(s, info);
     if (chance >= 0.45) {
       const [after, r] = fight(s, now, party);
       if (r.ok) return arrange(after, now);

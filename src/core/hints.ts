@@ -1,5 +1,5 @@
 // 고을 화면의 "다음 할 일" 한 줄. 지금 가장 도움이 되는 행동 하나를 고른다.
-import { battleChance, bestParty, feastCost, nextRank, power, promoteCheck, slotsPerWorkplace, stageInfo, talkReadyIn, unseenScene } from './engine';
+import { feastCost, nextRank, partyPlan, power, promoteCheck, slotsPerWorkplace, stageInfo, talkReadyIn, unseenScene } from './engine';
 import { fmt } from './format';
 import { WORKPLACES } from '../data/village';
 import { YOKAI_BY_ID } from '../data/yokai';
@@ -26,7 +26,7 @@ export function nextHint(s: GameState, now: number): Hint {
   const talker = ids.find((id) => talkReadyIn(s, id, now) === 0);
   if (talker) return { text: `${YOKAI_BY_ID[talker].name}이(가) 이야기하고 싶어 해요.`, target: 'yokai' };
   const info = stageInfo(s.stage.index);
-  if (info && s.stamina.value >= 1 && battleChance(s, info, bestParty(s, info)) >= 0.5) {
+  if (info && s.stamina.value >= 1 && partyPlan(s, info).chance >= 0.5) {
     return { text: '이길 만한 토벌이 있어요. 식객들과 출동해요!', target: 'stage' };
   }
   const target = nextRank(s);

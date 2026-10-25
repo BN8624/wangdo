@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { fmt } from '../core/format';
 import { completeEpisode, lockReason, visibleLines } from '../core/story';
 import type { Episode, GameState, StoryLine } from '../core/types';
 import { EPISODES, EPISODE_BY_ID } from '../data/story';
@@ -84,6 +85,6 @@ function EpisodeViewer({ ep, view, onClose, open }: {
             finish();
     };
     if (finished)
-        return <><div className="dim"/><div className="modal episode-reward" role="dialog" aria-label="이야기 보상"><div className="title">{ep.title} · 끝</div>{wasDone ? <div className="sub">다시 본 이야기</div> : <div className="reward-list"><span>엽전 +{ep.reward?.coin ?? 0}</span><span>곡식 +{ep.reward?.grain ?? 0}</span><span>명성 +{ep.reward?.fame ?? 0}</span></div>}{recruit && <><div className="recruit-card"><Portrait def={YOKAI_BY_ID[recruit]}/></div><div className="title">{YOKAI_BY_ID[recruit].name} 합류</div></>}<div className="actions"><button className="btn hong" onClick={() => { onClose(); ups.forEach(u => open({ kind: 'bondup', ...u })); }}>궁궐로</button></div></div></>;
+        return <><div className="dim"/><div className="modal episode-reward" role="dialog" aria-label="이야기 보상"><div className="title">{ep.title} · 끝</div>{wasDone ? <div className="sub">다시 본 이야기</div> : <div className="reward-list">{ep.reward?.coin ? <span>엽전 +{fmt(ep.reward.coin)}</span> : null}{ep.reward?.grain ? <span>곡식 +{fmt(ep.reward.grain)}</span> : null}{ep.reward?.fame ? <span>명성 +{fmt(ep.reward.fame)}</span> : null}</div>}{recruit && <><div className="recruit-card"><Portrait def={YOKAI_BY_ID[recruit]}/></div><div className="title">{YOKAI_BY_ID[recruit].name} 합류</div></>}<div className="actions"><button className="btn hong" onClick={() => { onClose(); ups.forEach(u => open({ kind: 'bondup', ...u })); }}>궁궐로</button></div></div></>;
     return <NovelFrame title={`${ep.season}부 ${ep.no}화 · ${ep.title}`} bg={sc.cg ?? ART.bg(sc.bg)} cast={sc.cg ? [] : sceneCast(sc.cast ?? [], lines.slice(0, index + 1))} line={reply ? { who: 'narration', text: reply } : lines[index]} onNext={next} onClose={view.introSeen ? onClose : undefined}>{choosing ? <div className="vn-choices" onClick={e => e.stopPropagation()}><p>{sc.choice!.prompt}</p>{sc.choice!.options.map((o, i) => <button className="choice" key={i} onClick={() => { setChoices(c => c.map((v, j) => j === scene ? i : v)); setReply(o.reply ?? '선택을 마쳤습니다.'); }}>{o.text}</button>)}</div> : undefined}</NovelFrame>;
 }

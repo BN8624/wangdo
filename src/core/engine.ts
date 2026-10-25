@@ -577,6 +577,24 @@ export function bestParty(s: GameState, info: StageInfo): string[] {
   return best.length === 3 ? best : quickParty(s, info, ids);
 }
 
+// 추천 편성 계산은 무거우므로(실제 전투를 여러 번 돌린다), 토벌과 식객 능력치가 같으면 앞서 계산한 결과를 다시 쓴다.
+const plans = new Map<string, { party: string[]; chance: number }>();
+
+/** 추천 편성과 그 편성의 승률. 화면 알림처럼 자주 묻는 곳에서 쓴다. */
+export function partyPlan(s: GameState, info: StageInfo): { party: string[]; chance: number } {
+  const key = `${info.index}|${Object.keys(s.yokai)
+    .map((id) => `${id}:${Object.values(statsOf(s, id)).join(',')}`)
+    .join('|')}`;
+  let plan = plans.get(key);
+  if (!plan) {
+    const party = bestParty(s, info);
+    plan = { party, chance: battleChance(s, info, party) };
+    if (plans.size > 2000) plans.clear();
+    plans.set(key, plan);
+  }
+  return plan;
+}
+
 export type FightResult =
   | { ok: true; won: boolean; stage: StageInfo; battle: BattleLog; fame: number; coin: number; gift: string | null; recruit: string | null }
   | Fail<'all-clear' | 'no-stamina' | 'bad-party'>;
