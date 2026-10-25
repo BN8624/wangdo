@@ -279,7 +279,7 @@ export function SceneViewer({ id, level, onClose }: { id: string; level: number;
       onClose();
     }
   };
-  return <NovelFrame title={`${name} · ${level}. ${scene.title}`} bg={level===3||level===5?ART.cg(id,level):ART.bg('night')} cast={level===3||level===5?[]:[id]} line={{who:line.who==='her'?id:line.who,text:line.text}} onNext={next} onClose={onClose} />;
+  return <NovelFrame title={`${name} · ${level}. ${scene.title}`} bg={level===3||level===5?ART.cg(id,level):ART.bg(level===4?'hut':'night')} cast={level===3||level===5?[]:[id]} line={{who:line.who==='her'?id:line.who,text:line.text}} onNext={next} onClose={onClose} />;
 }
 
 export function ComboModal({ combo, onClose }: { combo: ComboDef; onClose: () => void }) {

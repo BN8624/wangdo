@@ -129,6 +129,6 @@ export const ART_ASSETS: ArtAsset[] = [
   ...CHAPTERS.map((c): ArtAsset => ({ id: `foe-${c.id}`, kind: 'foe', out: ART.foe(c.id), subject: FOES[c.id] })),
   ...YOKAI.flatMap((y): ArtAsset[] => [
     { id: `cg-${y.id}-3`, kind: 'cg', out: ART.cg(y.id, 3), subject: `${y.kind}. ${y.artSubject}; first-person view on a riverside outing, she confides a secret to the viewer with a shy, honest look` },
-    { id: `cg-${y.id}-5`, kind: 'cg', out: ART.cg(y.id, 5), subject: `${y.kind}. ${y.artSubject}; first-person view on a festival night under lanterns, she holds the viewer's hand and leans close with a tender smile` },
+    { id: `cg-${y.id}-5`, kind: 'cg', out: ART.cg(y.id, 5), subject: `${y.kind}. ${y.artSubject}; first-person view in a quiet room at night after a festival, low lamplight, her outfit loosened at the collar, she leans close to the viewer with an intimate tender smile` },
   ]),
 ];
