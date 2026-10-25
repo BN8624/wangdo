@@ -9,7 +9,7 @@ import { WISHES, WISH_BY_ID } from '../data/wishes';
 import { SKILLS } from '../data/skills';
 import { STARTERS, YOKAI, YOKAI_BY_ID } from '../data/yokai';
 import { nextRandom } from './rng';
-import { battleOdds, runBattle, type BattleLog, type BattleSetup } from './battle';
+import { battleOdds, runBattle, type BattleLog, type BattleSetup, type SkillKind } from './battle';
 import type {
   ComboDef,
   GameState,
@@ -455,6 +455,9 @@ export function chooseWish(s: GameState, now: number, choice: 0 | 1): [GameState
 
 // ───────────────────────── 소동(겨루기) ─────────────────────────
 
+/** 졸개가 가질 수 있는 약점 기술 */
+const WEAK_KINDS: SkillKind[] = ['strike', 'stun', 'guard', 'weaken', 'rally'];
+
 export function stageInfo(index: number): StageInfo | null {
   if (index < 0 || index >= TOTAL_STAGES) return null;
   const chapterIndex = Math.floor(index / STAGES_PER_CHAPTER);
@@ -482,6 +485,8 @@ export function stageInfo(index: number): StageInfo | null {
     }
   }
   const factors = isBoss ? [1.15, 1, 0.9] : [0.85, 1, 1.15].sort(() => pick() - 0.5);
+  // 약점 기술: 대장은 장마다 정해 두고, 졸개는 순번으로 고른다(치유는 약점이 되지 않는다)
+  const weak = isBoss ? chapter.boss.weak : WEAK_KINDS[Math.floor(pick() * WEAK_KINDS.length)];
   const base = B.foeBase * Math.pow(B.foeGrowth, index) * (isBoss ? B.bossMult : 1);
   return {
     index,
@@ -491,6 +496,7 @@ export function stageInfo(index: number): StageInfo | null {
     isBoss,
     foe: isBoss ? chapter.boss.name : chapter.foes[number - 1],
     rounds: stats.slice(0, 3).map((stat, i) => ({ stat, value: Math.round(base * factors[i]) })),
+    weak,
     fame: Math.round(B.stageFameBase * Math.pow(B.stageFameGrowth, index) * rewardMult),
     coin: Math.round(B.stageCoinBase * Math.pow(B.stageCoinGrowth, index) * rewardMult),
   };
@@ -521,7 +527,7 @@ export function battleSetup(s: GameState, info: StageInfo, party: string[]): Bat
       power: party[i] && s.yokai[party[i]] ? statsOf(s, party[i])[r.stat] : 0,
       skill: SKILLS[party[i]],
     })),
-    foe: { name: info.foe, values: info.rounds.map((r) => r.value) },
+    foe: { name: info.foe, values: info.rounds.map((r) => r.value), weak: info.weak },
   };
 }
 
@@ -614,8 +620,13 @@ export function fight(s: GameState, now: number, party: string[]): [GameState, F
   const battle = runBattle(battleSetup(next, info, party), Math.floor(roll(next) * 4294967296));
   const won = battle.won;
   if (!won) {
+    // 져도 빈손은 아니다: 이겼을 때 보상의 일부를 위로금으로
+    const fame = Math.round(info.fame * B.loseRewardRatio);
+    const coin = Math.round(info.coin * B.loseRewardRatio);
+    next.res.fame += fame;
+    next.res.coin += coin;
     next.totals.losses += 1;
-    return [next, { ok: true, won, stage: info, battle, fame: 0, coin: 0, gift: null, recruit: null }];
+    return [next, { ok: true, won, stage: info, battle, fame, coin, gift: null, recruit: null }];
   }
   next.stage.index += 1;
   next.res.fame += info.fame;

@@ -1,4 +1,5 @@
 // 게임 전체에서 쓰는 타입. 상태는 JSON으로 그대로 저장할 수 있어야 한다.
+import type { SkillKind } from './battle';
 
 export type StatKey = 'might' | 'wit' | 'politics' | 'charm';
 export type Stats = Record<StatKey, number>;
@@ -94,7 +95,8 @@ export interface ChapterDef {
   foes: string[];
   /** foes마다 쓸 졸개 그림 번호(1~3) */
   grunts: number[];
-  boss: { name: string; stat: StatKey; line: string };
+  /** weak: 대장이 약한 기술 종류 */
+  boss: { name: string; stat: StatKey; line: string; weak: SkillKind };
 }
 
 export interface StageInfo {
@@ -107,6 +109,8 @@ export interface StageInfo {
   foe: string;
   /** 겨루기 세 판: 어떤 능력치로, 상대 수치는 얼마인지 */
   rounds: { stat: StatKey; value: number }[];
+  /** 이 종류의 고유 기술에 약하다 */
+  weak: SkillKind;
   fame: number;
   coin: number;
 }

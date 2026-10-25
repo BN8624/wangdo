@@ -169,7 +169,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
     // 기술 게이지: 식객마다 지금까지 나선 차례와 마지막으로 기술을 쓴 차례
     const turns = battle.allies.map(() => 0);
     const lastSkill = battle.allies.map(() => 0);
-    let effect: { kind: SkillKind; name: string } | null = null;
+    let effect: { kind: SkillKind; name: string; weak?: boolean } | null = null;
     events.slice(0, shown).forEach((ev, idx) => {
       if ((ev.t === 'skill' || ev.t === 'miss' || (ev.t === 'hit' && !ev.skill)) && ev.by >= 0) {
         turns[ev.by] += 1;
@@ -177,6 +177,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
       }
       // 기술의 효과 띠는 그 기술의 타격·효과·치유가 이어지는 동안만 남긴다
       if (ev.t === 'skill') effect = { kind: ev.kind, name: ev.name };
+      else if (ev.t === 'hit' && ev.skill && ev.weak && effect) effect = { ...effect, weak: true };
       else if (!((ev.t === 'hit' && ev.skill) || ev.t === 'heal' || ev.t === 'status')) effect = null;
       if (ev.t === 'round') round = ev.n;
       if (ev.t === 'hit') {
@@ -209,7 +210,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
       const from = lastSkill[i];
       return { fill: Math.min(1, (turns[i] - from) / (next - from)), ready: turns[i] + 1 === next };
     });
-    return { foeHp, hp, down, round, last: last as BattleEvent | null, focus, bubble: bubble as Said | null, foeStatus, partyStatus, gauge, effect: effect as { kind: SkillKind; name: string } | null };
+    return { foeHp, hp, down, round, last: last as BattleEvent | null, focus, bubble: bubble as Said | null, foeStatus, partyStatus, gauge, effect: effect as { kind: SkillKind; name: string; weak?: boolean } | null };
   }, [shown, events, battle, stage.foe, foeSays]);
 
   const last = state.last;
@@ -268,7 +269,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
         {last?.t === 'hit' && last.target < 0 && (
           <div key={`dmg-${shown}`} className={`battle-dmg foe ${last.crit || last.skill ? 'big' : ''}`}>
             {fmt(last.dmg)}
-            {last.crit && <small>치명타</small>}
+            {last.weak ? <small>약점!</small> : last.crit && <small>치명타</small>}
           </div>
         )}
         {last?.t === 'hit' && last.by < 0 && (
@@ -326,7 +327,10 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
         <div key={`fx-${state.effect.name}-${state.round}`} className="battle-effect">
           <b>{SKILL_LABEL[state.effect.kind]}</b>
           <span>
-            <small>{state.effect.name}</small>
+            <small>
+              {state.effect.name}
+              {state.effect.weak && <em> · 약점을 찔렀다!</em>}
+            </small>
             {EFFECT_TEXT[state.effect.kind]}
           </span>
         </div>
@@ -388,6 +392,15 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
             </div>
           ) : (
             <div className="sub">
+              <span className="reward-list consolation">
+                위로금
+                <span>
+                  <ResIcon kind="fame" />+{fmt(result.fame)}
+                </span>
+                <span>
+                  <ResIcon kind="coin" />+{fmt(result.coin)}
+                </span>
+              </span>
               {battle.rounds >= BATTLE.maxRounds && !state.hp.every((h) => h <= 0) ? '시간 안에 쓰러뜨리지 못했어요.' : '식객들이 모두 쓰러졌어요.'} 편성을
               바꾸거나 식객을 더 키워서 다시 도전해요.
             </div>

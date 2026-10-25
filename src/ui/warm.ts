@@ -5,9 +5,17 @@ import { ART, foeArtPath } from '../data/art';
 
 const done = new Set<string>();
 
-function idle(fn: () => void): number {
-  const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
-  return w.requestIdleCallback ? w.requestIdleCallback(fn, { timeout: 4000 }) : window.setTimeout(fn, 1500);
+type IdleWindow = Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number; cancelIdleCallback?: (h: number) => void };
+
+/** 한가할 때 fn을 부른다. 되돌려 주는 함수로 취소한다(한가 콜백과 타이머는 취소 방법이 다르다) */
+function idle(fn: () => void): () => void {
+  const w = window as IdleWindow;
+  if (w.requestIdleCallback && w.cancelIdleCallback) {
+    const h = w.requestIdleCallback(fn, { timeout: 4000 });
+    return () => w.cancelIdleCallback!(h);
+  }
+  const t = window.setTimeout(fn, 1500);
+  return () => clearTimeout(t);
 }
 
 /** 미리 받을 그림 목록: 데리고 있는 식객의 전신, 지금과 다음 토벌의 배경·상대 */
@@ -25,7 +33,7 @@ export function warmList(s: GameState): string[] {
 export function warmArt(s: GameState): () => void {
   const queue = warmList(s);
   let stopped = false;
-  let handle = 0;
+  let cancel = () => {};
   const next = () => {
     const url = queue.shift();
     if (!url || stopped) return;
@@ -33,13 +41,13 @@ export function warmArt(s: GameState): () => void {
     fetch(url, { priority: 'low' } as RequestInit)
       .catch(() => undefined)
       .finally(() => {
-        if (!stopped) handle = idle(next);
+        if (!stopped) cancel = idle(next);
       });
   };
-  const start = window.setTimeout(() => (handle = idle(next)), 3000);
+  const start = window.setTimeout(() => (cancel = idle(next)), 3000);
   return () => {
     stopped = true;
     clearTimeout(start);
-    clearTimeout(handle);
+    cancel();
   };
 }

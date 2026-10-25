@@ -104,6 +104,10 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
             <div className="soft" style={{ fontSize: 13 }}>
               {BATTLE.maxRounds}라운드 안에 쓰러뜨리면 해결!
             </div>
+            <div className="foe-weak">
+              약점 <b>{SKILL_LABEL[info.weak]}</b>
+              <small>이 기술은 {BATTLE.weakHit}배로 들어가요</small>
+            </div>
           </div>
         </div>
 
@@ -121,7 +125,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
                 <span className="round-vs">
                   <b className={def && statsOf(view, id)[r.stat] >= r.value ? 'ok' : 'bad'}>{def ? fmt(statsOf(view, id)[r.stat]) : '-'}</b> vs {fmt(r.value)}
                 </span>
-                <span className="round-skill">{id && SKILLS[id] ? SKILL_LABEL[SKILLS[id].kind] : ''}</span>
+                <span className={`round-skill ${id && SKILLS[id]?.kind === info.weak ? 'weak' : ''}`}>{id && SKILLS[id] ? SKILL_LABEL[SKILLS[id].kind] : ''}</span>
               </button>
             );
           })}
@@ -139,7 +143,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
                   </span>
                   <b>{def.name}</b>
                   <span className={v >= info.rounds[choosing].value ? 'ok' : 'bad'}>{fmt(v)}</span>
-                  {SKILLS[def.id] && <small>{SKILL_LABEL[SKILLS[def.id].kind]}</small>}
+                  {SKILLS[def.id] && <small className={SKILLS[def.id].kind === info.weak ? 'weak' : ''}>{SKILL_LABEL[SKILLS[def.id].kind]}</small>}
                 </button>
               ))}
           </div>
@@ -162,6 +166,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
             <ResIcon kind="coin" size={16} />+{fmt(info.coin)}
           </span>
           <span>+ 선물</span>
+          <em>지면 {Math.round(BALANCE.loseRewardRatio * 100)}%</em>
         </div>
         <button className="btn hong wide go" data-guide="go" disabled={view.stamina.value < 1 || party.length < 3} onClick={go}>
           출동! <small>기력 1</small>

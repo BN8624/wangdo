@@ -57,6 +57,8 @@ export const BALANCE = {
   stageCoinBase: 60,
   stageCoinGrowth: 1.22,
   bossRewardMult: 3,
+  /** 져도 이기면 받을 명성·엽전의 이만큼은 위로금으로 받는다 */
+  loseRewardRatio: 0.3,
   /** 추천 편성: 칸마다 그 능력치 상위 몇 명을 후보로 두고, 조합마다 몇 번 싸워 볼지 */
   partyPick: 4,
   partyRuns: 40,

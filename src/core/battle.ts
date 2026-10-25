@@ -33,6 +33,8 @@ export const BATTLE = {
   rallyHits: 3,
   /** 치유: 가장 다친 식객의 최대 체력 중 이만큼을 채운다 */
   healRatio: 0.35,
+  /** 상대의 약점과 같은 종류의 기술이면 그 기술의 타격이 이만큼 세진다 */
+  weakHit: 1.7,
 } as const;
 
 /** strike 강타 · stun 기절 · guard 방어 · heal 치유 · weaken 약화 · rally 격려 */
@@ -66,7 +68,7 @@ export type BattleEvent =
   /** 식객이 고유 기술을 외친다. 뒤이어 그 효과(hit·heal·status)가 나온다 */
   | { t: 'skill'; by: number; name: string; kind: SkillKind }
   /** by·target: 0~2는 식객 순번, -1은 상대 */
-  | { t: 'hit'; by: number; target: number; dmg: number; crit: boolean; hp: number; skill?: boolean }
+  | { t: 'hit'; by: number; target: number; dmg: number; crit: boolean; hp: number; skill?: boolean; weak?: boolean }
   | { t: 'miss'; by: number; target: number }
   | { t: 'heal'; target: number; amount: number; hp: number }
   /** side: 상대(foe)에게 걸리는지, 식객 모두(party)에게 걸리는지 */
@@ -85,7 +87,8 @@ export interface BattleLog {
 
 export interface BattleSetup {
   allies: { id: string; stat: StatKey; power: number; skill?: BattleSkill }[];
-  foe: { name: string; values: number[] };
+  /** weak: 이 종류의 기술에 약하다 */
+  foe: { name: string; values: number[]; weak?: SkillKind };
 }
 
 /** slot번째 식객(0부터)이 자기 n번째 차례(1부터)에 고유 기술을 쓰는지 */
@@ -125,20 +128,21 @@ export function runBattle(setup: BattleSetup, seed: number): BattleLog {
   };
   const setStatus = (side: 'foe' | 'party', status: Status, on: boolean) => events.push({ t: 'status', side, status, on });
   /** 식객 i가 상대를 친다. 격려가 걸려 있으면 세게 친다 */
-  const allyHit = (i: number, mult: number, skill: boolean) => {
+  const allyHit = (i: number, mult: number, skill: boolean, weak = false) => {
     let base = allies[i].power * cond[i] * mult;
     const rallied = rallyLeft > 0;
     if (rallied) base *= BATTLE.rallyBoost;
     const { dmg, crit } = strike(base);
     foeHp = Math.max(0, foeHp - dmg);
-    events.push({ t: 'hit', by: i, target: -1, dmg, crit, hp: foeHp, ...(skill ? { skill: true } : {}) });
+    events.push({ t: 'hit', by: i, target: -1, dmg, crit, hp: foeHp, ...(skill ? { skill: true } : {}), ...(weak ? { weak: true } : {}) });
     if (rallied && --rallyLeft === 0) setStatus('party', 'rally', false);
     if (foeHp === 0) events.push({ t: 'down', target: -1 });
   };
 
   const useSkill = (i: number, skill: BattleSkill) => {
     events.push({ t: 'skill', by: i, name: skill.name, kind: skill.kind });
-    allyHit(i, SKILL_DAMAGE[skill.kind], true);
+    const weak = setup.foe.weak === skill.kind;
+    allyHit(i, SKILL_DAMAGE[skill.kind] * (weak ? BATTLE.weakHit : 1), true, weak);
     if (foeHp <= 0) return;
     if (skill.kind === 'stun' && !stunned) {
       stunned = true;

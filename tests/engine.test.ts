@@ -315,3 +315,19 @@ describe('저장 지키기', () => {
     expect(backupDue(newGame(now - 2 * 86_400_000, 1), now)).toBe(true);
   });
 });
+
+describe('토벌 위로금', () => {
+  it('져도 이겼을 때 보상의 일부를 받는다', () => {
+    const now = 1_000_000_000;
+    const s = newGame(now, 5);
+    s.stage.index = 30;
+    for (const id of ['baekseol', 'muyeong', 'sodam']) s.yokai[id] = { level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0 };
+    const before = s.res.coin;
+    const [after, r] = fight(s, now, ['baekseol', 'muyeong', 'sodam']);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.won).toBe(false);
+    expect(r.coin).toBe(Math.round(r.stage.coin * BALANCE.loseRewardRatio));
+    expect(after.res.coin).toBe(before + r.coin);
+  });
+});

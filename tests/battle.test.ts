@@ -134,3 +134,18 @@ describe('토벌 자동 전투', () => {
     }
   });
 });
+
+describe('약점 기술', () => {
+  it('상대가 약한 종류의 기술이면 그 기술 타격이 세지고 약점 표시가 붙는다', () => {
+    const base = setup(1, ['strike', 'heal', 'stun']);
+    const weak: BattleSetup = { ...base, foe: { ...base.foe, weak: 'strike' } };
+    for (let seed = 1; seed < 10; seed++) {
+      const plain = runBattle(base, seed).events.find((e) => e.t === 'hit' && e.skill && e.by === 0);
+      const hit = runBattle(weak, seed).events.find((e) => e.t === 'hit' && e.skill && e.by === 0);
+      if (plain?.t !== 'hit' || hit?.t !== 'hit') continue;
+      expect(hit.weak).toBe(true);
+      expect(hit.dmg).toBeGreaterThan(plain.dmg);
+    }
+    expect(battleOdds(weak)).toBeGreaterThan(battleOdds(base));
+  });
+});
