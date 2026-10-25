@@ -1,5 +1,6 @@
 import { StoryView } from './StoryView';
 import { BattleView } from './BattleView';
+import { useNewVersion } from './update';
 import { useEffect, useMemo, useState } from 'react';
 import { RESOURCE_KEYS, partyPlan, power, promoteCheck, settle, stageInfo, talkReadyIn, unseenScene, type FightResult } from '../core/engine';
 import { fmt } from '../core/format';
@@ -49,6 +50,7 @@ const TABS: { id: Tab; label: string; icon: 'home' | 'yokai' | 'stage' | 'record
 
 export function App() {
   const { state, now } = useGame();
+  const newVersion = useNewVersion();
   // 화면에는 지금 시각까지 정산한 상태를 보여 준다(저장된 상태는 행동할 때만 바뀐다).
   const view = useMemo(() => settle(state, now), [state, now]);
   const [tab, setTab] = useState<Tab>('home');
@@ -100,6 +102,11 @@ export function App() {
   return (
     <div className={`app ${step ? 'guiding' : ''}`}>
       <IconSymbols />
+      {newVersion && (
+        <button className="update-bar" onClick={() => location.reload()}>
+          새 버전이 나왔어요 · 눌러서 새로고침
+        </button>
+      )}
       <header className="topbar" data-guide="res">
         <button className="rank-btn" data-guide="promote" onClick={() => setRankOpen(true)}>
           <span className="emb"><LineIcon name="crown" size={22} />{promoteCheck(view).ok && <i className="badge">↑</i>}</span>

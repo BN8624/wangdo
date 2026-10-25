@@ -659,6 +659,9 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 @media (prefers-reduced-motion: no-preference) { .vn-cg { animation: cg-in .5s ease; } @keyframes cg-in { from { opacity: 0; transform: scale(1.03); } } }
 .vn-title, .vn-close, .vn-box, .vn-item { z-index: 4; }
 
+/* 새 버전 알림 */
+.update-bar { position: fixed; left: 50%; top: calc(64px + env(safe-area-inset-top)); z-index: 60; transform: translateX(-50%); padding: 9px 16px; border-radius: 20px; border: 0; background: var(--ink); color: #fff; font: 700 13px var(--sans); box-shadow: 0 6px 18px rgba(0,0,0,.25); white-space: nowrap; animation: rise .3s ease; }
+
 /* 화면 오류 복구 안내 */
 .recover { max-width: 420px; margin: 18vh auto 0; padding: 24px 20px; display: grid; gap: 12px; text-align: center; background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
 .recover b { font: 700 19px var(--serif); }
