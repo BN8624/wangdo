@@ -32,7 +32,7 @@ export function lockReason(s: GameState, ep: Episode): string | null {
   const u = ep.unlock ?? {};
   if (u.after && !s.story.done.includes(u.after)) return '앞 화를 먼저 봐야 해요';
   if (s.rank < (u.rank ?? 0)) return `관직 〈${rankDef(u.rank!).title}〉에 오르면 열려요`;
-  if (power(s) < (u.power ?? 0)) return `권세 ${fmt(u.power!)}이 되면 열려요`;
+  if (power(s) < (u.power ?? 0)) return `권세 ${fmt(u.power!)}이 되면 열려요 · 지금 ${fmt(power(s))}`;
   if (s.stage.index < (u.stage ?? 0)) return `토벌을 ${u.stage}번 해내면 열려요`;
   return null;
 }

@@ -669,7 +669,7 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 
 /* ── 토벌 전투 화면 ── */
 /* 대치 구도: 사선으로 나눈 화면 오른쪽 위에 상대, 왼쪽 아래 앞쪽에 지금 나선 식객. 진한 색은 지금 나선 쪽에만 남긴다. */
-.battle { --hanji: #f4ecdc; --bink: #2a2019; --bseal: #b8242c; --bsafe: env(safe-area-inset-bottom); position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 45; overflow: hidden; background: #17121a; color: #fff; user-select: none; }
+.battle { --hanji: #f4ecdc; --bink: #2a2019; --bseal: #9e3b2e; --inju: #a8402f; --bsafe: env(safe-area-inset-bottom); position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 45; overflow: hidden; background: #17121a; color: #fff; user-select: none; }
 .battle-stage { position: absolute; inset: 0; }
 .battle-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(.32) saturate(.3) blur(6px); transform: scale(1.06); }
 .battle-pane { position: absolute; inset: 0; pointer-events: none; }
@@ -686,15 +686,16 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 /* 식객 전신 그림을 머리~허벅지로 잘라 상대와 같은 틀로 맞춘다 */
 .battle-ally { position: absolute; left: -16%; bottom: calc(168px + var(--bsafe)); width: 96%; height: 64%; background: 50% 3% / 176% auto no-repeat; -webkit-mask-image: linear-gradient(#000 78%, transparent), linear-gradient(to right, #000 78%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(#000 78%, transparent), linear-gradient(to right, #000 78%, transparent); mask-composite: intersect; opacity: 0; transform: translateX(-24px); transition: opacity .25s ease, transform .25s ease; pointer-events: none; }
 .battle-ally.on { opacity: 1; transform: none; }
+.battle-ally.down { filter: grayscale(1) brightness(.5); }
 
-.battle-dmg { position: absolute; z-index: 4; font: 700 36px var(--serif); letter-spacing: -.5px; color: #fff; -webkit-text-stroke: 3px #1d1012; paint-order: stroke fill; text-shadow: 0 3px 6px rgba(0,0,0,.5); font-variant-numeric: tabular-nums; animation: bdmg .7s ease-out forwards; pointer-events: none; }
+.battle-dmg { position: absolute; z-index: 4; font: 700 36px var(--serif); letter-spacing: -.5px; color: #fff; -webkit-text-stroke: 3px #1d1012; paint-order: stroke fill; text-shadow: 0 3px 6px rgba(0,0,0,.5); font-variant-numeric: tabular-nums; animation: bdmg 1s ease-out forwards; pointer-events: none; }
 .battle-dmg.foe { right: 9%; top: 25%; text-align: right; }
 .battle-dmg.ally { left: 38%; top: 40%; font-size: 30px; color: #ffb3b3; }
 .battle-dmg.big { font-size: 46px; color: #ffe2a8; }
 .battle-dmg.miss { font-size: 22px; color: #d6dcea; }
 .battle-dmg small { display: block; font: 22px 'Nanum Brush Script', var(--title); color: #ffd36b; -webkit-text-stroke: 0; margin-top: -2px; }
 @keyframes bdmg { 0% { opacity: 0; transform: translateY(10px) scale(.85); } 20% { opacity: 1; transform: none; } 75% { opacity: 1; transform: translateY(-6px); } 100% { opacity: 0; transform: translateY(-14px); } }
-.battle-pop { position: absolute; z-index: 4; font: 32px 'Nanum Brush Script', var(--title); color: #ffd36b; text-shadow: 0 2px 6px rgba(0,0,0,.8); animation: bdmg .8s ease-out forwards; pointer-events: none; }
+.battle-pop { position: absolute; z-index: 4; font: 40px 'Nanum Brush Script', var(--title); color: #ffd36b; text-shadow: 0 2px 6px rgba(0,0,0,.8); animation: bdmg 1.2s ease-out forwards; pointer-events: none; }
 .battle-pop.foe { right: 10%; top: 34%; }
 .battle-pop.party { left: 12%; top: 48%; }
 
@@ -724,17 +725,21 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .battle-bubble.foe { left: 4%; top: 18%; width: 55%; }
 .battle-bubble.skill { left: 4%; top: 59%; width: 51%; }
 @keyframes bbubble { from { opacity: 0; transform: scale(.92); } }
-.battle-tag { position: absolute; left: 16px; top: 56%; z-index: 6; display: flex; align-items: center; gap: 6px; padding: 5px 14px 5px 8px; background: rgba(244,236,220,.94); border-left: 3px solid var(--bseal); transform: skewX(-8deg); animation: bbubble .22s ease-out; }
-.battle-tag span { transform: skewX(8deg); font: 700 14px var(--serif); letter-spacing: 1px; color: var(--bink); }
-.battle-tag b { transform: skewX(8deg); font: 700 10px var(--sans); color: var(--bseal); border: 1px solid var(--bseal); padding: 0 4px; border-radius: 2px; }
+.battle-defs { position: absolute; width: 0; height: 0; }
+/* 기술 효과 띠: 기술을 쓴 뒤 그 기술이 무엇을 했는지 한 줄로 */
+.battle-effect { position: absolute; left: 0; right: 0; top: 45%; z-index: 6; display: flex; align-items: center; gap: 14px; padding: 10px 22px 10px 26px; background: linear-gradient(90deg, rgba(244,236,220,.97) 70%, rgba(244,236,220,.82)); color: var(--bink); box-shadow: 0 6px 18px rgba(0,0,0,.45); animation: beffect .35s ease-out; pointer-events: none; }
+.battle-effect b { font: 44px/1 'Nanum Brush Script', var(--title); color: var(--bseal); }
+.battle-effect span { display: grid; font: 700 16px/1.35 var(--serif); }
+.battle-effect small { font: 12px var(--sans); color: #8a6a4a; }
+@keyframes beffect { from { opacity: 0; transform: translateX(-40px); } }
 
 /* 고유 기술: 화면을 어둡게 하고 식객을 가까이, 세로 붓글씨로 기술 이름 */
-.battle-skill { position: absolute; inset: 0; z-index: 8; animation: bskill .2s ease-out; pointer-events: none; }
+.battle-skill { position: absolute; inset: 0; z-index: 8; animation: bskill .25s ease-out; pointer-events: none; }
 .battle-skill-dim { position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 55%, rgba(0,0,0,.25), rgba(0,0,0,.82)); }
-.battle-skill-art { position: absolute; left: -20%; bottom: calc(150px + var(--bsafe)); width: 104%; height: 72%; background: 50% 0 / 205% auto no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 6%, #000 80%, transparent), linear-gradient(to right, #000 74%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(transparent, #000 6%, #000 80%, transparent), linear-gradient(to right, #000 74%, transparent); mask-composite: intersect; animation: bskill-art .5s ease-out; }
+.battle-skill-art { position: absolute; left: -20%; bottom: calc(150px + var(--bsafe)); width: 104%; height: 72%; background: 50% 0 / 205% auto no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 6%, #000 80%, transparent), linear-gradient(to right, #000 74%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(transparent, #000 6%, #000 80%, transparent), linear-gradient(to right, #000 74%, transparent); mask-composite: intersect; animation: bskill-art .6s ease-out; }
 .battle-skill-band { position: absolute; right: 0; top: 17%; width: 150px; height: 71%; background: linear-gradient(to left, rgba(12,6,10,.85) 40%, transparent); }
-.battle-skill-name { position: absolute; right: 18px; top: 24%; writing-mode: vertical-rl; font: 88px/1 'Nanum Brush Script', var(--title); letter-spacing: 4px; color: #fff; text-shadow: 0 0 18px rgba(255,220,180,.35), 0 4px 14px rgba(0,0,0,.8); animation: bskill-name .5s ease-out .08s backwards; }
-.battle-skill-cap { position: absolute; right: 114px; top: 25%; writing-mode: vertical-rl; font: 700 14px var(--serif); letter-spacing: 3px; color: rgba(255,255,255,.8); }
+.battle-skill-name { position: absolute; right: 18px; top: 24%; writing-mode: vertical-rl; font: 88px/1 'Nanum Brush Script', var(--title); letter-spacing: 4px; color: #fff; text-shadow: 0 0 18px rgba(255,220,180,.35), 0 4px 14px rgba(0,0,0,.8); animation: bskill-name .7s ease-out .2s backwards; }
+.battle-skill-cap { position: absolute; right: 114px; top: 25%; writing-mode: vertical-rl; font: 700 14px var(--serif); letter-spacing: 3px; color: rgba(255,255,255,.8); animation: bskill .4s ease-out .5s backwards; }
 @keyframes bskill { from { opacity: 0; } }
 @keyframes bskill-art { from { opacity: 0; transform: translateX(-30px); } }
 @keyframes bskill-name { from { opacity: 0; clip-path: inset(0 0 100% 0); } to { opacity: 1; clip-path: inset(0); } }
@@ -754,18 +759,26 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .bcard-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
 .bcard-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 0 7px; text-align: center; font: 700 13px var(--serif); background: linear-gradient(transparent, rgba(0,0,0,.8)); }
 .bcard-hp { position: absolute; left: 6px; bottom: 3px; height: 3px; max-width: calc(100% - 12px); background: #8fcfa6; border-radius: 2px; transition: width .3s ease; }
+/* 기술 게이지: 차례마다 차오르고, 다 차면 다음 차례에 기술을 쓴다 */
+.bcard-sp { position: absolute; left: 6px; bottom: 8px; height: 3px; max-width: calc(100% - 12px); background: #e2b66a; border-radius: 2px; transition: width .4s ease; }
+.bcard.ready .bcard-pic { filter: saturate(.8) brightness(.85); border-color: #e2b66a; }
+.bcard.ready.on .bcard-pic, .bcard.ready .bcard-pic { box-shadow: 0 0 0 1px #e2b66a, 0 0 12px rgba(226,182,106,.5); }
+.bcard-ready { position: absolute; left: 5px; top: 5px; padding: 1px 7px 0; border-radius: 3px; font: 17px/1.15 'Nanum Brush Script', var(--title); color: var(--bink); background: #e2b66a; animation: bready 1.2s ease-in-out infinite alternate; }
+@keyframes bready { from { opacity: .75; } to { opacity: 1; } }
 .bcard-down { position: absolute; inset: auto 0 44%; text-align: center; font: 700 15px var(--title); text-shadow: 0 1px 4px #000; }
 .bcard-heal { position: absolute; inset: 28% 0 auto; text-align: center; font: 700 22px var(--serif); color: #b9f0cc; -webkit-text-stroke: 2px #10261a; paint-order: stroke fill; animation: bdmg .6s ease-out forwards; }
 .bcard-chips { position: absolute; top: 4px; right: 4px; display: grid; gap: 3px; justify-items: end; }
 .bcard-chips .bchip { font-size: 14px; padding: 0 5px; }
 
 /* 결과: 붉은 낙관과 한지 보상 창 */
-.battle-seal { position: absolute; left: 50%; top: 20%; z-index: 9; width: 176px; height: 176px; margin-left: -88px; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); background: var(--bseal); border-radius: 10px; box-shadow: inset 0 0 0 6px rgba(255,240,230,.25), 0 8px 24px rgba(0,0,0,.6); font: 56px/1.08 var(--title); letter-spacing: 4px; color: #fff3ea; animation: bseal .45s cubic-bezier(.2,1.5,.4,1); }
-.battle-seal.lose { background: #4a4048; color: #e8e0d6; font-size: 64px; }
-@keyframes bseal { from { opacity: 0; transform: rotate(-8deg) scale(1.8); } }
-.battle-result { position: absolute; left: 22px; right: 22px; bottom: calc(196px + var(--bsafe)); z-index: 9; display: grid; gap: 10px; padding: 18px 18px 16px; text-align: center; background: var(--hanji); color: var(--bink); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.55); animation: bbubble .3s ease-out; }
-.battle-result .title { font: 700 19px var(--serif); }
-.battle-result .reward-list { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; font: 700 15px var(--sans); }
+.battle-result { position: absolute; left: 22px; right: 22px; bottom: calc(196px + var(--bsafe)); z-index: 9; display: grid; gap: 10px; padding: 20px 112px 16px 20px; min-height: 120px; text-align: left; background: var(--hanji); color: var(--bink); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.55); animation: bbubble .3s ease-out; }
+.battle-result .title { font: 700 19px/1.35 var(--serif); word-break: keep-all; }
+.battle-result .reward-list { justify-content: flex-start; gap: 14px; margin: 0; padding: 0; font: 700 15px var(--sans); }
+.battle-result .battle-ok { margin-right: -92px; text-align: center; }
+/* 낙관: 한지에 찍힌 인주 자국. 굵은 명조 넉 자를 네모 안에 두 줄로 */
+.battle-seal { position: absolute; right: 16px; top: 16px; width: 84px; height: 84px; display: grid; grid-template-columns: 1fr 1fr; place-items: center; padding: 5px 4px 4px; border: 4px solid var(--inju); border-radius: 7px; color: var(--inju); font: 900 30px/1 'Noto Serif KR', var(--title); transform: rotate(-7deg); mix-blend-mode: multiply; filter: url(#battle-ink); animation: bseal .42s cubic-bezier(.2,1.4,.4,1) .2s backwards; }
+.battle-seal.lose { width: 52px; right: 32px; grid-template-columns: 1fr; color: #4a4440; border-color: #4a4440; transform: rotate(-4deg); }
+@keyframes bseal { from { opacity: 0; transform: rotate(-7deg) scale(1.7); } 70% { opacity: 1; } }
 .battle-result .sub { font-size: 14px; color: #6a5544; }
 .battle-ok { height: 44px; border: 0; border-radius: 4px; background: var(--bseal); color: #fff; font: 700 16px var(--sans); }
 @media (prefers-reduced-motion: reduce) { .battle * { animation: none !important; transition: none !important; } }

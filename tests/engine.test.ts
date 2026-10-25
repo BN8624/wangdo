@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { nextHint } from '../src/core/hints';
 import {
   MINUTE,
   assign,
@@ -277,5 +278,31 @@ describe('안내', () => {
     [s] = advanceGuide(s);
     expect(s.guide).toBe(2);
     expect(s.res.coin).toBe(coin + (GUIDE[1].reward?.coin ?? 0));
+  });
+});
+
+describe('권세가 모자랄 때 할 일 안내', () => {
+  /** 3화를 보고 사직이 된 뒤, 할 수 있는 건 다 해서 권세만 남은 상태 */
+  function blocked(coin: number) {
+    const now = 1_000_000_000;
+    const s = newGame(now, 3);
+    s.rank = 3;
+    for (const id of ['baekseol', 'muyeong', 'sodam', 'seorin', 'danhui']) s.yokai[id] = { level: 1, bond: 0, talkAt: now, outingAt: now, seen: 0, talks: 0 };
+    for (const id of Object.keys(s.yokai)) s.yokai[id].talkAt = now;
+    s.work = { market: ['baekseol', 'seorin'], woodyard: ['muyeong'], field: ['danhui'], tavern: ['sodam'] };
+    s.story.done = ['s1e01', 's1e02', 's1e03'];
+    s.stage.index = 6;
+    s.stamina.value = 0;
+    s.wish.charges = 0;
+    s.res = { coin, grain: 0, fame: 999_999 };
+    return { s, now };
+  }
+
+  it('엽전이 있으면 레벨을 올리라고, 없으면 얼마나 기다리면 되는지 알려 준다', () => {
+    const rich = blocked(1_000_000);
+    expect(power(rich.s)).toBeLessThan(2600);
+    expect(nextHint(rich.s, rich.now).text).toMatch(/^4화까지 권세 .+ 남았어요\. 식객 레벨을 올려 보세요\.$/);
+    const poor = blocked(0);
+    expect(nextHint(poor.s, poor.now).text).toMatch(/엽전이 모이면 레벨을 올릴 수 있어요 · 약 \d+분$/);
   });
 });

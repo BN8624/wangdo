@@ -1,6 +1,6 @@
 import { BATTLE, SKILL_DAMAGE, type BattleSkill, type SkillKind } from '../core/battle';
 
-// 식객 고유 기술. 토벌에서 두 번째 차례부터 세 번에 한 번 쓴다. 종류는 설화 속 정체와 하는 일에서 골랐다.
+// 식객 고유 기술. 토벌에서 세 번에 한 번 쓴다(첫 기술은 편성 순서대로 한 차례씩 늦게). 종류는 설화 속 정체와 하는 일에서 골랐다.
 export const SKILLS: Record<string, BattleSkill> = {
   baekseol: { name: '여우불 홀림', kind: 'stun' },
   muyeong: { name: '쇠방망이 내려치기', kind: 'strike' },

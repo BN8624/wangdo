@@ -1,20 +1,38 @@
 // 토벌 전투 화면. 엔진이 미리 계산한 전투 기록(battle.events)을 한 칸씩 재생한다. 모두 자동이고, 2배속과 건너뛰기만 있다.
 // 오피스퀸키우기식 대치 구도: 화면을 사선으로 나눠 오른쪽 위에 상대, 왼쪽 아래 앞쪽에 지금 나선 식객을 세우고, 말풍선 한 줄로 주고받는다.
 // 빛 이펙트는 쓰지 않는다. 지금 나서지 않은 쪽은 색을 빼서 진한 색이 한 명에게만 남게 한다.
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FightResult } from '../core/engine';
-import { BATTLE, type BattleEvent, type Status } from '../core/battle';
+import { BATTLE, firstSkillTurn, type BattleEvent, type SkillKind, type Status } from '../core/battle';
 import { fmt } from '../core/format';
 import { ART, foeArtPath } from '../data/art';
 import { ALLY_LINES, foeLines } from '../data/battle-lines';
+import { SKILL_LABEL } from '../data/skills';
 import { GIFT_BY_ID } from '../data/village';
-import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
+import { YOKAI_BY_ID } from '../data/yokai';
 import { ResIcon } from './icons';
 import { Art } from './Portrait';
 import { buzz } from './toast';
-import { SPEC_COLOR } from './YokaiView';
 
-const PACE: Record<BattleEvent['t'], number> = { round: 380, skill: 1150, hit: 720, miss: 600, heal: 560, status: 420, skip: 640, down: 700 };
+// 1배속 기준 한 칸의 길이(ms). 말풍선 한 줄을 읽을 수 있을 만큼, 기술은 그보다 길게 머문다.
+const PACE: Record<BattleEvent['t'], number> = { round: 600, skill: 2300, hit: 1150, miss: 950, heal: 1300, status: 1300, skip: 1300, down: 1200 };
+
+function paceOf(ev: BattleEvent): number {
+  if (ev.t === 'hit' && ev.skill) return 1500;
+  // 효과가 풀리는 건 조용히 지나간다
+  if (ev.t === 'status' && !ev.on) return 350;
+  return PACE[ev.t];
+}
+
+/** 기술을 쓴 뒤 화면 가운데 띠에 적는 효과 설명 */
+const EFFECT_TEXT: Record<SkillKind, string> = {
+  strike: '평소보다 훨씬 큰 피해',
+  stun: '상대가 다음 차례를 쉰다',
+  guard: '다음 공격 피해가 절반으로',
+  heal: '가장 다친 식객의 체력을 채운다',
+  weaken: `${BATTLE.weakTurns}차례 동안 상대 공격이 약해진다`,
+  rally: `이어지는 공격 ${BATTLE.rallyHits}번이 강해진다`,
+};
 
 const STATUS_LABEL: Record<Status, string> = { stun: '기절', weak: '약화', guard: '방어', rally: '격려' };
 
@@ -110,7 +128,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
     const t = setTimeout(() => {
       setShown((n) => n + 1);
       if (ev.t === 'hit') buzz(ev.crit ? 25 : ev.by < 0 ? 18 : 8);
-    }, PACE[ev.t] / speed);
+    }, paceOf(ev) / speed);
     return () => clearTimeout(t);
   }, [shown, speed, done, events]);
 
@@ -124,7 +142,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
     }
     if (ev.t === 'hit' && (ev.crit || ev.skill)) stageRef.current?.animate(SHAKE, 260);
     if (ev.t === 'heal') cardRefs.current[ev.target]?.animate(CARD_HEAL, 500);
-    if (ev.t === 'skip') foeRef.current?.animate(FOE_DIZZY, 600);
+    if (ev.t === 'skip' || (ev.t === 'status' && ev.on && ev.status === 'stun')) foeRef.current?.animate(FOE_DIZZY, 700);
   }, [shown, events]);
 
   const toggleSpeed = () => {
@@ -148,7 +166,18 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
     let bubble: Said | null = null;
     const foeStatus = new Set<Status>();
     const partyStatus = new Set<Status>();
+    // 기술 게이지: 식객마다 지금까지 나선 차례와 마지막으로 기술을 쓴 차례
+    const turns = battle.allies.map(() => 0);
+    const lastSkill = battle.allies.map(() => 0);
+    let effect: { kind: SkillKind; name: string } | null = null;
     events.slice(0, shown).forEach((ev, idx) => {
+      if ((ev.t === 'skill' || ev.t === 'miss' || (ev.t === 'hit' && !ev.skill)) && ev.by >= 0) {
+        turns[ev.by] += 1;
+        if (ev.t === 'skill') lastSkill[ev.by] = turns[ev.by];
+      }
+      // 기술의 효과 띠는 그 기술의 타격·효과·치유가 이어지는 동안만 남긴다
+      if (ev.t === 'skill') effect = { kind: ev.kind, name: ev.name };
+      else if (!((ev.t === 'hit' && ev.skill) || ev.t === 'heal' || ev.t === 'status')) effect = null;
       if (ev.t === 'round') round = ev.n;
       if (ev.t === 'hit') {
         if (ev.target < 0) foeHp = ev.hp;
@@ -175,7 +204,12 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
       }
       last = ev;
     });
-    return { foeHp, hp, down, round, last: last as BattleEvent | null, focus, bubble: bubble as Said | null, foeStatus, partyStatus };
+    const gauge = battle.allies.map((_, i) => {
+      const next = lastSkill[i] ? lastSkill[i] + BATTLE.skillEvery : firstSkillTurn(i);
+      const from = lastSkill[i];
+      return { fill: Math.min(1, (turns[i] - from) / (next - from)), ready: turns[i] + 1 === next };
+    });
+    return { foeHp, hp, down, round, last: last as BattleEvent | null, focus, bubble: bubble as Said | null, foeStatus, partyStatus, gauge, effect: effect as { kind: SkillKind; name: string } | null };
   }, [shown, events, battle, stage.foe, foeSays]);
 
   const last = state.last;
@@ -187,10 +221,22 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
   const focusAlly = battle.allies[state.focus];
   const focusName = YOKAI_BY_ID[focusAlly.id]?.name ?? '';
   const skillAlly = last?.t === 'skill' ? battle.allies[last.by] : null;
-  const lastSkill = [...events.slice(0, shown)].reverse().find((e) => e.t === 'skill');
 
   return (
     <div className="battle" role="dialog" aria-label={`${stage.foe} 토벌`}>
+      <svg className="battle-defs" aria-hidden>
+        {/* 낙관 번짐: 가장자리를 조금 흔들고 인주가 고르게 묻지 않은 자국을 낸다 */}
+        <filter id="battle-ink" x="-10%" y="-10%" width="120%" height="120%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.05" numOctaves="2" seed="4" result="warp" />
+          <feDisplacementMap in="SourceGraphic" in2="warp" scale="2" xChannelSelector="R" yChannelSelector="G" result="wob" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="3" seed="11" result="blot" />
+          <feColorMatrix in="blot" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.1 1.42" result="soft" />
+          <feComposite in="wob" in2="soft" operator="in" result="inked" />
+          <feTurbulence type="fractalNoise" baseFrequency="0.7" numOctaves="1" seed="2" result="grain" />
+          <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -6 4.6" result="specks" />
+          <feComposite in="inked" in2="specks" operator="in" />
+        </filter>
+      </svg>
       <div ref={stageRef} className="battle-stage">
         <Art
           className="battle-bg"
@@ -214,7 +260,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
           <div
             key={a.id}
             ref={(el) => (allyRefs.current[i] = el)}
-            className={`battle-ally ${state.focus === i && !skillOn ? 'on' : ''}`}
+            className={`battle-ally ${state.focus === i && !skillOn ? 'on' : ''} ${state.down.has(i) ? 'down' : ''}`}
             style={{ backgroundImage: `url(${ART.full(a.id)})` }}
           />
         ))}
@@ -275,11 +321,14 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
         </div>
       </div>
 
-      {!done && !skillOn && state.bubble && <Bubble key={`b-${state.bubble.side}-${state.bubble.text}`} {...state.bubble} />}
-      {!done && !skillOn && last?.t === 'hit' && last.skill && lastSkill?.t === 'skill' && (
-        <div className="battle-tag" style={{ '--c': SPEC_COLOR[focusAlly.stat] } as CSSProperties}>
-          <b>{STAT_LABEL[focusAlly.stat]}</b>
-          <span>{lastSkill.name}</span>
+      {!done && !skillOn && !state.effect && state.bubble && <Bubble key={`b-${state.bubble.side}-${state.bubble.text}`} {...state.bubble} />}
+      {!done && !skillOn && state.effect && (
+        <div key={`fx-${state.effect.name}-${state.round}`} className="battle-effect">
+          <b>{SKILL_LABEL[state.effect.kind]}</b>
+          <span>
+            <small>{state.effect.name}</small>
+            {EFFECT_TEXT[state.effect.kind]}
+          </span>
         </div>
       )}
 
@@ -291,7 +340,9 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
           <div className="battle-skill-name" style={{ fontSize: Math.min(88, Math.floor(500 / last.name.length)) }}>
             {last.name}
           </div>
-          <div className="battle-skill-cap">{YOKAI_BY_ID[skillAlly.id]?.name}의 기술</div>
+          <div className="battle-skill-cap">
+            {YOKAI_BY_ID[skillAlly.id]?.name}의 기술 · {SKILL_LABEL[last.kind]}
+          </div>
           {ALLY_LINES[skillAlly.id] && <Bubble side="skill" who={YOKAI_BY_ID[skillAlly.id]?.name ?? ''} text={ALLY_LINES[skillAlly.id].skill} />}
         </div>
       )}
@@ -317,13 +368,13 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
       )}
 
       {done && (
-        <div className={`battle-seal ${result.won ? 'win' : 'lose'}`}>
-          <span>{result.won ? '토벌' : '퇴각'}</span>
-          {result.won && <span>완료</span>}
-        </div>
-      )}
-      {done && (
         <div className="battle-result">
+          {/* 한지 위에 찍는 낙관: 이기면 인주색 '토벌 완료', 지면 먹색 '퇴각' */}
+          <div className={`battle-seal ${result.won ? 'win' : 'lose'}`} aria-hidden>
+            {[...(result.won ? '토벌완료' : '퇴각')].map((c, i) => (
+              <span key={i}>{c}</span>
+            ))}
+          </div>
           <div className="title">{result.won ? `${stage.foe} 해결!` : '이번엔 물러났어요'}</div>
           {result.won ? (
             <div className="reward-list">
@@ -356,8 +407,10 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
         {battle.allies.map((a, i) => {
           const def = YOKAI_BY_ID[a.id];
           const healed = last?.t === 'heal' && last.target === i;
+          const g = state.gauge[i];
+          const ready = g.ready && !done && !state.down.has(i);
           return (
-            <div key={a.id} className={`bcard ${state.focus === i && !done ? 'on' : ''} ${state.down.has(i) ? 'down' : ''}`}>
+            <div key={a.id} className={`bcard ${state.focus === i && !done ? 'on' : ''} ${state.down.has(i) ? 'down' : ''} ${ready ? 'ready' : ''}`}>
               <div ref={(el) => (cardRefs.current[i] = el)} className="bcard-pic">
                 <Art src={ART.card(a.id)} alt={def?.name} fallback={<div className="portrait-fallback">{def?.name}</div>} />
                 <span className="bcard-name">{def?.name}</span>
@@ -372,6 +425,8 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
                     ))}
                   </span>
                 )}
+                {ready && <span className="bcard-ready">기술</span>}
+                <i className="bcard-sp" style={{ width: `${(done ? 0 : g.fill) * 100}%` }} />
                 <i className="bcard-hp" style={{ width: `${(state.hp[i] / a.maxHp) * 100}%` }} />
               </div>
             </div>

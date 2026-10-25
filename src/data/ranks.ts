@@ -8,7 +8,7 @@ export const RANKS: RankDef[] = [
   { title: '서민', powerReq: 0, fameCost: 0, flavor: '산에서 나무나 하던 신세였다. 그 방망이를 줍기 전까지는.' },
   { title: '방망이 임자', powerReq: 950, fameCost: 5, flavor: '달골에 소문이 돈다. 금이 쏟아지는 방망이를 가진 사내가 있다고.' },
   { title: '종9품 참봉', powerReq: 1100, fameCost: 25, recruit: 'seorin', flavor: '말단이지만 관복을 입었다. 이제 아무도 나무꾼이라 부르지 못한다.' },
-  { title: '정8품 사직', powerReq: 2800, fameCost: 90, recruit: 'danhui', flavor: '관아 사람들이 고개를 숙이기 시작했다.' },
+  { title: '정8품 사직', powerReq: 2400, fameCost: 90, recruit: 'danhui', flavor: '관아 사람들이 고개를 숙이기 시작했다.' },
   { title: '종7품 직장', powerReq: 4900, fameCost: 300, recruit: 'geumyeong', flavor: '도성에서 온 서찰이 하나둘 쌓인다. 누군가 나를 지켜보고 있다.' },
   { title: '종6품 현감', powerReq: 6500, fameCost: 700, flavor: '고을 하나가 온전히 내 것이 되었다.' },
   { title: '종5품 판관', powerReq: 9600, fameCost: 1500, recruit: 'haeryun', flavor: '판결 한 마디에 사람들의 운명이 갈린다.' },

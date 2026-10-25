@@ -44,15 +44,23 @@ describe('토벌 자동 전투', () => {
     }
   });
 
-  it('식객은 두 번째 차례부터 세 번에 한 번 기술을 쓴다', () => {
-    expect([1, 2, 3, 4, 5, 6, 7, 8].filter(isSkillTurn)).toEqual([2, 5, 8]);
+  it('식객은 세 번에 한 번 기술을 쓰고, 한 라운드에 기술은 하나뿐이다', () => {
+    const turnsOf = (slot: number) => [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((n) => isSkillTurn(n, slot));
+    expect(turnsOf(0)).toEqual([2, 5, 8]);
+    expect(turnsOf(1)).toEqual([3, 6, 9]);
+    expect(turnsOf(2)).toEqual([4, 7]);
     for (let seed = 1; seed < 20; seed++) {
       const log = runBattle(setup(0.9), seed);
       const turns = [0, 0, 0];
       for (const e of log.events) {
         // 차례 하나 = 기술 외침 또는 기술이 아닌 평범한 공격·빗나감
         const normal = (e.t === 'hit' || e.t === 'miss') && e.by >= 0 && !(e.t === 'hit' && e.skill);
-        if (e.t === 'skill' || normal) expect(isSkillTurn(++turns[e.by])).toBe(e.t === 'skill');
+        if (e.t === 'skill' || normal) expect(isSkillTurn(++turns[e.by], e.by)).toBe(e.t === 'skill');
+      }
+      let skillsThisRound = 0;
+      for (const e of log.events) {
+        if (e.t === 'round') skillsThisRound = 0;
+        if (e.t === 'skill') expect(++skillsThisRound).toBe(1);
       }
     }
   });

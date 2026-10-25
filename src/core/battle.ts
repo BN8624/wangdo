@@ -1,5 +1,6 @@
 // 토벌 자동 전투. 식객 셋이 차례로 공격하고 상대가 반격한다. 순수 함수라 같은 씨앗이면 늘 같은 전투가 나온다.
-// 식객은 두 번째 차례부터 세 번에 한 번 고유 기술을 쓴다. 화면은 이 기록(events)을 순서대로 재생만 한다.
+// 식객은 세 번에 한 번 고유 기술을 쓴다. 첫 기술은 순번마다 한 차례씩 늦춰 한 라운드에 기술이 몰리지 않게 한다.
+// 화면은 이 기록(events)을 순서대로 재생만 한다.
 import { nextRandom } from './rng';
 import type { StatKey } from './types';
 
@@ -11,7 +12,7 @@ export const BATTLE = {
   /** 식객 체력 = 맡은 능력치 × allyHp */
   allyHp: 4.2,
   /** 상대 한 번 공격 = 겨룰 능력치 평균 × foeAtk */
-  foeAtk: 2.7,
+  foeAtk: 2.45,
   /** 전투마다 컨디션이 이만큼(±) 흔들린다 */
   condition: 0.6,
   /** 한 번 공격의 흔들림(±) */
@@ -19,7 +20,7 @@ export const BATTLE = {
   critChance: 0.12,
   critMult: 1.6,
   missChance: 0.06,
-  /** 고유 기술: 이 번째 차례에 처음 쓰고, 그 뒤로 이만큼마다 다시 쓴다 */
+  /** 고유 기술: 첫째 식객은 이 번째 차례에 처음 쓰고(뒤 식객은 한 차례씩 늦게), 그 뒤로 이만큼마다 다시 쓴다 */
   skillFirst: 2,
   skillEvery: 3,
   /** 방어: 다음 공격 한 번의 피해 배율 */
@@ -87,8 +88,9 @@ export interface BattleSetup {
   foe: { name: string; values: number[] };
 }
 
-/** n번째 차례(1부터)에 고유 기술을 쓰는지 */
-export const isSkillTurn = (n: number) => n >= BATTLE.skillFirst && (n - BATTLE.skillFirst) % BATTLE.skillEvery === 0;
+/** slot번째 식객(0부터)이 자기 n번째 차례(1부터)에 고유 기술을 쓰는지 */
+export const firstSkillTurn = (slot: number) => BATTLE.skillFirst + slot;
+export const isSkillTurn = (n: number, slot = 0) => n >= firstSkillTurn(slot) && (n - firstSkillTurn(slot)) % BATTLE.skillEvery === 0;
 
 export function runBattle(setup: BattleSetup, seed: number): BattleLog {
   let rng = seed | 0;
@@ -172,7 +174,7 @@ export function runBattle(setup: BattleSetup, seed: number): BattleLog {
       if (hp[i] <= 0) continue;
       turns[i] += 1;
       const skill = allies[i].skill;
-      if (skill && isSkillTurn(turns[i])) {
+      if (skill && isSkillTurn(turns[i], i)) {
         useSkill(i, skill);
         continue;
       }
