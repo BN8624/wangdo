@@ -27,6 +27,8 @@ export function nextEpisode(s: GameState, all: Episode[]): Episode | null {
 
 /** 잠긴 화를 열려면 무엇이 필요한지 */
 export function lockReason(s: GameState, ep: Episode): string | null {
+  // 이미 본 화는 조건이 바뀌어도 언제든 다시 볼 수 있다.
+  if (s.story.done.includes(ep.id)) return null;
   const u = ep.unlock ?? {};
   if (u.after && !s.story.done.includes(u.after)) return '앞 화를 먼저 봐야 해요';
   if (s.rank < (u.rank ?? 0)) return `관직 〈${rankDef(u.rank!).title}〉에 오르면 열려요`;
@@ -84,7 +86,7 @@ export const SCENES = [
   'e4-mirror', 'e5-catch', 'e6-boat', 'e7-gate', 'e8-shoulder', 'e9-oath', 'e10-robe', 'e10-night',
 ];
 
-const BGS = ['village', 'palace', 'market', 'tavern', 'field', 'night', 'forest', 'hall', 'court', 'hut', 'villagenight', 'warehouse', 'ferry', 'pass', 'camp'];
+export const BGS = ['village', 'palace', 'market', 'tavern', 'field', 'night', 'forest', 'hall', 'court', 'hut', 'villagenight', 'warehouse', 'ferry', 'pass', 'camp'];
 
 /** 화 파일이 형식에 맞는지 검사한다. 문제가 없으면 빈 배열 */
 export function validateEpisode(ep: Episode, heroineIds: Set<string>): string[] {

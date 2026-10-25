@@ -32,8 +32,8 @@ export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }:
     } }}>
   {/* 장소 배경은 흐리고 차분하게 눌러 인물이 돋보이게 한다(이벤트 그림은 그대로) */}
   <Art className={`vn-bg scene-img ${bg.includes('/bg/') ? 'soft' : ''}`} src={bg} fallback={<div className="art-placeholder vn-bg"/>}/>
-  {line?.cg && <img key={line.cg} className="vn-cg" src={ART.scene(line.cg)} alt=""/>}
-  {line?.img && <img key={line.img} className="vn-item" src={ART.item(line.img)} alt=""/>}
+  {line?.cg && <Art key={line.cg} className="vn-cg" src={ART.scene(line.cg)} fallback={null}/>}
+  {line?.img && <Art key={line.img} className="vn-item" src={ART.item(line.img)} fallback={null}/>}
   <div className={`vn-cast ${line?.img ? 'dim-cast' : ''}`} data-n={cast.length} hidden={!!line?.cg}>{cast.map(id => <Art key={id} className={`vn-full ${cast.length > 1 ? (line?.who === id ? 'on' : 'off') : ''}`} src={ART.full(id)} alt={YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{YOKAI_BY_ID[id]?.name}</div>}/>)}</div>
   <div className="vn-title">{title}</div>{onClose && <button className="vn-close panel" onClick={e => { e.stopPropagation(); onClose(); }}>닫기</button>}
   <div className="vn-box panel">{name && line?.who !== 'narration' && <div className="vn-name">{name}</div>}<div className="vn-text">{line?.text}</div>{children ?? <div className="vn-more">화면을 눌러 계속 ▾</div>}</div>

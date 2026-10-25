@@ -1,9 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { newGame } from '../core/engine';
-import { EPISODES } from '../data/story';
-import { YOKAI_BY_ID } from '../data/yokai';
-import { NovelFrame, StoryView } from './StoryView';
+import { newGame } from '../src/core/engine';
+import { EPISODES } from '../src/data/story';
+import { YOKAI_BY_ID } from '../src/data/yokai';
+import { NovelFrame, StoryView } from '../src/ui/StoryView';
 
 const noop = () => {};
 describe('이야기 화면', () => {
@@ -14,6 +14,13 @@ describe('이야기 화면', () => {
     expect(html).toContain('본 이야기 · 다시 보기');
     expect(html).toContain('disabled');
     expect(html).toContain(EPISODES[0].title);
+  });
+  it('이미 본 화는 열림 조건이 모자라도 다시 볼 수 있다', () => {
+    const view = newGame(0);
+    view.story.done.push(...EPISODES.map((e) => e.id));
+    const html = renderToStaticMarkup(<StoryView view={view} open={noop} onClose={noop} />);
+    expect(html).not.toContain('열려요');
+    expect(html).not.toContain('disabled');
   });
   it('첫 실행은 소개 창 대신 첫 화를 표시하고 중간에 닫지 않는다', () => {
     const html = renderToStaticMarkup(<StoryView view={newGame(0)} episode={EPISODES[0].id} open={noop} onClose={noop} />);
