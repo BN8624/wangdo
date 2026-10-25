@@ -298,5 +298,305 @@
       { "label": "대표단과 채무 심의회를 열어라", "reward": { "kind": "fame", "pct": 10 } },
       { "label": "필수 배급을 지키며 상환을 협상하라", "reward": { "kind": "grain", "minutes": 90 } }
     ]
+  },
+  {
+    "id": "widow-firewood",
+    "who": "달골 과부 댁",
+    "text": "남편 상을 치르고 나니 이웃 총각들이 장작을 패 주겠다며 줄을 섭니다. 고맙긴 한데, 장작 값으로 저녁상을 받아 가겠다니 장작보다 소문이 더 쌓입니다.",
+    "minRank": 0,
+    "choices": [
+      { "label": "장작은 관아 품삯으로 패게 하라", "reward": { "kind": "coin", "minutes": 40 } },
+      { "label": "줄 선 총각들에게 번호표를 나눠라", "reward": { "kind": "fame", "pct": 4 } }
+    ]
+  },
+  {
+    "id": "lost-ox-bet",
+    "who": "달골 소장수",
+    "text": "내기 장기에서 소를 걸었다가 졌는데, 이긴 놈이 소 대신 제 딸을 달랍니다. 딸은 그놈 얼굴만 봐도 침을 뱉는데, 내기 빚도 빚입니까?",
+    "minRank": 0,
+    "choices": [
+      { "label": "사람을 건 내기는 무효로 하라", "reward": { "kind": "fame", "pct": 4 } },
+      { "label": "소 값만 나눠 갚게 하라", "reward": { "kind": "grain", "minutes": 40 } }
+    ]
+  },
+  {
+    "id": "bathhouse-peeping",
+    "who": "개울가 빨래터 아낙들",
+    "text": "해 질 녘 멱 감는 개울 위쪽에 송씨 머슴들이 낚시를 한답시고 앉아 있습니다. 물고기는 한 마리도 못 잡으면서 눈은 왜 그리 바쁜지 모르겠습니다.",
+    "minRank": 1,
+    "choices": [
+      { "label": "개울 위쪽 낚시를 저녁에 금하라", "reward": { "kind": "fame", "pct": 5 } },
+      { "label": "빨래터에 가림막을 세워 주라", "reward": { "kind": "coin", "minutes": 45 } }
+    ]
+  },
+  {
+    "id": "matchmaker-fee",
+    "who": "달골 중매쟁이",
+    "text": "혼사를 세 번이나 붙여 줬는데 세 번 다 첫날밤이 지나자 중매비를 깎자고 합니다. 신랑들이 하나같이 기대보다 못했다는데, 그게 제 탓입니까?",
+    "minRank": 1,
+    "choices": [
+      { "label": "중매비는 혼례 날 먼저 치르게 하라", "reward": { "kind": "coin", "minutes": 45 } },
+      { "label": "신랑 쪽 주장은 듣지도 마라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "tavern-credit",
+    "who": "고개 주막 주모",
+    "text": "참봉 나리 이름을 대고 외상술을 마신 손님이 열둘입니다. 그중 열하나는 나리 얼굴도 모르고, 하나는 나리 관복을 빌려 입고 왔더군요.",
+    "minRank": 2,
+    "choices": [
+      { "label": "사칭한 외상은 본인에게 받으라", "reward": { "kind": "coin", "minutes": 50 } },
+      { "label": "관복 대여점을 단속하라", "reward": { "kind": "fame", "pct": 5 } }
+    ]
+  },
+  {
+    "id": "love-letter-scribe",
+    "who": "장터 편지 대필꾼",
+    "text": "연서를 대신 써 주는데, 한 처녀에게 다섯 총각이 같은 날 편지를 맡겼습니다. 다섯 통 다 제가 썼으니 문장이 똑같아, 처녀가 저를 고소한답니다.",
+    "minRank": 2,
+    "choices": [
+      { "label": "대필 연서에는 대필인 표시를 하라", "reward": { "kind": "fame", "pct": 5 } },
+      { "label": "처녀에게 대필료를 돌려주라", "reward": { "kind": "grain", "minutes": 45 } }
+    ]
+  },
+  {
+    "id": "gisaeng-debt",
+    "who": "읍내 기생 매향",
+    "text": "손님들이 밤새 노래를 청해 놓고 술값은 송씨 장부에 달아 두랍니다. 송씨는 대리 계약이 정지됐다며 안 갚고, 제 목만 쉬었습니다.",
+    "minRank": 3,
+    "choices": [
+      { "label": "정지 전 외상은 송씨가 갚게 하라", "reward": { "kind": "coin", "minutes": 50 } },
+      { "label": "노래값을 그 자리에서 받게 하라", "reward": { "kind": "fame", "pct": 5 } }
+    ]
+  },
+  {
+    "id": "goblin-wrestling",
+    "who": "도깨비 씨름판 심판",
+    "text": "도깨비들이 씨름에 지면 밤마다 이긴 사람 집에 찾아와 재경기를 청합니다. 이긴 총각이 잠을 못 자 장가간 지 석 달째 각방이랍니다.",
+    "minRank": 3,
+    "choices": [
+      { "label": "재경기는 장날 낮에만 하라", "reward": { "kind": "stamina", "amount": 1 } },
+      { "label": "도깨비 씨름판을 정식 대회로 만들라", "reward": { "kind": "fame", "pct": 5 } }
+    ]
+  },
+  {
+    "id": "perfume-tax",
+    "who": "분 냄새 나는 방물장수",
+    "text": "향낭과 분에 사치세를 매긴다더니, 관아 서리 부인들은 공짜로 가져갑니다. 세금은 저만 내고 향기는 부인들 몫입니다.",
+    "minRank": 4,
+    "choices": [
+      { "label": "방물에 붙은 사치세를 없애라", "reward": { "kind": "coin", "minutes": 50 } },
+      { "label": "서리 부인들 외상을 공개하라", "reward": { "kind": "fame", "pct": 6 } }
+    ]
+  },
+  {
+    "id": "midnight-serenade",
+    "who": "읍내 선비 댁 하인",
+    "text": "옆집 한량이 밤마다 담 너머로 아씨에게 노래를 부릅니다. 아씨는 싫다는데 노래가 너무 늘어서, 이제는 동네 아낙들이 박수를 칩니다.",
+    "minRank": 4,
+    "choices": [
+      { "label": "밤 노래는 자정 전까지만 하라", "reward": { "kind": "grain", "minutes": 50 } },
+      { "label": "한량을 연회 악사로 써라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "magistrate-portrait",
+    "who": "고을 환쟁이",
+    "text": "현감 초상을 그려 관아에 걸라는데, 기생들이 실물보다 잘생기게 그리면 사기라고, 못생기게 그리면 모독이라고 따집니다. 어떻게 그려야 합니까?",
+    "minRank": 5,
+    "choices": [
+      { "label": "있는 그대로 그려라", "reward": { "kind": "fame", "pct": 6 } },
+      { "label": "초상 대신 관아 장부를 걸어라", "reward": { "kind": "coin", "minutes": 55 } }
+    ]
+  },
+  {
+    "id": "bridal-sedan",
+    "who": "가마꾼 조합",
+    "text": "혼례 가마를 메고 가는데 신부가 가마 안에서 마음을 바꿔 다른 집으로 가자고 합니다. 품삯은 어느 집에서 받아야 합니까?",
+    "minRank": 5,
+    "choices": [
+      { "label": "신부가 내린 곳에서 품삯을 받으라", "reward": { "kind": "coin", "minutes": 55 } },
+      { "label": "신부 뜻을 먼저 들으라", "reward": { "kind": "fame", "pct": 6 } }
+    ]
+  },
+  {
+    "id": "court-lady-letters",
+    "who": "궁녀 출신 노파",
+    "text": "궁에서 나올 때 받은 연서 한 보따리를 팔겠다는데, 보낸 이 중에 지금 대감이 된 분이 셋입니다. 사겠다는 사람이 줄을 섰습니다.",
+    "minRank": 6,
+    "choices": [
+      { "label": "편지는 본인들에게 돌려주라", "reward": { "kind": "fame", "pct": 6 } },
+      { "label": "편지 값을 관아가 정하라", "reward": { "kind": "coin", "minutes": 55 } }
+    ]
+  },
+  {
+    "id": "ferry-romance",
+    "who": "나루터 뱃사공",
+    "text": "야밤에 강을 건너려는 연인들이 배삯 대신 노래를 내겠답니다. 노래가 좋아 태워 줬더니, 이젠 마을 연인들이 다 제 배에서 만납니다.",
+    "minRank": 6,
+    "choices": [
+      { "label": "야간 뱃삯을 정식으로 정하라", "reward": { "kind": "grain", "minutes": 55 } },
+      { "label": "나루에 정자를 세워 주라", "reward": { "kind": "stamina", "amount": 1 } }
+    ]
+  },
+  {
+    "id": "wine-fraud",
+    "who": "도성 술도가",
+    "text": "송씨 주막이 우리 술에 물을 타서 비싸게 팔고, 손님들이 취하지 않는다며 우리를 욕합니다. 물 탄 술값까지 우리가 물어야 합니까?",
+    "minRank": 7,
+    "choices": [
+      { "label": "술독에 봉인을 찍어 팔게 하라", "reward": { "kind": "coin", "minutes": 55 } },
+      { "label": "송씨 주막 술을 공개 시음하라", "reward": { "kind": "fame", "pct": 6 } }
+    ]
+  },
+  {
+    "id": "dancer-contract",
+    "who": "기방 어린 무희들의 언니",
+    "text": "행수가 무희들에게 평생 계약을 쓰게 하고, 그만두려면 춤춘 날 수만큼 빚을 갚으랍니다. 춤으로 진 빚이 어디 있습니까?",
+    "minRank": 7,
+    "choices": [
+      { "label": "평생 계약을 무효로 하라", "reward": { "kind": "fame", "pct": 7 } },
+      { "label": "그만두는 값을 관아가 정하라", "reward": { "kind": "coin", "minutes": 60 } }
+    ]
+  },
+  {
+    "id": "noble-bath-house",
+    "who": "도성 목욕탕 주인",
+    "text": "양반 댁 마님들이 남탕과 여탕 사이 벽에 구멍이 있다고 고소했습니다. 구멍은 사흘 전에 막았는데, 막고 나니 남탕 손님이 반으로 줄었습니다.",
+    "minRank": 8,
+    "choices": [
+      { "label": "벽을 돌로 다시 쌓으라", "reward": { "kind": "coin", "minutes": 60 } },
+      { "label": "구멍 뚫은 자부터 찾으라", "reward": { "kind": "fame", "pct": 6 } }
+    ]
+  },
+  {
+    "id": "eunuch-nephew",
+    "who": "궁궐 내시의 조카",
+    "text": "삼촌이 남긴 땅을 물려받으려는데, 친척들이 내시에게 조카가 있을 리 없다며 막습니다. 양자도 조카입니다.",
+    "minRank": 8,
+    "choices": [
+      { "label": "양자 문서를 확인해 물려주라", "reward": { "kind": "grain", "minutes": 60 } },
+      { "label": "친척 회의를 관아에서 열어라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "concubine-allowance",
+    "who": "판서 댁 첩실",
+    "text": "대감이 돌아가시자 본처가 첩실들의 생활비를 끊었습니다. 셋이 함께 수놓아 팔고 있는데, 수 값보다 소문 값이 더 비쌉니다.",
+    "minRank": 9,
+    "choices": [
+      { "label": "남은 재산에서 생활비를 떼어 주라", "reward": { "kind": "coin", "minutes": 60 } },
+      { "label": "수방을 정식 상점으로 열어 주라", "reward": { "kind": "fame", "pct": 7 } }
+    ]
+  },
+  {
+    "id": "lantern-festival",
+    "who": "등불 축제 준비 모임",
+    "text": "축제 날 밤 연인들이 강가에서 등을 띄우는데, 송씨가 등 하나에 세금을 매겼습니다. 사랑에도 세금을 내야 합니까?",
+    "minRank": 9,
+    "choices": [
+      { "label": "등불 세금을 없애라", "reward": { "kind": "fame", "pct": 7 } },
+      { "label": "축제 비용은 상단들이 나눠 내라", "reward": { "kind": "grain", "minutes": 60 } }
+    ]
+  },
+  {
+    "id": "minister-scandal",
+    "who": "판서 댁 문지기",
+    "text": "밤마다 가마 한 채가 뒷문으로 드나드는데, 마님은 모르는 척하시고 대감은 기억 안 난다 하십니다. 문지기 입막음 값만 매일 오릅니다.",
+    "minRank": 10,
+    "choices": [
+      { "label": "입막음 값을 받지 말고 기록하라", "reward": { "kind": "fame", "pct": 7 } },
+      { "label": "뒷문을 잠그고 열쇠를 마님께 드려라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "royal-cook",
+    "who": "수라간 숙수",
+    "text": "송씨가 궁에 들이는 고기가 자꾸 무게가 모자랍니다. 따지면 칼질이 서툴러서라고 하는데, 저는 삼십 년째 칼을 잡았습니다.",
+    "minRank": 10,
+    "choices": [
+      { "label": "궁에 들이는 고기를 저울에 달라", "reward": { "kind": "coin", "minutes": 60 } },
+      { "label": "납품처를 공개 입찰하라", "reward": { "kind": "stamina", "amount": 1 } }
+    ]
+  },
+  {
+    "id": "fox-wife-claim",
+    "who": "한빛성 비단 상인",
+    "text": "삼 년 산 아내가 여우라는 소문이 돌자 처가가 혼인 무효를 청했습니다. 여우든 사람이든 제 아내는 바느질도 잘하고 밤에 따뜻합니다.",
+    "minRank": 11,
+    "choices": [
+      { "label": "혼인은 두 사람 뜻대로 두라", "reward": { "kind": "fame", "pct": 8 } },
+      { "label": "소문 낸 자를 찾아 사과받으라", "reward": { "kind": "coin", "minutes": 60 } }
+    ]
+  },
+  {
+    "id": "palace-maid-escape",
+    "who": "궁녀 몇 사람",
+    "text": "궁에 들어온 지 십 년, 한 번도 바깥 장을 못 봤습니다. 한 달에 하루만 나가 연지라도 사게 해 주십시오.",
+    "minRank": 11,
+    "choices": [
+      { "label": "한 달에 하루 외출을 허락하라", "reward": { "kind": "fame", "pct": 8 } },
+      { "label": "궁 안에 작은 장을 세워라", "reward": { "kind": "grain", "minutes": 60 } }
+    ]
+  },
+  {
+    "id": "dragon-bride",
+    "who": "용궁 하급 관리",
+    "text": "용궁에서 도성 총각을 신랑으로 데려가겠다는 혼서를 보냈는데, 총각이 물을 무서워합니다. 혼서를 물릴 수 있습니까?",
+    "minRank": 12,
+    "choices": [
+      { "label": "본인이 싫으면 혼서를 돌려보내라", "reward": { "kind": "fame", "pct": 8 } },
+      { "label": "뭍에 신방을 차리자고 답하라", "reward": { "kind": "gift" } }
+    ]
+  },
+  {
+    "id": "regent-banquet",
+    "who": "섭정 연회 악사",
+    "text": "섭정 연회에서 송씨가 기생들을 데려와 대신들 무릎에 앉혔습니다. 다음 연회부터는 악사도 무릎에 앉혀야 하느냐는 문의가 빗발칩니다.",
+    "minRank": 12,
+    "choices": [
+      { "label": "연회 접대를 관아가 감독하라", "reward": { "kind": "fame", "pct": 8 } },
+      { "label": "악사 품삯부터 올려라", "reward": { "kind": "coin", "minutes": 60 } }
+    ]
+  },
+  {
+    "id": "heavenly-letter",
+    "who": "천문을 보는 관원",
+    "text": "밤하늘에 처음 보는 글씨가 떠올랐다가 사라집니다. 읽을 줄 아는 이는 선녀 출신 식객 하나뿐이라는데, 그분은 자꾸 대답을 미룹니다.",
+    "minRank": 13,
+    "choices": [
+      { "label": "천문 기록을 매일 밤 남기라", "reward": { "kind": "stamina", "amount": 1 } },
+      { "label": "대답을 기다리고 재촉하지 마라", "reward": { "kind": "fame", "pct": 8 } }
+    ]
+  },
+  {
+    "id": "ghost-creditor",
+    "who": "저승길 주막 주모",
+    "text": "저승 가는 손님들이 외상을 달고 갑니다. 돌아올 일이 없으니 받을 길이 없는데, 차사님은 명부에 외상은 안 적는답니다.",
+    "minRank": 13,
+    "choices": [
+      { "label": "저승 외상은 산 가족에게 묻지 마라", "reward": { "kind": "fame", "pct": 8 } },
+      { "label": "명부 옆에 외상 장부를 하나 두라", "reward": { "kind": "coin", "minutes": 60 } }
+    ]
+  },
+  {
+    "id": "king-mistress",
+    "who": "궁 밖에 사는 여인",
+    "text": "선왕께서 젊은 시절 제게 정표로 주신 비녀가 있습니다. 그것도 선왕의 빚입니까, 아니면 제 것입니까?",
+    "minRank": 14,
+    "choices": [
+      { "label": "정표는 받은 이의 것이다", "reward": { "kind": "fame", "pct": 9 } },
+      { "label": "비녀를 명부와 대조하라", "reward": { "kind": "grain", "minutes": 60 } }
+    ]
+  },
+  {
+    "id": "throne-romance-ballad",
+    "who": "도성 소리꾼",
+    "text": "새 정리관과 식객들의 이야기를 판소리로 지었더니 사람들이 장면마다 앙코르를 외칩니다. 다만 침방 대목은 관아 허락이 있어야 부를 수 있다는군요.",
+    "minRank": 14,
+    "choices": [
+      { "label": "부르되 사실과 다른 대목은 빼라", "reward": { "kind": "fame", "pct": 9 } },
+      { "label": "그 대목은 내 앞에서 먼저 불러 보라", "reward": { "kind": "gift" } }
+    ]
   }
 ]

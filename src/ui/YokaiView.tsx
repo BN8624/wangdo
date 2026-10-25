@@ -41,8 +41,8 @@ export function joinCondition(id: string): string {
   const rank = RANKS.findIndex((r) => r.recruit === id);
   if (rank >= 0) return `관직 〈${RANKS[rank].title}〉`;
   if (join === 'recruit') return '모집';
-  const m = join.match(/^story:s(\d+)/);
-  if (m) return `${m[1]}부 이야기`;
+  const m = join.match(/^story:s(\d+)(?:e(\d+))?/);
+  if (m) return m[2] ? `${m[1]}부 ${Number(m[2])}화` : `${m[1]}부 이야기`;
   return '???';
 }
 

@@ -79,14 +79,18 @@ export function completeEpisode(s: GameState, ep: Episode, choices: (number | nu
 }
 
 /** 이야기에 띄울 수 있는 물건 그림 */
-export const ITEMS = ['bangmangi', 'iou', 'emblem', 'shell', 'ledger', 'crack', 'contract', 'reed', 'crate', 'tornseal', 'bond'];
+export const ITEMS = ['bangmangi', 'iou', 'emblem', 'shell', 'ledger', 'crack', 'contract', 'reed', 'crate', 'tornseal', 'bond', 'goldmark', 'redledger', 'pearl', 'myeongbu', 'oath'];
 /** 이야기에 띄울 수 있는 이벤트 그림 */
 export const SCENES = [
   'e1-tree', 'e1-ondol', 'e1-coins', 'e2-collar', 'e2-tavern', 'e2-walk-mu', 'e2-walk-bs', 'e3-hide', 'e3-shell', 'e3-measure',
   'e4-mirror', 'e5-catch', 'e6-boat', 'e7-gate', 'e8-shoulder', 'e9-oath', 'e10-robe', 'e10-night',
+  's2e1-desk', 's2e2-shadow', 's2e3-dance', 's2e4-name', 's2e4-night', 's2e5-bath', 's2e6-cave', 's2e7-hair', 's2e8-moon',
 ];
 
-export const BGS = ['village', 'palace', 'market', 'tavern', 'field', 'night', 'forest', 'hall', 'court', 'hut', 'villagenight', 'warehouse', 'ferry', 'pass', 'camp'];
+export const BGS = [
+  'village', 'palace', 'market', 'tavern', 'field', 'night', 'forest', 'hall', 'court', 'hut', 'villagenight', 'warehouse', 'ferry', 'pass', 'camp',
+  'capital', 'alley', 'gibang', 'bath', 'snowcave', 'bedroom',
+];
 
 /** 화 파일이 형식에 맞는지 검사한다. 문제가 없으면 빈 배열 */
 export function validateEpisode(ep: Episode, heroineIds: Set<string>): string[] {

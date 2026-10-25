@@ -95,6 +95,12 @@ const BG: Record<string, string> = {
   ferry: 'a river ferry dock at night, wooden pier planks, moored cargo boats, paper lanterns reflecting on dark water, light mist',
   pass: 'a mountain pass road on the back hill at dusk, red pines, a stone cairn shrine with cloth strips, a wooden toll barricade with torches',
   camp: 'the great hall of a dokkaebi mountain fortress, rough timber pillars, a raised seat covered with fur, torches and plain black cloth banners',
+  capital: 'the main street of a grand royal capital at daytime, a huge stone city gate with a tiled pavilion, shop signs and banners, palace roofs in the distance',
+  alley: 'a narrow back alley of the royal capital at night, wet stones, hanging paper lanterns, wooden walls and shadows',
+  gibang: 'an elegant private room in a red-lantern pleasure house, red silk curtains, a low lacquered table with a wine set, a folding screen, warm red light',
+  bath: 'an indoor bathhouse with a large steaming stone pool, dark wood beams, rising steam, soft lantern light and floating petals',
+  snowcave: 'a shallow mountain cave during a blizzard at night, a small campfire, fur bedding, snow blowing past the entrance',
+  bedroom: 'a nobleman bedroom at night, thick silk bedding on the warm floor, a paper lantern, a folding screen with plum blossoms, lattice doors',
 };
 
 const BANNER: Record<string, string> = {
