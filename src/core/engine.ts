@@ -531,10 +531,8 @@ export function battleChance(s: GameState, info: StageInfo, party: string[]): nu
   return battleOdds(battleSetup(s, info, party));
 }
 
-/** 이길 확률이 가장 높은 편성 */
-export function bestParty(s: GameState, info: StageInfo): string[] {
-  const ids = Object.keys(s.yokai);
-  // 식객마다 판별 승률을 먼저 계산해 두고 조합만 비교한다.
+/** 판마다 따로 이길 확률만 보고 고른 편성(식객이 많을 때 후보를 추리는 데 쓴다) */
+function quickParty(s: GameState, info: StageInfo, ids: string[]): string[] {
   const p = ids.map((id) => {
     const st = statsOf(s, id);
     return info.rounds.map((r) => winChance(st[r.stat], r.value));
@@ -552,6 +550,31 @@ export function bestParty(s: GameState, info: StageInfo): string[] {
         }
       }
   return best.map((i) => ids[i]).filter(Boolean);
+}
+
+/** 이길 확률이 가장 높은 편성. 칸마다 그 능력치가 높은 식객을 몇 명씩 추린 뒤, 고유 기술까지 넣은 실제 전투로 비교한다. */
+export function bestParty(s: GameState, info: StageInfo): string[] {
+  const ids = Object.keys(s.yokai);
+  if (ids.length < 3) return quickParty(s, info, ids);
+  const stats = Object.fromEntries(ids.map((id) => [id, statsOf(s, id)]));
+  const picks = info.rounds.map((r) => [...ids].sort((a, b) => stats[b][r.stat] - stats[a][r.stat]).slice(0, B.partyPick));
+  let best: string[] = [];
+  let bestP = -1;
+  let bestPower = -1;
+  for (const a of picks[0])
+    for (const b of picks[1])
+      for (const c of picks[2]) {
+        if (a === b || a === c || b === c) continue;
+        const party = [a, b, c];
+        const odds = battleOdds(battleSetup(s, info, party), B.partyRuns);
+        const pow = stats[a][info.rounds[0].stat] + stats[b][info.rounds[1].stat] + stats[c][info.rounds[2].stat];
+        if (odds > bestP || (odds === bestP && pow > bestPower)) {
+          bestP = odds;
+          bestPower = pow;
+          best = party;
+        }
+      }
+  return best.length === 3 ? best : quickParty(s, info, ids);
 }
 
 export type FightResult =

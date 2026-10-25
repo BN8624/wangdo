@@ -318,13 +318,17 @@ b, strong { font-weight: 700; }
 .round-pic { width: 36px; height: 46px; overflow: hidden; background: var(--paper-2); flex: none; border: 1px solid var(--line); display: flex; align-items: center; justify-content: center; }
 .round-vs { flex: 1; font-size: 14px; color: var(--ink-2); }
 .round-vs b { color: var(--ink); font-family: var(--serif); font-size: 17px; }
-.round-p { font-family: var(--serif); font-weight: 700; font-size: 18px; }
-.round-p.ok { color: var(--jade); }
-.round-p.bad { color: var(--seal); }
+.round-vs b.ok { color: var(--jade); }
+.round-vs b.bad { color: var(--seal); }
+.round-skill { flex: none; min-width: 36px; text-align: center; font-size: 12px; font-weight: 700; color: var(--ink-2); border: 1px solid var(--line); border-radius: 4px; padding: 2px 4px; }
+.round-skill:empty { display: none; }
 .chooser { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px; padding: 8px; background: var(--paper-2); border: 1px solid var(--line); }
 .chooser button { display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 13px; padding: 4px 0; border: 2px solid transparent; text-align: center; }
 .chooser button.on { border-color: var(--seal); background: var(--paper-3); }
 .chooser .cpic { width: 46px; height: 58px; overflow: hidden; border: 1px solid var(--line); }
+.chooser .ok { color: var(--jade); font-weight: 700; }
+.chooser .bad { color: var(--seal); font-weight: 700; }
+.chooser small { font-size: 11px; color: var(--ink-2); }
 .chooser b { font-family: var(--serif); font-size: 13px; }
 .need { display: flex; justify-content: space-between; align-items: center; font-size: 15px; margin-top: 10px; background: var(--paper); border: 1px solid var(--line); padding: 8px 12px; }
 .need b { font-family: var(--serif); font-size: 18px; }

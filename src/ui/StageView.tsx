@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { battleChance, bestParty, fight, ownedYokai, partyChances, staminaRegenRemaining, stageInfo, statsOf, winChance } from '../core/engine';
+import { battleChance, bestParty, fight, ownedYokai, staminaRegenRemaining, stageInfo, statsOf } from '../core/engine';
 import { fmt, fmtDuration } from '../core/format';
 import { BALANCE } from '../data/balance';
 import { BATTLE } from '../core/battle';
@@ -7,6 +7,7 @@ import { STAGES_PER_CHAPTER } from '../data/stages';
 import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
 import type { GameState } from '../core/types';
 import { foeArtPath } from '../data/art';
+import { SKILL_LABEL, SKILLS } from '../data/skills';
 import { ChapterArt, FoeGroup, ResIcon } from './icons';
 import { Art, Portrait } from './Portrait';
 import { act } from './store';
@@ -41,7 +42,6 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
     );
   }
 
-  const chances = partyChances(view, info, party);
   const total = battleChance(view, info, party);
   const regen = staminaRegenRemaining(view, now);
   const chapterStart = info.chapterIndex * STAGES_PER_CHAPTER;
@@ -94,19 +94,16 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
       <div className="card" style={{ marginTop: 14 }}>
         <div className="foe">
           <div className={`foe-pic ${info.isBoss ? 'boss' : ''}`}>
-            <Art
-              className="foe-face"
-              src={foeArtPath(info)}
-              alt={info.foe}
-              fallback={<FoeGroup chapterId={info.chapter.id} />}
-            />
+            <Art className="foe-face" src={foeArtPath(info)} alt={info.foe} fallback={<FoeGroup chapterId={info.chapter.id} />} />
           </div>
           <div>
             <div className="foe-no">
               {info.chapter.title.split(' · ')[0]} · {info.isBoss ? '대장' : `${info.number}번째 토벌`}
             </div>
             <div className="foe-name">{info.foe}</div>
-            <div className="soft" style={{ fontSize: 13 }}>{BATTLE.maxRounds}라운드 안에 쓰러뜨리면 해결!</div>
+            <div className="soft" style={{ fontSize: 13 }}>
+              {BATTLE.maxRounds}라운드 안에 쓰러뜨리면 해결!
+            </div>
           </div>
         </div>
 
@@ -122,9 +119,9 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
                 </span>
                 <span className="round-pic">{def ? <Portrait def={def} /> : '?'}</span>
                 <span className="round-vs">
-                  <b>{def ? fmt(statsOf(view, id)[r.stat]) : '-'}</b> vs {fmt(r.value)}
+                  <b className={def && statsOf(view, id)[r.stat] >= r.value ? 'ok' : 'bad'}>{def ? fmt(statsOf(view, id)[r.stat]) : '-'}</b> vs {fmt(r.value)}
                 </span>
-                <span className={`round-p ${chances[i] >= 0.5 ? 'ok' : 'bad'}`}>{pct(chances[i])}</span>
+                <span className="round-skill">{id && SKILLS[id] ? SKILL_LABEL[SKILLS[id].kind] : ''}</span>
               </button>
             );
           })}
@@ -133,15 +130,16 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
         {choosing !== null && (
           <div className="chooser">
             {ownedYokai(view)
-              .map(({ def }) => ({ def, p: winChance(statsOf(view, def.id)[info.rounds[choosing].stat], info.rounds[choosing].value) }))
-              .sort((a, b) => b.p - a.p)
-              .map(({ def, p }) => (
+              .map(({ def }) => ({ def, v: statsOf(view, def.id)[info.rounds[choosing].stat] }))
+              .sort((a, b) => b.v - a.v)
+              .map(({ def, v }) => (
                 <button key={def.id} className={party[choosing] === def.id ? 'on' : ''} onClick={() => choose(choosing, def.id)}>
                   <span className="cpic">
                     <Portrait def={def} />
                   </span>
                   <b>{def.name}</b>
-                  <span>{pct(p)}</span>
+                  <span className={v >= info.rounds[choosing].value ? 'ok' : 'bad'}>{fmt(v)}</span>
+                  {SKILLS[def.id] && <small>{SKILL_LABEL[SKILLS[def.id].kind]}</small>}
                 </button>
               ))}
           </div>

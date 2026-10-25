@@ -1,7 +1,7 @@
 import { StoryView } from './StoryView';
 import { BattleView } from './BattleView';
 import { useEffect, useMemo, useState } from 'react';
-import { RESOURCE_KEYS, bestParty, partyChance, partyChances, power, promoteCheck, settle, stageInfo, talkReadyIn, unseenScene, type FightResult } from '../core/engine';
+import { RESOURCE_KEYS, battleChance, bestParty, power, promoteCheck, settle, stageInfo, talkReadyIn, unseenScene, type FightResult } from '../core/engine';
 import { fmt } from '../core/format';
 import type { HintTarget } from '../core/hints';
 import type { ComboDef } from '../core/types';
@@ -90,7 +90,7 @@ export function App() {
     return {
       home: promoteCheck(view).ok || view.wish.charges > 0,
       yokai: ids.some((id) => unseenScene(view, id) > 0 || talkReadyIn(view, id, now) === 0),
-      stage: !!info && view.stamina.value > 0 && partyChance(partyChances(view, info, bestParty(view, info))) >= 0.5,
+      stage: !!info && view.stamina.value > 0 && battleChance(view, info, bestParty(view, info)) >= 0.5,
       record: false,
     } satisfies Record<Tab, boolean>;
     // 1초마다 다시 계산하지 않도록 분 단위로만 갱신한다.

@@ -5,6 +5,7 @@ import { SKILLS } from '../src/data/skills';
 import { ALLY_LINES, FOE_LINE_CHAPTERS, foeLines } from '../src/data/battle-lines';
 import { CHAPTERS } from '../src/data/stages';
 import { YOKAI } from '../src/data/yokai';
+import { battleChance, bestParty, freshYokai, newGame, stageInfo, statsOf } from '../src/core/engine';
 
 const setup = (ratio: number, kinds: SkillKind[] = ['strike', 'heal', 'stun']): BattleSetup => ({
   allies: [85, 100, 115].map((v, i) => ({ id: `a${i}`, stat: 'might' as const, power: v * ratio, skill: { name: `기술${i}`, kind: kinds[i] } })),
@@ -101,6 +102,27 @@ describe('토벌 자동 전투', () => {
     for (const c of CHAPTERS) {
       expect(foeLines(c.id, false).length).toBeGreaterThan(0);
       expect(foeLines(c.id, true)[0]).toBe(c.boss.line);
+    }
+  });
+
+  it('추천 편성은 칸마다 능력치만 가장 높은 식객을 고른 편성보다 못하지 않다', () => {
+    const s = newGame(0, 3);
+    for (const y of YOKAI) {
+      s.yokai[y.id] = freshYokai();
+      s.yokai[y.id].level = 20 + ((y.id.length * 3) % 15);
+    }
+    for (const idx of [10, 20, 30]) {
+      const info = stageInfo(idx)!;
+      const greedy: string[] = [];
+      for (const r of info.rounds) {
+        const pick = Object.keys(s.yokai)
+          .filter((id) => !greedy.includes(id))
+          .sort((a, b) => statsOf(s, b)[r.stat] - statsOf(s, a)[r.stat])[0];
+        greedy.push(pick);
+      }
+      const best = bestParty(s, info);
+      expect(new Set(best).size).toBe(3);
+      expect(battleChance(s, info, best)).toBeGreaterThanOrEqual(battleChance(s, info, greedy) - 0.05);
     }
   });
 });
