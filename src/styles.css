@@ -669,6 +669,9 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .update-bar { position: fixed; left: 50%; top: calc(64px + env(safe-area-inset-top)); z-index: 60; transform: translateX(-50%); padding: 9px 16px; border-radius: 20px; border: 0; background: var(--ink); color: #fff; font: 700 13px var(--sans); box-shadow: 0 6px 18px rgba(0,0,0,.25); white-space: nowrap; animation: rise .3s ease; }
 
 /* 화면 오류 복구 안내 */
+/* 소리 */
+.sound-toggles { display: flex; gap: 8px; }
+.sound-toggles .btn { flex: 1; font-size: 15px; padding: 9px 0; }
 /* 저장 지키기 */
 .backup-note { font-size: 13px; line-height: 1.55; }
 .backup-when { margin-top: 8px; font: 700 13px var(--sans); color: var(--gold); }

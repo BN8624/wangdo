@@ -1,5 +1,5 @@
 import { NovelFrame } from './StoryView';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { chooseWish, levelCap, markSceneSeen, rankMultiplier, talk, wishRewardAmount } from '../core/engine';
 import { fmt, fmtDuration } from '../core/format';
 import { ART } from '../data/art';
@@ -13,6 +13,7 @@ import { Burst, LineIcon, RES_LABEL, ResIcon, VillageScene } from './icons';
 import { Portrait } from './Portrait';
 import { act, type OfflineSummary } from './store';
 import { buzz, pushToast } from './toast';
+import { play } from './sound';
 import type { ModalRequest } from './App';
 
 function Shell({ children, onClose }: { children: React.ReactNode; onClose?: () => void }) {
@@ -78,6 +79,7 @@ export function WishModal({ view, onClose }: { view: GameState; onClose: () => v
 
 export function PromoteModal({ rank, recruit, onClose }: { rank: number; recruit: string | null; onClose: () => void }) {
   const r = rankDef(rank);
+  useEffect(() => play('promote'), []);
   const def = recruit ? YOKAI_BY_ID[recruit] : null;
   return (
     <Shell onClose={onClose}>

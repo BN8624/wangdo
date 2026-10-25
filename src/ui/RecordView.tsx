@@ -5,6 +5,7 @@ import { rankDef } from '../data/ranks';
 import { YOKAI } from '../data/yokai';
 import type { GameState } from '../core/types';
 import { BackupPanel } from './Backup';
+import { SoundToggles } from './SoundToggles';
 import { resetGame } from './store';
 
 export function RecordView({ view, now }: { view: GameState; now: number }) {
@@ -59,6 +60,11 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
           <span>벌어들인 엽전·곡식</span>
           <b>{fmt(view.totals.earned)}</b>
         </div>
+      </div>
+
+      <div className="section-title">소리</div>
+      <div className="card">
+        <SoundToggles />
       </div>
 
       <div className="section-title">저장 지키기</div>

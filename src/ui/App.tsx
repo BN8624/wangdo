@@ -28,6 +28,7 @@ import { advanceGuide, guideStep } from '../core/guide';
 import { YokaiSheet, YokaiView } from './YokaiView';
 import { AdultGate, adultConfirmed } from './Backup';
 import { warmArt } from './warm';
+import { setMood } from './sound';
 
 export type ModalRequest =
   | { kind: 'wish' }
@@ -85,6 +86,11 @@ export function App() {
   const go = (t: HintTarget) => setTab(t);
   const top = queue[0];
   const step = guideStep(state);
+
+  // 배경음 분위기: 토벌은 북 장단, 이야기·인연 장면은 잔잔하게, 나머지는 궁궐 가락
+  useEffect(() => {
+    setMood(!adult ? 'off' : top?.kind === 'fight' ? 'battle' : top?.kind === 'story' || top?.kind === 'scene' ? 'story' : 'home');
+  }, [adult, top?.kind]);
 
   // 안내 단계의 할 일을 해냈으면 다음 단계로 넘긴다.
   useEffect(() => {

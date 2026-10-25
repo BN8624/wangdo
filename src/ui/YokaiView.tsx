@@ -31,6 +31,7 @@ import { Portrait } from './Portrait';
 import { LineIcon } from './icons';
 import { act } from './store';
 import { buzz, pushToast } from './toast';
+import { play } from './sound';
 import type { ModalRequest } from './App';
 
 export const SPEC_COLOR: Record<StatKey, string> = { might: '#e2553f', wit: '#e08a1e', politics: '#4f9a3a', charm: '#d0577a' };
@@ -131,6 +132,7 @@ export function YokaiSheet({ view, now, id, open, onClose }: { view: GameState; 
     const r = act((s, t) => levelUp(s, t, id, count));
     if (r.ok) {
       buzz();
+      play('levelup');
       pushToast({ text: `${def.name} Lv ${y.level + r.levels}!` });
     }
   };

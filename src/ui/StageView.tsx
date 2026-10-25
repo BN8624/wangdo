@@ -12,6 +12,7 @@ import { ChapterArt, FoeGroup, ResIcon } from './icons';
 import { Art, Portrait } from './Portrait';
 import { act } from './store';
 import { buzz, pushToast } from './toast';
+import { track } from './analytics';
 import type { ModalRequest } from './App';
 import { SPEC_COLOR } from './YokaiView';
 
@@ -54,6 +55,7 @@ export function StageView({ view, now, open }: { view: GameState; now: number; o
       return;
     }
     buzz(30);
+    track(`stage/${r.stage.index}/${r.won ? 'win' : 'lose'}`);
     open({ kind: 'fight', result: r });
   };
 

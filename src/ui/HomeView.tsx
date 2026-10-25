@@ -19,6 +19,7 @@ import { themeOf } from '../data/themes';
 import { EPISODES } from '../data/story';
 import { nextEpisode, lockReason } from '../core/story';
 import { BackupSheet } from './Backup';
+import { track } from './analytics';
 import { backupDue, lastBackupAt, snoozeBackup } from './backup';
 interface Props {
     view: GameState;
@@ -77,6 +78,7 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
 export function RankSheet({ view, open, onClose }: { view: GameState; open: (m: ModalRequest) => void; onClose: () => void }) {
     const target = nextRank(view), pw = power(view), canPromote = promoteCheck(view).ok;
     const doPromote = () => { const r = act(promote); if (r.ok) {
+        track(`rank/${r.rank}`);
         onClose();
         open({ kind: 'promote', rank: r.rank, recruit: r.recruit });
     } };

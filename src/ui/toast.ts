@@ -1,6 +1,7 @@
 // 화면 위로 잠깐 떠오르는 알림("+1,234 엽전" 같은 것).
 import { useSyncExternalStore } from 'react';
 import type { IconKind } from './icons';
+import { play } from './sound';
 
 export interface Toast {
   id: number;
@@ -16,6 +17,7 @@ const emit = () => listeners.forEach((l) => l());
 
 export function pushToast(t: Omit<Toast, 'id'>) {
   const toast = { ...t, id: ++seq };
+  if (!t.warn) play(t.res === 'coin' ? 'coin' : 'chime');
   toasts = [...toasts.slice(-3), toast];
   emit();
   setTimeout(() => {

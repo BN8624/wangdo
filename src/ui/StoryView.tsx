@@ -7,6 +7,7 @@ import { ART } from '../data/art';
 import { YOKAI_BY_ID } from '../data/yokai';
 import { Art, Portrait } from './Portrait';
 import { act } from './store';
+import { track } from './analytics';
 import type { ModalRequest } from './App';
 /** 장면에 보일 인물: 폰 화면에서 크게 보이도록 가장 최근에 말했거나 등장한 식객 한 명. 주인공은 1인칭이라 화면에 나오지 않는다. */
 function sceneCast(cast: string[], spoken: StoryLine[]): string[] {
@@ -64,7 +65,7 @@ function EpisodeViewer({ ep, view, onClose, open }: {
     const flags = [...view.story.flags, ...ep.scenes.flatMap((sc, i) => choices[i] !== null ? sc.choice?.options[choices[i]!]?.effects?.flags ?? [] : [])];
     const sc = ep.scenes[scene], lines = visibleLines({ ...view, story: { ...view.story, flags } }, sc.lines);
     const choosing = index >= lines.length && !!sc.choice && choices[scene] === null;
-    const finish = () => { const result = act(s => completeEpisode({ ...s, introSeen: true }, ep, choices)); setRecruit(result.recruit); setUps(result.bondUps); setFinished(true); };
+    const finish = () => { const result = act(s => completeEpisode({ ...s, introSeen: true }, ep, choices)); track(`story/${ep.id}`); setRecruit(result.recruit); setUps(result.bondUps); setFinished(true); };
     const next = () => {
         if (finished || choosing)
             return;

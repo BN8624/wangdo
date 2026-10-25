@@ -28,6 +28,9 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+        env:
+          # 방문 통계(선택): 저장소 설정 > Variables에 GOATCOUNTER를 넣으면 켜진다
+          VITE_GOATCOUNTER: ${{ vars.GOATCOUNTER }}
       - if: github.ref == 'refs/heads/main'
         uses: actions/upload-pages-artifact@v3
         with:

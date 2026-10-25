@@ -13,6 +13,7 @@ import { YOKAI_BY_ID } from '../data/yokai';
 import { ResIcon } from './icons';
 import { Art } from './Portrait';
 import { buzz } from './toast';
+import { play } from './sound';
 
 // 1배속 기준 한 칸의 길이(ms). 말풍선 한 줄을 읽을 수 있을 만큼, 기술은 그보다 길게 머문다.
 const PACE: Record<BattleEvent['t'], number> = { round: 600, skill: 2300, hit: 1150, miss: 950, heal: 1300, status: 1300, skip: 1300, down: 1200 };
@@ -131,6 +132,26 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
     }, paceOf(ev) / speed);
     return () => clearTimeout(t);
   }, [shown, speed, done, events]);
+
+  // 소리: 타격은 북, 기술은 징, 치유는 퉁김
+  useEffect(() => {
+    const ev = events[shown - 1];
+    if (!ev) return;
+    if (ev.t === 'hit') play(ev.weak || ev.crit ? 'crit' : 'hit');
+    if (ev.t === 'skill') play('skill');
+    if (ev.t === 'heal') play('heal');
+  }, [shown, events]);
+
+  // 끝나면 낙관을 찍고 결과 가락
+  useEffect(() => {
+    if (!done) return;
+    const t1 = setTimeout(() => play('stamp'), 250);
+    const t2 = setTimeout(() => play(result.won ? 'win' : 'lose'), 650);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [done, result.won]);
 
   useEffect(() => {
     const ev = events[shown - 1];
