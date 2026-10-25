@@ -2,6 +2,8 @@
 import { describe, expect, it } from 'vitest';
 import { BATTLE, battleOdds, isSkillTurn, runBattle, type BattleSetup, type SkillKind } from '../src/core/battle';
 import { SKILLS } from '../src/data/skills';
+import { ALLY_LINES, FOE_LINE_CHAPTERS, foeLines } from '../src/data/battle-lines';
+import { CHAPTERS } from '../src/data/stages';
 import { YOKAI } from '../src/data/yokai';
 
 const setup = (ratio: number, kinds: SkillKind[] = ['strike', 'heal', 'stun']): BattleSetup => ({
@@ -88,5 +90,17 @@ describe('토벌 자동 전투', () => {
 
   it('식객 모두 고유 기술이 있다', () => {
     for (const y of YOKAI) expect(SKILLS[y.id], y.id).toBeDefined();
+  });
+
+  it('식객 모두 토벌 대사가 있고, 장마다 상대 대사가 있다', () => {
+    for (const y of YOKAI) {
+      expect(ALLY_LINES[y.id]?.attack.length, y.id).toBeGreaterThan(0);
+      expect(ALLY_LINES[y.id]?.skill, y.id).toBeTruthy();
+    }
+    expect([...FOE_LINE_CHAPTERS].sort()).toEqual(CHAPTERS.map((c) => c.id).sort());
+    for (const c of CHAPTERS) {
+      expect(foeLines(c.id, false).length).toBeGreaterThan(0);
+      expect(foeLines(c.id, true)[0]).toBe(c.boss.line);
+    }
   });
 });

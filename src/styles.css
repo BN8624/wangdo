@@ -655,100 +655,104 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .vn-title, .vn-close, .vn-box, .vn-item { z-index: 4; }
 
 /* ── 토벌 전투 화면 ── */
-.battle { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 45; overflow: hidden; background: #17121a; color: #fff; user-select: none; }
+/* 대치 구도: 사선으로 나눈 화면 오른쪽 위에 상대, 왼쪽 아래 앞쪽에 지금 나선 식객. 진한 색은 지금 나선 쪽에만 남긴다. */
+.battle { --hanji: #f4ecdc; --bink: #2a2019; --bseal: #b8242c; --bsafe: env(safe-area-inset-bottom); position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 45; overflow: hidden; background: #17121a; color: #fff; user-select: none; }
 .battle-stage { position: absolute; inset: 0; }
-.battle-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(.82); }
-.battle-bg.banner { filter: saturate(.8) brightness(.55); }
-.battle-shade { position: absolute; inset: 0; background: linear-gradient(180deg, rgba(8,6,10,.35), transparent 26%, transparent 48%, rgba(8,6,10,.55) 70%, rgba(8,6,10,.92)); }
+.battle-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(.32) saturate(.3) blur(6px); transform: scale(1.06); }
+.battle-pane { position: absolute; inset: 0; pointer-events: none; }
+.battle-pane.foe { background: linear-gradient(200deg, rgba(60,66,80,.35), rgba(20,22,30,.2)); clip-path: polygon(32% 0, 100% 0, 100% 100%, 82% 100%); }
+.battle-pane.ally { background: linear-gradient(160deg, rgba(80,64,52,.3), rgba(30,24,20,.2)); clip-path: polygon(0 0, 32% 0, 82% 100%, 0 100%); }
+.battle-seam { position: absolute; inset: 0; background: rgba(255,240,220,.25); clip-path: polygon(31.7% 0, 32.3% 0, 82.3% 100%, 81.7% 100%); pointer-events: none; }
 
-/* 상대: 대장은 한 명의 상반신, 나머지는 무리 그림 */
-.battle-foe { position: absolute; left: 0; right: 0; top: 7%; height: 64%; z-index: 1; }
-.battle-foe img.solo { position: absolute; right: 0; top: 0; width: 100%; height: 100%; object-fit: contain; object-position: center top; -webkit-mask-image: linear-gradient(180deg, #000 72%, transparent); mask-image: linear-gradient(180deg, #000 72%, transparent); }
-.battle-foe img.group { position: absolute; right: -10%; top: 1%; width: 100%; aspect-ratio: 1; object-fit: cover; -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%); }
-.battle-foe.down { opacity: .35; filter: grayscale(1); transition: opacity .6s ease, filter .6s ease; }
+.battle-foe { position: absolute; right: -10%; top: 9%; width: 74%; height: 50%; filter: brightness(.7) saturate(.45); transition: filter .25s ease; }
+.battle-foe.act { filter: none; }
+.battle-foe.down { filter: grayscale(1) brightness(.4); transition: filter .6s ease; }
+.battle-foe img { width: 100%; height: 100%; object-fit: contain; object-position: center top; -webkit-mask-image: linear-gradient(#000 74%, transparent); mask-image: linear-gradient(#000 74%, transparent); }
+.battle-foe img.group { object-fit: cover; -webkit-mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%); mask-image: radial-gradient(ellipse 50% 50% at 50% 50%, #000 62%, transparent 100%); }
 
-/* 타격 효과: 검은 바탕 그림을 화면 섞기(screen)로 겹쳐 빛만 남긴다 */
-.battle-fx { position: absolute; left: 50%; top: 36%; width: 76%; aspect-ratio: 1; margin: -38% 0 0 -38%; z-index: 3; pointer-events: none; mix-blend-mode: screen; animation: fx-pop .5s ease-out forwards; }
-.battle-fx.big { width: 104%; margin: -52% 0 0 -52%; animation-duration: .62s; }
-@keyframes fx-pop { 0% { opacity: 0; transform: scale(.55) rotate(-12deg); } 18% { opacity: 1; transform: scale(1) rotate(0); } 70% { opacity: .9; } 100% { opacity: 0; transform: scale(1.12) rotate(6deg); } }
-.battle-flash { position: absolute; inset: 0; z-index: 5; pointer-events: none; background: rgba(255,250,235,.45); animation: flash .25s ease-out forwards; }
-.battle-flash.hurt { background: radial-gradient(ellipse 90% 60% at 50% 100%, rgba(220,40,60,.5), transparent 70%); animation-duration: .4s; }
-@keyframes flash { to { opacity: 0; } }
+/* 식객 전신 그림을 머리~허벅지로 잘라 상대와 같은 틀로 맞춘다 */
+.battle-ally { position: absolute; left: -16%; bottom: calc(168px + var(--bsafe)); width: 96%; height: 64%; background: 50% 3% / 176% auto no-repeat; -webkit-mask-image: linear-gradient(#000 78%, transparent), linear-gradient(to right, #000 78%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(#000 78%, transparent), linear-gradient(to right, #000 78%, transparent); mask-composite: intersect; opacity: 0; transform: translateX(-24px); transition: opacity .25s ease, transform .25s ease; pointer-events: none; }
+.battle-ally.on { opacity: 1; transform: none; }
 
-.battle-dmg { position: absolute; right: 12%; top: 24%; z-index: 6; text-align: right; font: italic 700 52px/1 var(--title); color: #fff; letter-spacing: -1px; -webkit-text-stroke: 2px #2a0f14; paint-order: stroke fill; text-shadow: 0 4px 0 #2a0f14, 0 8px 18px rgba(0,0,0,.6); animation: dmg-pop .7s cubic-bezier(.2,1.4,.4,1) forwards; font-variant-numeric: tabular-nums; }
-.battle-dmg small { display: block; font-size: 20px; color: #ff9a3d; letter-spacing: 1px; }
-.battle-dmg.crit { color: #ffd34d; font-size: 66px; }
-.battle-dmg.miss { font-size: 28px; color: #d6dcea; }
-@keyframes dmg-pop { 0% { opacity: 0; transform: translateY(16px) scale(.6); } 25% { opacity: 1; transform: translateY(0) scale(1.1); } 70% { opacity: 1; transform: translateY(-8px) scale(1); } 100% { opacity: 0; transform: translateY(-18px) scale(1); } }
+.battle-dmg { position: absolute; z-index: 4; font: 700 36px var(--serif); letter-spacing: -.5px; color: #fff; -webkit-text-stroke: 3px #1d1012; paint-order: stroke fill; text-shadow: 0 3px 6px rgba(0,0,0,.5); font-variant-numeric: tabular-nums; animation: bdmg .7s ease-out forwards; pointer-events: none; }
+.battle-dmg.foe { right: 9%; top: 25%; text-align: right; }
+.battle-dmg.ally { left: 38%; top: 40%; font-size: 30px; color: #ffb3b3; }
+.battle-dmg.big { font-size: 46px; color: #ffe2a8; }
+.battle-dmg.miss { font-size: 22px; color: #d6dcea; }
+.battle-dmg small { display: block; font: 22px 'Nanum Brush Script', var(--title); color: #ffd36b; -webkit-text-stroke: 0; margin-top: -2px; }
+@keyframes bdmg { 0% { opacity: 0; transform: translateY(10px) scale(.85); } 20% { opacity: 1; transform: none; } 75% { opacity: 1; transform: translateY(-6px); } 100% { opacity: 0; transform: translateY(-14px); } }
+.battle-pop { position: absolute; z-index: 4; font: 32px 'Nanum Brush Script', var(--title); color: #ffd36b; text-shadow: 0 2px 6px rgba(0,0,0,.8); animation: bdmg .8s ease-out forwards; pointer-events: none; }
+.battle-pop.foe { right: 10%; top: 34%; }
+.battle-pop.party { left: 12%; top: 48%; }
 
-/* 위쪽 표시줄 */
-.battle-top { position: absolute; left: 0; right: 0; top: 0; z-index: 7; display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: calc(10px + env(safe-area-inset-top)) 14px 26px; background: linear-gradient(180deg, rgba(8,6,10,.78), rgba(8,6,10,0)); }
-.battle-round { text-align: center; line-height: 1; text-shadow: 0 1px 3px #000; }
-.battle-round small { display: block; font: 11px var(--sans); opacity: .8; margin-bottom: 3px; }
-.battle-round b { display: inline-block; font: 700 30px var(--title); animation: round-tick .5s ease; }
-@keyframes round-tick { 0% { transform: scale(1.5); color: #ffd34d; } 100% { transform: none; } }
-.battle-foebar { flex: 1; max-width: 68%; text-align: right; }
-.battle-foename { font: 700 16px var(--title); text-shadow: 0 1px 3px #000; margin-bottom: 5px; }
-.battle-foename em { font: 700 11px var(--sans); background: var(--seal); padding: 2px 7px; border-radius: 4px; margin-right: 6px; vertical-align: 2px; }
-.hpbar { position: relative; height: 8px; border-radius: 3px; background: rgba(0,0,0,.5); overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
+.battle-top { position: absolute; left: 0; right: 0; top: 0; z-index: 7; display: flex; justify-content: space-between; align-items: flex-start; padding: calc(14px + env(safe-area-inset-top)) 16px 0; height: calc(120px + env(safe-area-inset-top)); background: linear-gradient(rgba(10,8,12,.7), transparent); pointer-events: none; }
+.battle-round { font: 13px/1.5 var(--sans); color: rgba(255,255,255,.85); text-shadow: 0 1px 2px #000; }
+.battle-round small { display: block; font-size: 12px; opacity: .8; }
+.battle-foebar { width: 64%; text-align: right; }
+.battle-foename { font: 700 15px var(--serif); text-shadow: 0 1px 3px #000; margin-bottom: 5px; }
+.battle-foename em { font: 700 10px var(--sans); font-style: normal; background: var(--bseal); padding: 2px 6px; border-radius: 3px; margin-right: 6px; vertical-align: 2px; }
+.hpbar { position: relative; height: 6px; border-radius: 3px; background: rgba(0,0,0,.55); overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,.18); }
 .hpbar i { position: absolute; left: 0; top: 0; bottom: 0; }
-.hpbar .lag { background: rgba(255,255,255,.85); transition: width .6s ease .25s; }
+.hpbar .lag { background: rgba(255,255,255,.35); transition: width .6s ease .25s; }
 .hpbar .cur { transition: width .18s ease; }
-.hpbar.foe { height: 12px; }
-.hpbar.foe .cur { background: linear-gradient(180deg, #ff8f9b, #d93a55 60%, #b02844); }
-.hpbar.ally { height: 6px; margin-top: 5px; }
-.hpbar.ally .cur { background: linear-gradient(180deg, #8ff0b6, #36b874); }
-.hpnum { font: 12px var(--sans); opacity: .85; margin-top: 3px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
+.hpbar.foe .cur { background: #d9d0c2; }
+.hpbar.mine .cur { background: #b9d8c3; }
+.hpnum { font: 12px var(--sans); color: rgba(255,255,255,.8); margin-top: 3px; font-variant-numeric: tabular-nums; text-shadow: 0 1px 2px #000; }
+.bchips { display: flex; justify-content: flex-end; gap: 4px; margin-top: 5px; }
+.bchip { font: 17px/1.1 'Nanum Brush Script', var(--title); padding: 1px 7px 0; border-radius: 3px; color: var(--hanji); border: 1px solid rgba(244,236,220,.6); background: rgba(10,8,12,.35); }
 
-.battle-dmg.skill { font-size: 62px; }
-.battle-pop { position: absolute; z-index: 7; font: 700 28px var(--title); color: #fff; -webkit-text-stroke: 1.5px rgba(30,10,20,.85); paint-order: stroke fill; text-shadow: 0 3px 10px rgba(0,0,0,.6); animation: dmg-pop .6s ease-out forwards; pointer-events: none; }
-.battle-pop.foe { right: 10%; top: 17%; }
-.battle-pop.party { left: 0; right: 0; bottom: 250px; text-align: center; }
-.battle-pop.stun { color: #ffe066; }
-.battle-pop.weak { color: #c9a0ff; }
-.battle-pop.guard { color: #8fd3ff; }
-.battle-pop.rally { color: #ffb36b; }
-.bchips { display: flex; justify-content: flex-end; gap: 4px; margin-top: 4px; }
-.bchip { font: 700 11px var(--sans); padding: 2px 7px; border-radius: 4px; color: #1b1420; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
-.bchip.stun { background: #ffe066; }
-.bchip.weak { background: #c9a0ff; }
-.bchip.guard { background: #8fd3ff; }
-.bchip.rally { background: #ffb36b; }
+/* 한지 말풍선 */
+.battle-bubble { position: absolute; z-index: 6; filter: drop-shadow(0 4px 10px rgba(0,0,0,.45)); animation: bbubble .22s ease-out; pointer-events: none; }
+.battle-bubble svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.battle-bubble polygon { fill: var(--hanji); stroke: #3a2a1e; stroke-width: 2; }
+.battle-bubble p { position: relative; padding: 16px 20px 18px 24px; font: 700 16px/1.45 var(--serif); color: var(--bink); word-break: keep-all; }
+.battle-bubble small { display: block; font: 12px var(--sans); color: #8a6a4a; margin-bottom: 2px; }
+.battle-bubble.ally { left: 40%; top: 44%; width: 57%; }
+.battle-bubble.foe { left: 4%; top: 18%; width: 55%; }
+.battle-bubble.skill { left: 4%; top: 59%; width: 51%; }
+@keyframes bbubble { from { opacity: 0; transform: scale(.92); } }
+.battle-tag { position: absolute; left: 16px; top: 56%; z-index: 6; display: flex; align-items: center; gap: 6px; padding: 5px 14px 5px 8px; background: rgba(244,236,220,.94); border-left: 3px solid var(--bseal); transform: skewX(-8deg); animation: bbubble .22s ease-out; }
+.battle-tag span { transform: skewX(8deg); font: 700 14px var(--serif); letter-spacing: 1px; color: var(--bink); }
+.battle-tag b { transform: skewX(8deg); font: 700 10px var(--sans); color: var(--bseal); border: 1px solid var(--bseal); padding: 0 4px; border-radius: 2px; }
+
+/* 고유 기술: 화면을 어둡게 하고 식객을 가까이, 세로 붓글씨로 기술 이름 */
+.battle-skill { position: absolute; inset: 0; z-index: 8; animation: bskill .2s ease-out; pointer-events: none; }
+.battle-skill-dim { position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 55%, rgba(0,0,0,.25), rgba(0,0,0,.82)); }
+.battle-skill-art { position: absolute; left: -20%; bottom: calc(150px + var(--bsafe)); width: 104%; height: 72%; background: 50% 0 / 205% auto no-repeat; -webkit-mask-image: linear-gradient(transparent, #000 6%, #000 80%, transparent), linear-gradient(to right, #000 74%, transparent); -webkit-mask-composite: source-in; mask-image: linear-gradient(transparent, #000 6%, #000 80%, transparent), linear-gradient(to right, #000 74%, transparent); mask-composite: intersect; animation: bskill-art .5s ease-out; }
+.battle-skill-band { position: absolute; right: 0; top: 17%; width: 150px; height: 71%; background: linear-gradient(to left, rgba(12,6,10,.85) 40%, transparent); }
+.battle-skill-name { position: absolute; right: 18px; top: 24%; writing-mode: vertical-rl; font: 88px/1 'Nanum Brush Script', var(--title); letter-spacing: 4px; color: #fff; text-shadow: 0 0 18px rgba(255,220,180,.35), 0 4px 14px rgba(0,0,0,.8); animation: bskill-name .5s ease-out .08s backwards; }
+.battle-skill-cap { position: absolute; right: 114px; top: 25%; writing-mode: vertical-rl; font: 700 14px var(--serif); letter-spacing: 3px; color: rgba(255,255,255,.8); }
+@keyframes bskill { from { opacity: 0; } }
+@keyframes bskill-art { from { opacity: 0; transform: translateX(-30px); } }
+@keyframes bskill-name { from { opacity: 0; clip-path: inset(0 0 100% 0); } to { opacity: 1; clip-path: inset(0); } }
+
+/* 아래: 앞에 선 식객 체력, 조작 버튼, 카드 셋 */
+.battle-mine { position: absolute; left: 16px; bottom: calc(182px + var(--bsafe)); width: 52%; z-index: 5; pointer-events: none; }
+.battle-mine .who { font: 700 14px var(--serif); text-shadow: 0 1px 3px #000; margin-bottom: 3px; }
+.battle-ctrl { position: absolute; right: 14px; bottom: calc(176px + var(--bsafe)); z-index: 5; display: flex; gap: 10px; }
+.battle-ctrl button { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border-radius: 50%; font: 700 13px/1 var(--sans); color: #fff; background: rgba(10,8,12,.45); border: 1px solid rgba(255,255,255,.4); }
+.battle-ctrl button.on { background: var(--hanji); color: var(--bink); border-color: var(--hanji); }
+.battle-party { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; height: calc(168px + var(--bsafe)); padding: 12px 14px calc(18px + var(--bsafe)); display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: minmax(0, 1fr); gap: 8px; background: linear-gradient(transparent, rgba(8,6,8,.85) 30%); }
+.bcard { transition: transform .2s ease; min-width: 0; min-height: 0; }
+.bcard.on { transform: translateY(-6px); }
+.bcard-pic { position: relative; height: 100%; border-radius: 8px; overflow: hidden; background: #2a2230; border: 1px solid rgba(255,255,255,.2); box-shadow: 0 4px 10px rgba(0,0,0,.5); filter: saturate(.35) brightness(.6); transition: filter .25s ease; }
+.bcard.on .bcard-pic { filter: none; border: 2px solid #f0c77a; box-shadow: 0 0 14px rgba(240,199,122,.55); }
+.bcard.down .bcard-pic { filter: grayscale(1) brightness(.4); }
+.bcard-pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 12%; }
+.bcard-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 14px 0 7px; text-align: center; font: 700 13px var(--serif); background: linear-gradient(transparent, rgba(0,0,0,.8)); }
+.bcard-hp { position: absolute; left: 6px; bottom: 3px; height: 3px; max-width: calc(100% - 12px); background: #8fcfa6; border-radius: 2px; transition: width .3s ease; }
+.bcard-down { position: absolute; inset: auto 0 44%; text-align: center; font: 700 15px var(--title); text-shadow: 0 1px 4px #000; }
+.bcard-heal { position: absolute; inset: 28% 0 auto; text-align: center; font: 700 22px var(--serif); color: #b9f0cc; -webkit-text-stroke: 2px #10261a; paint-order: stroke fill; animation: bdmg .6s ease-out forwards; }
 .bcard-chips { position: absolute; top: 4px; right: 4px; display: grid; gap: 3px; justify-items: end; }
-.bcard-chips .bchip { font-size: 10px; padding: 1px 5px; }
-.bcard-dmg.heal { color: #7ff0a8; }
-/* 고유 기술 얼굴 띠 */
-.battle-cutin { position: absolute; left: 0; right: 0; top: 40%; height: 104px; z-index: 7; display: flex; align-items: center; overflow: hidden; background: linear-gradient(90deg, rgba(10,8,12,.92), rgba(10,8,12,.78) 60%, rgba(10,8,12,.4)); border-top: 1px solid rgba(255,220,160,.5); border-bottom: 1px solid rgba(255,220,160,.5); animation: cutin .76s ease forwards; pointer-events: none; }
-.battle-cutin-face { width: 40%; height: 100%; object-fit: cover; object-position: 50% 6%; -webkit-mask-image: linear-gradient(90deg, #000 55%, transparent); mask-image: linear-gradient(90deg, #000 55%, transparent); animation: cutin-face .76s ease-out forwards; }
-.battle-cutin-text { flex: 1; min-width: 0; padding-right: 18px; text-align: right; white-space: nowrap; }
-.battle-cutin-text small { display: block; font: 700 12px var(--sans); color: var(--c); letter-spacing: 1px; filter: brightness(1.4); margin-bottom: 2px; }
-.battle-cutin-text b { font: 700 25px var(--title); letter-spacing: 1px; color: #fff; text-shadow: 0 2px 10px rgba(0,0,0,.6); }
-@keyframes cutin { 0% { opacity: 0; transform: scaleY(0); } 14% { opacity: 1; transform: none; } 84% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes cutin-face { from { transform: translateX(-24px); } to { transform: translateX(6px); } }
-.battle-stamp { position: absolute; left: 0; right: 0; top: 28%; z-index: 8; text-align: center; font: 700 68px var(--title); letter-spacing: 8px; -webkit-text-stroke: 2px rgba(40,15,20,.8); paint-order: stroke fill; text-shadow: 0 6px 20px rgba(0,0,0,.6); animation: stamp .5s cubic-bezier(.2,1.6,.4,1); }
-.battle-stamp.win { color: #ffd34d; }
-.battle-stamp.lose { color: #cfc8dc; }
-@keyframes stamp { from { opacity: 0; transform: scale(2); } }
+.bcard-chips .bchip { font-size: 14px; padding: 0 5px; }
 
-.battle-bottom { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 0 10px calc(12px + env(safe-area-inset-bottom)); }
-/* 아래: 조작 버튼과 카드 셋 */
-.battle-ctrl { position: relative; display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 16px; }
-.battle-ctrl button { display: inline-flex; align-items: center; justify-content: center; height: 30px; min-width: 64px; padding: 0 12px; border-radius: 15px; background: rgba(12,10,16,.55); border: 1px solid rgba(255,255,255,.28); color: #fff; font: 700 13px var(--sans); line-height: 1; text-align: center; -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
-.battle-ctrl button.on { background: rgba(217,86,107,.92); border-color: transparent; }
-.battle-party { position: relative; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-.bcard { transition: transform .2s ease; }
-.bcard.act { transform: translateY(-6px); }
-.bcard-pic { position: relative; aspect-ratio: 3 / 4; border-radius: 10px; overflow: hidden; background: #2a2230; border: 1px solid rgba(255,255,255,.22); box-shadow: 0 4px 12px rgba(0,0,0,.5); }
-.bcard.act .bcard-pic { border-color: #fff; box-shadow: 0 0 0 1px #fff, 0 0 20px var(--c); }
-.bcard-pic img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 10%; }
-.bcard.down .bcard-pic img { filter: grayscale(1) brightness(.45); }
-.bcard-stat { position: absolute; top: 4px; left: 4px; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 4px; color: #fff; background: var(--c); }
-.bcard-name { position: absolute; left: 0; right: 0; bottom: 0; padding: 16px 4px 5px; text-align: center; font: 700 13px var(--serif); background: linear-gradient(transparent, rgba(0,0,0,.78)); }
-.bcard-down { position: absolute; inset: auto 0 42%; text-align: center; font: 700 15px var(--title); color: #fff; text-shadow: 0 1px 4px #000; }
-.bcard-dmg { position: absolute; inset: 28% 0 auto; text-align: center; font: italic 700 24px var(--title); color: #ff8a8a; -webkit-text-stroke: 1.5px #2a0f14; paint-order: stroke fill; animation: dmg-pop .6s ease-out forwards; }
-.bcard-dmg.miss { color: #d6dcea; font-size: 15px; }
-.battle-result { position: relative; z-index: 6; margin: 0 4px 12px; background: rgba(255,251,246,.97); color: var(--ink); border-radius: 16px; padding: 16px; display: grid; gap: 10px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: rise .3s ease; }
-.battle-result .title { font: 700 20px var(--title); }
-.battle-result .reward-list { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; font-weight: 700; }
-.battle-result .sub { font-size: 14px; color: var(--ink-2); }
+/* 결과: 붉은 낙관과 한지 보상 창 */
+.battle-seal { position: absolute; left: 50%; top: 20%; z-index: 9; width: 176px; height: 176px; margin-left: -88px; display: flex; flex-direction: column; align-items: center; justify-content: center; transform: rotate(-8deg); background: var(--bseal); border-radius: 10px; box-shadow: inset 0 0 0 6px rgba(255,240,230,.25), 0 8px 24px rgba(0,0,0,.6); font: 56px/1.08 var(--title); letter-spacing: 4px; color: #fff3ea; animation: bseal .45s cubic-bezier(.2,1.5,.4,1); }
+.battle-seal.lose { background: #4a4048; color: #e8e0d6; font-size: 64px; }
+@keyframes bseal { from { opacity: 0; transform: rotate(-8deg) scale(1.8); } }
+.battle-result { position: absolute; left: 22px; right: 22px; bottom: calc(196px + var(--bsafe)); z-index: 9; display: grid; gap: 10px; padding: 18px 18px 16px; text-align: center; background: var(--hanji); color: var(--bink); border-radius: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.55); animation: bbubble .3s ease-out; }
+.battle-result .title { font: 700 19px var(--serif); }
+.battle-result .reward-list { display: flex; justify-content: center; gap: 14px; flex-wrap: wrap; font: 700 15px var(--sans); }
+.battle-result .sub { font-size: 14px; color: #6a5544; }
+.battle-ok { height: 44px; border: 0; border-radius: 4px; background: var(--bseal); color: #fff; font: 700 16px var(--sans); }
 @media (prefers-reduced-motion: reduce) { .battle * { animation: none !important; transition: none !important; } }

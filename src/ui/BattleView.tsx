@@ -1,10 +1,12 @@
 // 토벌 전투 화면. 엔진이 미리 계산한 전투 기록(battle.events)을 한 칸씩 재생한다. 모두 자동이고, 2배속과 건너뛰기만 있다.
-// 공격하는 식객은 카드가 빛나고, 고유 기술은 얼굴 띠로 외친다. 걸린 효과(기절·약화·방어·격려)는 상대 체력 줄 아래와 카드 위에 표시한다.
+// 오피스퀸키우기식 대치 구도: 화면을 사선으로 나눠 오른쪽 위에 상대, 왼쪽 아래 앞쪽에 지금 나선 식객을 세우고, 말풍선 한 줄로 주고받는다.
+// 빛 이펙트는 쓰지 않는다. 지금 나서지 않은 쪽은 색을 빼서 진한 색이 한 명에게만 남게 한다.
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { FightResult } from '../core/engine';
 import { BATTLE, type BattleEvent, type Status } from '../core/battle';
 import { fmt } from '../core/format';
 import { ART, foeArtPath } from '../data/art';
+import { ALLY_LINES, foeLines } from '../data/battle-lines';
 import { GIFT_BY_ID } from '../data/village';
 import { STAT_LABEL, YOKAI_BY_ID } from '../data/yokai';
 import { ResIcon } from './icons';
@@ -12,37 +14,36 @@ import { Art } from './Portrait';
 import { buzz } from './toast';
 import { SPEC_COLOR } from './YokaiView';
 
-const PACE: Record<BattleEvent['t'], number> = { round: 420, skill: 760, hit: 560, miss: 480, heal: 560, status: 460, skip: 640, down: 700 };
+const PACE: Record<BattleEvent['t'], number> = { round: 380, skill: 1150, hit: 720, miss: 600, heal: 560, status: 420, skip: 640, down: 700 };
 
 const STATUS_LABEL: Record<Status, string> = { stun: '기절', weak: '약화', guard: '방어', rally: '격려' };
 
-// 맞거나 덤빌 때 흔들림. key로 다시 그리면 그림이 깜빡여서 Web Animations로 그 자리에서 다시 튼다.
+// 맞을 때 흔들림. key로 다시 그리면 그림이 깜빡여서 Web Animations로 그 자리에서 다시 튼다.
 const FOE_HIT: Keyframe[] = [
-  { transform: 'none', filter: 'brightness(2.2)' },
-  { transform: 'translateX(10px)', offset: 0.3 },
-  { transform: 'translateX(-6px)', filter: 'brightness(1.3)', offset: 0.6 },
+  { transform: 'none', filter: 'brightness(1.6)' },
+  { transform: 'translateX(12px)', offset: 0.3 },
+  { transform: 'translateX(-5px)', offset: 0.6 },
   { transform: 'none', filter: 'none' },
 ];
-const FOE_LUNGE: Keyframe[] = [{ transform: 'none' }, { transform: 'translate(-18px, 14px) scale(1.06)', offset: 0.4 }, { transform: 'none' }];
-const CARD_HURT: Keyframe[] = [
-  { transform: 'none', filter: 'brightness(1.8) sepia(1) hue-rotate(-40deg) saturate(4)' },
-  { transform: 'translateX(-5px)', offset: 0.4 },
-  { transform: 'translateX(4px)', offset: 0.7 },
+const ALLY_HURT: Keyframe[] = [
+  { transform: 'none', filter: 'sepia(.6) hue-rotate(-30deg) saturate(2.4) brightness(.9)' },
+  { transform: 'translateX(-10px)', offset: 0.3 },
+  { transform: 'translateX(5px)', offset: 0.6 },
   { transform: 'none', filter: 'none' },
 ];
 const CARD_HEAL: Keyframe[] = [{ filter: 'brightness(1.5) sepia(.5) hue-rotate(70deg) saturate(2.5)' }, { filter: 'none' }];
 const FOE_DIZZY: Keyframe[] = [
   { transform: 'none' },
-  { transform: 'rotate(-3deg)', offset: 0.25 },
-  { transform: 'rotate(3deg)', offset: 0.5 },
-  { transform: 'rotate(-2deg)', offset: 0.75 },
+  { transform: 'rotate(-2deg)', offset: 0.25 },
+  { transform: 'rotate(2deg)', offset: 0.5 },
+  { transform: 'rotate(-1deg)', offset: 0.75 },
   { transform: 'none' },
 ];
 const SHAKE: Keyframe[] = [
   { transform: 'none' },
-  { transform: 'translate(-7px, 4px)' },
-  { transform: 'translate(6px, -4px)' },
-  { transform: 'translate(-3px, 2px)' },
+  { transform: 'translate(-6px, 3px)' },
+  { transform: 'translate(5px, -3px)' },
+  { transform: 'translate(-2px, 2px)' },
   { transform: 'none' },
 ];
 
@@ -56,12 +57,36 @@ function loadSpeed(): 1 | 2 {
   }
 }
 
-function HpBar({ kind, value, max }: { kind: 'foe' | 'ally'; value: number; max: number }) {
+function HpBar({ kind, value, max }: { kind: 'foe' | 'mine'; value: number; max: number }) {
   const width = `${(value / max) * 100}%`;
   return (
     <div className={`hpbar ${kind}`}>
       <i className="lag" style={{ width }} />
       <i className="cur" style={{ width }} />
+    </div>
+  );
+}
+
+/** 말풍선 하나: 누가(식객·상대) 무슨 말을 했는지 */
+type Said = { side: 'ally' | 'foe'; who: string; text: string };
+
+/** 한지 말풍선. 꼬리 방향만 다르게 그린다 */
+function Bubble({ side, who, text }: { side: 'ally' | 'foe' | 'skill'; who: string; text: string }) {
+  const shape = {
+    ally: '8,6 222,0 214,84 70,90 22,118 40,88 0,92',
+    foe: '0,4 206,0 200,70 236,96 186,84 10,92',
+    skill: '4,14 92,10 110,-16 120,8 198,4 190,84 0,90',
+  }[side];
+  const box = { ally: '0 0 228 104', foe: '0 0 214 104', skill: '0 0 200 92' }[side];
+  return (
+    <div className={`battle-bubble ${side}`}>
+      <svg viewBox={box} preserveAspectRatio="none" aria-hidden>
+        <polygon points={shape} />
+      </svg>
+      <p>
+        <small>{who}</small>
+        {text}
+      </p>
     </div>
   );
 }
@@ -75,7 +100,9 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
   const done = shown >= events.length;
   const stageRef = useRef<HTMLDivElement>(null);
   const foeRef = useRef<HTMLDivElement>(null);
+  const allyRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const foeSays = useMemo(() => foeLines(chapterId, stage.isBoss), [chapterId, stage.isBoss]);
 
   useEffect(() => {
     if (done) return;
@@ -91,11 +118,11 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
     const ev = events[shown - 1];
     if (!ev || reducedMotion()) return;
     if (ev.t === 'hit' && ev.target < 0) foeRef.current?.animate(FOE_HIT, 320);
-    if ((ev.t === 'hit' || ev.t === 'miss') && ev.by < 0) {
-      foeRef.current?.animate(FOE_LUNGE, 400);
-      if (ev.t === 'hit') cardRefs.current[ev.target]?.animate(CARD_HURT, 350);
+    if (ev.t === 'hit' && ev.by < 0) {
+      allyRefs.current[ev.target]?.animate(ALLY_HURT, 380);
+      cardRefs.current[ev.target]?.animate(ALLY_HURT, 380);
     }
-    if (ev.t === 'hit' && (ev.crit || ev.skill)) stageRef.current?.animate(SHAKE, 280);
+    if (ev.t === 'hit' && (ev.crit || ev.skill)) stageRef.current?.animate(SHAKE, 260);
     if (ev.t === 'heal') cardRefs.current[ev.target]?.animate(CARD_HEAL, 500);
     if (ev.t === 'skip') foeRef.current?.animate(FOE_DIZZY, 600);
   }, [shown, events]);
@@ -110,16 +137,18 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
     }
   };
 
-  // 지금까지 재생한 기록으로 체력·라운드·쓰러진 식객을 다시 계산한다.
+  // 지금까지 재생한 기록으로 체력·라운드·효과·앞에 선 식객·말풍선을 다시 계산한다.
   const state = useMemo(() => {
     let foeHp = battle.foe.maxHp;
     const hp = battle.allies.map((a) => a.maxHp);
     const down = new Set<number>();
     let round = 0;
     let last: BattleEvent | null = null;
+    let focus = 0;
+    let bubble: Said | null = null;
     const foeStatus = new Set<Status>();
     const partyStatus = new Set<Status>();
-    for (const ev of events.slice(0, shown)) {
+    events.slice(0, shown).forEach((ev, idx) => {
       if (ev.t === 'round') round = ev.n;
       if (ev.t === 'hit') {
         if (ev.target < 0) foeHp = ev.hp;
@@ -132,18 +161,33 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
         else set.delete(ev.status);
       }
       if (ev.t === 'down') down.add(ev.target);
+      // 식객이 나서면 그 식객이, 상대가 반격하면 맞는 식객이 앞에 선다
+      if ((ev.t === 'hit' || ev.t === 'miss' || ev.t === 'skill') && ev.by >= 0) {
+        focus = ev.by;
+        const lines = ALLY_LINES[battle.allies[ev.by].id];
+        const who = YOKAI_BY_ID[battle.allies[ev.by].id]?.name ?? '';
+        if (ev.t === 'skill') bubble = lines ? { side: 'ally', who, text: lines.skill } : null;
+        else if (!(ev.t === 'hit' && ev.skill)) bubble = lines ? { side: 'ally', who, text: lines.attack[(idx * 7 + ev.by) % lines.attack.length] } : null;
+      }
+      if ((ev.t === 'hit' || ev.t === 'miss') && ev.by < 0) {
+        focus = ev.target;
+        bubble = { side: 'foe', who: stage.foe, text: foeSays[(idx * 5) % foeSays.length] };
+      }
       last = ev;
-    }
-    return { foeHp, hp, down, round, last, foeStatus, partyStatus };
-  }, [shown, events, battle]);
+    });
+    return { foeHp, hp, down, round, last: last as BattleEvent | null, focus, bubble: bubble as Said | null, foeStatus, partyStatus };
+  }, [shown, events, battle, stage.foe, foeSays]);
 
   const last = state.last;
-  const actor = last && (last.t === 'hit' || last.t === 'miss' || last.t === 'skill') && last.by >= 0 ? last.by : null;
+  const skillOn = last?.t === 'skill';
+  const foeActs = !!last && (last.t === 'hit' || last.t === 'miss') && last.by < 0;
   const foeDown = state.down.has(-1);
   const leftRounds = Math.max(0, BATTLE.maxRounds - Math.max(0, state.round - 1));
   const recruit = result.recruit ? YOKAI_BY_ID[result.recruit] : null;
-  const actorStat = actor !== null ? battle.allies[actor].stat : null;
-  const groupFoe = <Art className="group" src={ART.foe(chapterId)} alt={stage.foe} fallback={<div className="portrait-fallback">{stage.foe}</div>} />;
+  const focusAlly = battle.allies[state.focus];
+  const focusName = YOKAI_BY_ID[focusAlly.id]?.name ?? '';
+  const skillAlly = last?.t === 'skill' ? battle.allies[last.by] : null;
+  const lastSkill = [...events.slice(0, shown)].reverse().find((e) => e.t === 'skill');
 
   return (
     <div className="battle" role="dialog" aria-label={`${stage.foe} 토벌`}>
@@ -151,42 +195,53 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
         <Art
           className="battle-bg"
           src={ART.battle(chapterId)}
-          fallback={<Art className="battle-bg banner" src={ART.chapter(chapterId)} fallback={<div className="battle-bg" />} />}
+          fallback={<Art className="battle-bg" src={ART.chapter(chapterId)} fallback={<div className="battle-bg" />} />}
         />
-        <div className="battle-shade" />
+        <div className="battle-pane foe" />
+        <div className="battle-pane ally" />
+        <div className="battle-seam" />
 
-        <div ref={foeRef} className={`battle-foe ${foeDown ? 'down' : ''}`}>
-          <Art className="solo" src={foeArtPath(stage)} alt={stage.foe} fallback={groupFoe} />
+        <div ref={foeRef} className={`battle-foe ${foeActs ? 'act' : ''} ${foeDown ? 'down' : ''}`}>
+          <Art
+            src={foeArtPath(stage)}
+            alt={stage.foe}
+            fallback={<Art className="group" src={ART.foe(chapterId)} alt={stage.foe} fallback={<div className="portrait-fallback">{stage.foe}</div>} />}
+          />
         </div>
 
-        {/* 능력치마다 다른 타격 효과 그림. 미리 불러 두고, 맞을 때마다 새로 띄운다 */}
-        <div hidden>
-          {[...new Set(battle.allies.map((a) => a.stat))].map((st) => (
-            <img key={st} src={ART.fx(st)} alt="" />
-          ))}
-        </div>
-        {last?.t === 'hit' && last.target < 0 && actorStat && (
-          <img key={`fx-${shown}`} className={`battle-fx ${last.crit || last.skill ? 'big' : ''}`} src={ART.fx(actorStat)} alt="" draggable={false} />
-        )}
-        {last?.t === 'hit' && (last.crit || last.target >= 0) && <div key={`flash-${shown}`} className={`battle-flash ${last.target >= 0 ? 'hurt' : ''}`} />}
+        {/* 셋 다 미리 깔아 두고 앞에 선 식객만 보인다 */}
+        {battle.allies.map((a, i) => (
+          <div
+            key={a.id}
+            ref={(el) => (allyRefs.current[i] = el)}
+            className={`battle-ally ${state.focus === i && !skillOn ? 'on' : ''}`}
+            style={{ backgroundImage: `url(${ART.full(a.id)})` }}
+          />
+        ))}
+
         {last?.t === 'hit' && last.target < 0 && (
-          <div key={`dmg-${shown}`} className={`battle-dmg ${last.crit ? 'crit' : ''} ${last.skill ? 'skill' : ''}`}>
-            {last.crit && <small>치명타!</small>}
+          <div key={`dmg-${shown}`} className={`battle-dmg foe ${last.crit || last.skill ? 'big' : ''}`}>
+            {fmt(last.dmg)}
+            {last.crit && <small>치명타</small>}
+          </div>
+        )}
+        {last?.t === 'hit' && last.by < 0 && (
+          <div key={`dmg-${shown}`} className="battle-dmg ally">
             {fmt(last.dmg)}
           </div>
         )}
-        {last?.t === 'miss' && last.target < 0 && (
-          <div key={`miss-${shown}`} className="battle-dmg miss">
+        {last?.t === 'miss' && (
+          <div key={`miss-${shown}`} className={`battle-dmg miss ${last.target < 0 ? 'foe' : 'ally'}`}>
             빗나감
           </div>
         )}
         {last?.t === 'status' && last.on && (
-          <div key={`st-${shown}`} className={`battle-pop ${last.side} ${last.status}`}>
-            {STATUS_LABEL[last.status]}!
+          <div key={`st-${shown}`} className={`battle-pop ${last.side}`}>
+            {STATUS_LABEL[last.status]}
           </div>
         )}
         {last?.t === 'skip' && (
-          <div key={`skip-${shown}`} className="battle-pop foe stun">
+          <div key={`skip-${shown}`} className="battle-pop foe">
             기절해서 쉰다
           </div>
         )}
@@ -194,8 +249,10 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
 
       <div className="battle-top">
         <div className="battle-round">
-          <small>남은 라운드</small>
-          <b key={state.round}>{leftRounds}</b>
+          남은 {leftRounds}라운드
+          <small>
+            {Math.max(1, state.round)} / {BATTLE.maxRounds}
+          </small>
         </div>
         <div className="battle-foebar">
           <div className="battle-foename">
@@ -206,10 +263,10 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
           <div className="hpnum">
             {fmt(state.foeHp)} / {fmt(battle.foe.maxHp)}
           </div>
-          {state.foeStatus.size > 0 && (
+          {state.foeStatus.size > 0 && !done && (
             <div className="bchips">
               {[...state.foeStatus].map((st) => (
-                <span key={st} className={`bchip ${st}`}>
+                <span key={st} className="bchip">
                   {STATUS_LABEL[st]}
                 </span>
               ))}
@@ -218,89 +275,108 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
         </div>
       </div>
 
-      {last?.t === 'skill' && (
-        <div key={`skill-${shown}`} className="battle-cutin" style={{ '--c': SPEC_COLOR[battle.allies[last.by].stat] } as CSSProperties}>
-          <Art className="battle-cutin-face" src={ART.card(battle.allies[last.by].id)} alt="" fallback={<div />} />
-          <div className="battle-cutin-text">
-            <small>{YOKAI_BY_ID[battle.allies[last.by].id]?.name}</small>
-            <b>{last.name}</b>
+      {!done && !skillOn && state.bubble && <Bubble key={`b-${state.bubble.side}-${state.bubble.text}`} {...state.bubble} />}
+      {!done && !skillOn && last?.t === 'hit' && last.skill && lastSkill?.t === 'skill' && (
+        <div className="battle-tag" style={{ '--c': SPEC_COLOR[focusAlly.stat] } as CSSProperties}>
+          <b>{STAT_LABEL[focusAlly.stat]}</b>
+          <span>{lastSkill.name}</span>
+        </div>
+      )}
+
+      {skillAlly && last?.t === 'skill' && (
+        <div key={`skill-${shown}`} className="battle-skill">
+          <div className="battle-skill-dim" />
+          <div className="battle-skill-art" style={{ backgroundImage: `url(${ART.full(skillAlly.id)})` }} />
+          <div className="battle-skill-band" />
+          <div className="battle-skill-name" style={{ fontSize: Math.min(88, Math.floor(500 / last.name.length)) }}>
+            {last.name}
+          </div>
+          <div className="battle-skill-cap">{YOKAI_BY_ID[skillAlly.id]?.name}의 기술</div>
+          {ALLY_LINES[skillAlly.id] && <Bubble side="skill" who={YOKAI_BY_ID[skillAlly.id]?.name ?? ''} text={ALLY_LINES[skillAlly.id].skill} />}
+        </div>
+      )}
+
+      {!done && (
+        <div className="battle-mine">
+          <div className="who">{focusName}</div>
+          <HpBar kind="mine" value={state.hp[state.focus]} max={focusAlly.maxHp} />
+          <div className="hpnum">
+            {fmt(state.hp[state.focus])} / {fmt(focusAlly.maxHp)}
           </div>
         </div>
       )}
-      {done && <div className={`battle-stamp ${result.won ? 'win' : 'lose'}`}>{result.won ? '해결!' : '후퇴'}</div>}
-
-      <div className="battle-bottom">
-        {done ? (
-          <div className="battle-result">
-            <div className="title">{result.won ? `${stage.foe} 해결!` : '이번엔 물러났어요'}</div>
-            {result.won ? (
-              <div className="reward-list">
-                <span>
-                  <ResIcon kind="fame" />+{fmt(result.fame)}
-                </span>
-                <span>
-                  <ResIcon kind="coin" />+{fmt(result.coin)}
-                </span>
-                {result.gift && <span>선물 〈{GIFT_BY_ID[result.gift].name}〉</span>}
-              </div>
-            ) : (
-              <div className="sub">
-                {battle.rounds >= BATTLE.maxRounds && !state.hp.every((h) => h <= 0) ? '시간 안에 쓰러뜨리지 못했어요.' : '식객들이 모두 쓰러졌어요.'} 편성을
-                바꾸거나 식객을 더 키워서 다시 도전해요.
-              </div>
-            )}
-            {recruit && (
-              <div className="sub">
-                <b>{recruit.name}</b>이(가) 식객으로 합류했어요!
-              </div>
-            )}
-            <button className="btn hong wide" onClick={onClose}>
-              확인
-            </button>
-          </div>
-        ) : (
-          <div className="battle-ctrl">
-            <button className={speed === 2 ? 'on' : ''} onClick={toggleSpeed}>
-              2배속
-            </button>
-            <button onClick={() => setShown(events.length)}>건너뛰기</button>
-          </div>
-        )}
-        <div className="battle-party">
-          {battle.allies.map((a, i) => {
-            const def = YOKAI_BY_ID[a.id];
-            const hit = last?.t === 'hit' && last.by < 0 && last.target === i;
-            const missed = last?.t === 'miss' && last.by < 0 && last.target === i;
-            const healed = last?.t === 'heal' && last.target === i;
-            return (
-              <div
-                key={a.id}
-                className={`bcard ${actor === i ? 'act' : ''} ${state.down.has(i) ? 'down' : ''}`}
-                style={{ '--c': SPEC_COLOR[a.stat] } as CSSProperties}
-              >
-                <div ref={(el) => (cardRefs.current[i] = el)} className="bcard-pic">
-                  <Art src={ART.card(a.id)} alt={def?.name} fallback={<div className="portrait-fallback">{def?.name}</div>} />
-                  <span className="bcard-stat">{STAT_LABEL[a.stat]}</span>
-                  <span className="bcard-name">{def?.name}</span>
-                  {state.down.has(i) && <span className="bcard-down">쓰러짐</span>}
-                  {hit && last?.t === 'hit' && <span className="bcard-dmg">-{fmt(last.dmg)}</span>}
-                  {missed && <span className="bcard-dmg miss">빗나감</span>}
-                  {healed && last?.t === 'heal' && <span className="bcard-dmg heal">+{fmt(last.amount)}</span>}
-                  {!state.down.has(i) && state.partyStatus.size > 0 && (
-                    <span className="bcard-chips">
-                      {[...state.partyStatus].map((st) => (
-                        <span key={st} className={`bchip ${st}`}>
-                          {STATUS_LABEL[st]}
-                        </span>
-                      ))}
-                    </span>
-                  )}
-                </div>
-                <HpBar kind="ally" value={state.hp[i]} max={a.maxHp} />
-              </div>
-            );
-          })}
+      {!done && (
+        <div className="battle-ctrl">
+          <button className={speed === 2 ? 'on' : ''} onClick={toggleSpeed} aria-label="2배속">
+            ×2
+          </button>
+          <button onClick={() => setShown(events.length)} aria-label="건너뛰기">
+            ▶▶
+          </button>
         </div>
+      )}
+
+      {done && (
+        <div className={`battle-seal ${result.won ? 'win' : 'lose'}`}>
+          <span>{result.won ? '토벌' : '퇴각'}</span>
+          {result.won && <span>완료</span>}
+        </div>
+      )}
+      {done && (
+        <div className="battle-result">
+          <div className="title">{result.won ? `${stage.foe} 해결!` : '이번엔 물러났어요'}</div>
+          {result.won ? (
+            <div className="reward-list">
+              <span>
+                <ResIcon kind="fame" />+{fmt(result.fame)}
+              </span>
+              <span>
+                <ResIcon kind="coin" />+{fmt(result.coin)}
+              </span>
+              {result.gift && <span>선물 〈{GIFT_BY_ID[result.gift].name}〉</span>}
+            </div>
+          ) : (
+            <div className="sub">
+              {battle.rounds >= BATTLE.maxRounds && !state.hp.every((h) => h <= 0) ? '시간 안에 쓰러뜨리지 못했어요.' : '식객들이 모두 쓰러졌어요.'} 편성을
+              바꾸거나 식객을 더 키워서 다시 도전해요.
+            </div>
+          )}
+          {recruit && (
+            <div className="sub">
+              <b>{recruit.name}</b>이(가) 식객으로 합류했어요!
+            </div>
+          )}
+          <button className="battle-ok" onClick={onClose}>
+            확인
+          </button>
+        </div>
+      )}
+
+      <div className="battle-party">
+        {battle.allies.map((a, i) => {
+          const def = YOKAI_BY_ID[a.id];
+          const healed = last?.t === 'heal' && last.target === i;
+          return (
+            <div key={a.id} className={`bcard ${state.focus === i && !done ? 'on' : ''} ${state.down.has(i) ? 'down' : ''}`}>
+              <div ref={(el) => (cardRefs.current[i] = el)} className="bcard-pic">
+                <Art src={ART.card(a.id)} alt={def?.name} fallback={<div className="portrait-fallback">{def?.name}</div>} />
+                <span className="bcard-name">{def?.name}</span>
+                {state.down.has(i) && <span className="bcard-down">쓰러짐</span>}
+                {healed && last?.t === 'heal' && <span className="bcard-heal">+{fmt(last.amount)}</span>}
+                {!state.down.has(i) && state.partyStatus.size > 0 && (
+                  <span className="bcard-chips">
+                    {[...state.partyStatus].map((st) => (
+                      <span key={st} className="bchip">
+                        {STATUS_LABEL[st]}
+                      </span>
+                    ))}
+                  </span>
+                )}
+                <i className="bcard-hp" style={{ width: `${(state.hp[i] / a.maxHp) * 100}%` }} />
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

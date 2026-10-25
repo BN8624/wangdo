@@ -66,8 +66,6 @@ export const ART = {
   /** 토벌 전투 배경(세로), 장마다 대장과 일반 졸개 그림 */
   battle: (id: string) => `art/battle/${id}.webp`,
   boss: (id: string) => `art/boss/${id}.webp`,
-  /** 타격 효과(검은 바탕, 화면 섞기로 겹친다) */
-  fx: (stat: string) => `art/fx/${stat}.webp`,
   grunt: (id: string, v = 1) => (v > 1 ? `art/grunt/${id}-${v}.webp` : `art/grunt/${id}.webp`),
   item: (key: string) => `art/item/${key}.webp`,
   scene: (key: string) => `art/scene/${key}.webp`,
