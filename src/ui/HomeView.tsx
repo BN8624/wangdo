@@ -18,6 +18,8 @@ import { bondContent } from '../data/bond-content';
 import { themeOf } from '../data/themes';
 import { EPISODES } from '../data/story';
 import { nextEpisode, lockReason } from '../core/story';
+import { BackupSheet } from './Backup';
+import { backupDue, lastBackupAt, snoozeBackup } from './backup';
 interface Props {
     view: GameState;
     now: number;
@@ -31,6 +33,8 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
     const [banquet, setBanquet] = useState(false);
     const [taps, setTaps] = useState(0);
     const [line, setLine] = useState<string | null>(null);
+    const [backup, setBackup] = useState(false);
+    const [snoozed, setSnoozed] = useState(false);
     useEffect(() => { if (!line) return; const t = setTimeout(() => setLine(null), 5000); return () => clearTimeout(t); }, [line, taps]);
     const step = guideStep(view);
     const wpTarget = step?.target?.startsWith('wp-') ? step.target : null;
@@ -60,7 +64,9 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
     <Art className="heroine-card" src={ART.card(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>}/>
    </button>
    <div className="nameplate"><small style={{ background: theme }}>{def.kind}</small><b>{def.name}</b></div>
+   {!line && !step && !snoozed && backupDue(view, now) && <div className="backup-nudge" role="status"><span><b>진행을 백업해 두세요</b><small>{lastBackupAt() ? `마지막 백업 ${Math.floor((now - lastBackupAt()) / 86_400_000)}일 전` : '저장은 이 기기에만 있어요'}</small></span><button className="go" onClick={() => setBackup(true)}>백업</button><button className="later" onClick={() => { snoozeBackup(); setSnoozed(true); }}>나중에</button></div>}
   </div>
+  {backup && <BackupSheet view={view} now={now} onClose={() => setBackup(false)}/>}
   {line ? <div className="say" role="status"><b>{def.name}</b><span>{line}</span><button onClick={() => onHeroine(def.id)}>대화하기 ›</button></div> : !step && <button className="quest" onClick={() => go(hint.target)}><b>할 일</b><span>{hint.text}</span><em>가기 ›</em></button>}
   {work && createPortal(<WorkSheet view={view} open={open} picking={picking} setPicking={setPicking} onClose={() => { setWork(false); setPicking(null); }}/>, document.body)}
   {banquet && createPortal(<><div className="dim" onClick={() => setBanquet(false)}/><div className="modal" role="dialog" aria-label="연회"><div className="title">연회 열기</div><div className="bubble">곡식 {fmt(feastCost(view.rank))} · 명성 +{fmt(feastFame(view))}<br />모든 식객의 호감도가 올라갑니다.</div><div className="actions"><button className="btn hong" disabled={view.res.grain < feastCost(view.rank)} onClick={doFeast}>연회 열기</button><button className="btn" onClick={() => setBanquet(false)}>닫기</button></div></div></>, document.body)}

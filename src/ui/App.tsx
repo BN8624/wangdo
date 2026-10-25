@@ -26,6 +26,8 @@ import { pushToast, useToasts } from './toast';
 import { GuideBar, rewardText } from './Guide';
 import { advanceGuide, guideStep } from '../core/guide';
 import { YokaiSheet, YokaiView } from './YokaiView';
+import { AdultGate, adultConfirmed } from './Backup';
+import { warmArt } from './warm';
 
 export type ModalRequest =
   | { kind: 'wish' }
@@ -57,6 +59,7 @@ export function App() {
   const [queue, setQueue] = useState<ModalRequest[]>([]);
   const [sheet, setSheet] = useState<string | null>(null);
   const [rankOpen, setRankOpen] = useState(false);
+  const [adult, setAdult] = useState(adultConfirmed);
   const toasts = useToasts();
 
   useEffect(() => {
@@ -72,6 +75,10 @@ export function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [tab]);
+
+  // 곧 쓸 그림(식객 전신, 지금 토벌 상대)을 한가할 때 미리 받아 둔다.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => warmArt(state), [state.stage.index, Object.keys(state.yokai).length]);
 
   const open = (m: ModalRequest) => setQueue((q) => [...q, m]);
   const closeTop = () => setQueue((q) => q.slice(1));
@@ -98,6 +105,8 @@ export function App() {
     // 1초마다 다시 계산하지 않도록 분 단위로만 갱신한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, Math.floor(now / 60_000)]);
+
+  if (!adult) return <AdultGate onPass={() => setAdult(true)} />;
 
   return (
     <div className={`app ${step ? 'guiding' : ''}`}>

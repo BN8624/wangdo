@@ -306,3 +306,12 @@ describe('권세가 모자랄 때 할 일 안내', () => {
     expect(nextHint(poor.s, poor.now).text).toMatch(/엽전이 모이면 레벨을 올릴 수 있어요 · 약 \d+분$/);
   });
 });
+
+describe('저장 지키기', () => {
+  it('하루 넘게 했는데 백업한 적이 없으면 백업을 권한다', async () => {
+    const { backupDue } = await import('../src/ui/backup');
+    const now = 10 * 86_400_000;
+    expect(backupDue(newGame(now - 3_600_000, 1), now)).toBe(false);
+    expect(backupDue(newGame(now - 2 * 86_400_000, 1), now)).toBe(true);
+  });
+});
