@@ -247,6 +247,22 @@ describe('저장', () => {
     expect(deserialize('{"version":1}', T0)).toBeNull();
     expect(importCode('!!!', T0)).toBeNull();
   });
+
+  it('어긋난 저장은 바로잡는다: 없는 식객은 버리고, 일터에는 데리고 있는 식객만 한 번씩', () => {
+    const s = newGame(T0, 9);
+    const raw = JSON.parse(serialize(s));
+    raw.yokai.nobody = { level: 3 };
+    raw.work = { market: ['baekseol', 'nobody', 'baekseol'], tavern: ['danhui'], moon: ['baekseol'] };
+    raw.res.coin = -50;
+    raw.favorite = 'nobody';
+    const fixed = deserialize(JSON.stringify(raw), T0)!;
+    expect(fixed.yokai.nobody).toBeUndefined();
+    expect(fixed.work.market).toEqual(['baekseol']);
+    expect(fixed.work.tavern).toEqual([]);
+    expect(Object.keys(fixed.work).sort()).toEqual(Object.keys(s.work).sort());
+    expect(fixed.res.coin).toBe(0);
+    expect(fixed.yokai[fixed.favorite]).toBeDefined();
+  });
 });
 
 describe('안내', () => {

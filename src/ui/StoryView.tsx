@@ -29,7 +29,8 @@ export function NovelFrame({ title, bg, cast, line, onNext, children, onClose }:
         e.preventDefault();
         onNext();
     } }}>
-  <Art className="vn-bg scene-img" src={bg} fallback={<div className="art-placeholder vn-bg"/>}/>
+  {/* 장소 배경은 흐리고 차분하게 눌러 인물이 돋보이게 한다(이벤트 그림은 그대로) */}
+  <Art className={`vn-bg scene-img ${bg.includes('/bg/') ? 'soft' : ''}`} src={bg} fallback={<div className="art-placeholder vn-bg"/>}/>
   {line?.cg && <img key={line.cg} className="vn-cg" src={ART.scene(line.cg)} alt=""/>}
   {line?.img && <img key={line.img} className="vn-item" src={ART.item(line.img)} alt=""/>}
   <div className={`vn-cast ${line?.img ? 'dim-cast' : ''}`} data-n={cast.length} hidden={!!line?.cg}>{cast.map(id => <Art key={id} className={`vn-full ${cast.length > 1 ? (line?.who === id ? 'on' : 'off') : ''}`} src={ART.full(id)} alt={YOKAI_BY_ID[id]?.name} fallback={<div className="portrait-fallback">{YOKAI_BY_ID[id]?.name}</div>}/>)}</div>

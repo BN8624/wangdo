@@ -38,7 +38,7 @@ export interface ArtAsset {
 export const ASPECT: Record<ArtKind, 'portrait' | 'landscape' | 'square'> = {
   full: 'portrait',
   card: 'portrait',
-  cg: 'landscape',
+  cg: 'portrait',
   bg: 'portrait',
   banner: 'landscape',
   foe: 'square',
@@ -91,6 +91,10 @@ const BG: Record<string, string> = {
   hut: 'the inside of a modest thatched-roof cottage room at night, warm low oil-lamp light, paper sliding doors, a folded blanket on the heated floor',
   villagenight: 'Dalgol mountain village at night, thatched houses around a dirt square, a big zelkova tree, torches and paper lanterns, full moon',
   court: 'the royal throne hall with a sun-and-moon folding screen behind the empty throne, red pillars and gold light',
+  warehouse: 'the inside of a large wooden granary warehouse, rows of storage bays, a few rice sacks, dust in shafts of lantern light, an open heavy door',
+  ferry: 'a river ferry dock at night, wooden pier planks, moored cargo boats, paper lanterns reflecting on dark water, light mist',
+  pass: 'a mountain pass road on the back hill at dusk, red pines, a stone cairn shrine with cloth strips, a wooden toll barricade with torches',
+  camp: 'the great hall of a dokkaebi mountain fortress, rough timber pillars, a raised seat covered with fur, torches and plain black cloth banners',
 };
 
 const BANNER: Record<string, string> = {
