@@ -171,6 +171,9 @@ const FOES: Record<string, string> = {
   north: 'snow-covered bandit warriors with black banners and a giant horned chieftain',
 };
 
+/** 식객 동일성 참조: 카드(얼굴·상반신)와 전신(옷 전체·신발) */
+const identityOf = (id: string) => [`public/${ART.card(id)}`, `public/${ART.full(id)}`];
+
 export const ART_ASSETS: ArtAsset[] = [
   ...YOKAI.flatMap((y): ArtAsset[] => [
     { id: `full-${y.id}`, kind: 'full', out: ART.full(y.id), subject: `${y.kind}. ${y.artSubject}`, identity: [`public/${ART.card(y.id)}`], source: 'content/heroines.json' },
@@ -180,8 +183,9 @@ export const ART_ASSETS: ArtAsset[] = [
   ...CHAPTERS.map((c): ArtAsset => ({ id: `banner-${c.id}`, kind: 'banner', out: ART.chapter(c.id), subject: BANNER[c.id] })),
   ...CHAPTERS.map((c): ArtAsset => ({ id: `foe-${c.id}`, kind: 'foe', out: ART.foe(c.id), subject: FOES[c.id] })),
   ...YOKAI.flatMap((y): ArtAsset[] => [
-    { id: `cg-${y.id}-3`, kind: 'cg', out: ART.cg(y.id, 3), subject: `${y.name}, ${y.kind}. ${y.artSubject}; ${bondArtSubject(y.id, 3)}`, identity: [`public/${ART.card(y.id)}`], source: `content/bonds/${y.id}.json, scene level 3` },
-    { id: `cg-${y.id}-5`, kind: 'cg', out: ART.cg(y.id, 5), subject: `${y.name}, ${y.kind}. ${y.artSubject}; ${bondArtSubject(y.id, 5)}`, identity: [`public/${ART.card(y.id)}`], source: `content/bonds/${y.id}.json, scene level 5` },
+    // 인연·이야기 그림은 카드(얼굴)와 전신(옷 전체)을 함께 참조해 옷이 정본과 어긋나지 않게 한다
+    { id: `cg-${y.id}-3`, kind: 'cg', out: ART.cg(y.id, 3), subject: `${y.name}, ${y.kind}. ${y.artSubject}; ${bondArtSubject(y.id, 3)}`, identity: identityOf(y.id), source: `content/bonds/${y.id}.json, scene level 3` },
+    { id: `cg-${y.id}-5`, kind: 'cg', out: ART.cg(y.id, 5), subject: `${y.name}, ${y.kind}. ${y.artSubject}; ${bondArtSubject(y.id, 5)}`, identity: identityOf(y.id), source: `content/bonds/${y.id}.json, scene level 5` },
   ]),
   ...Object.entries(BATTLE_SUBJECTS).map(([key, subject]): ArtAsset => ({ id: `battle-${key}`, kind: 'battle', out: ART.battle(key), subject, source: 'src/data/art-direction.ts; src/data/world.ts' })),
   ...ENEMY_SUBJECTS.flatMap(({ group, key, subject, source }): ArtAsset[] => [
@@ -189,5 +193,5 @@ export const ART_ASSETS: ArtAsset[] = [
     { id: `enemy-${group}-${key}`, kind: 'enemy', out: ART.enemy(group, key), subject, identity: [`public/art/${group}/${key}.webp`], source },
   ]),
   ...Object.entries(ITEM_SUBJECTS).map(([key, subject]): ArtAsset => ({ id: `item-${key}`, kind: 'item', out: ART.item(key), subject, identity: [`public/${ART.item(key)}`], source: 'src/core/story.ts; src/data/art-direction.ts' })),
-  ...STORY_ART_BRIEFS.map(({ key, cast, source, subject }): ArtAsset => ({ id: `scene-${key}`, kind: 'scene', out: ART.scene(key), subject, identity: cast.map((id) => `public/${ART.card(id)}`), source })),
+  ...STORY_ART_BRIEFS.map(({ key, cast, source, subject }): ArtAsset => ({ id: `scene-${key}`, kind: 'scene', out: ART.scene(key), subject, identity: cast.flatMap(identityOf), source })),
 ];

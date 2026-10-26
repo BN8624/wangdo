@@ -33,6 +33,7 @@ describe('아트 제작 명세', () => {
     expect(artReferences(asset('cg-sodam-3'))).toEqual([
       { role: 'style', path: 'art/style-heroine-card.webp' },
       { role: 'identity', path: 'public/art/card/sodam.webp' },
+      { role: 'identity', path: 'public/art/full/sodam.webp' },
     ]);
     expect(artReferences(asset('scene-s3e3-loom'))).toContainEqual({ role: 'identity', path: 'public/art/card/yunseul.webp' });
   });
