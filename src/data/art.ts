@@ -155,6 +155,7 @@ export const ENEMY_FIGURES = new Set([
   'grunt/sky-2',
   'grunt/underworld',
   'grunt/yonggung',
+  'grunt/yonggung-2',
 ]);
 
 const BG: Record<string, string> = {
