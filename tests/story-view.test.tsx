@@ -22,12 +22,21 @@ describe('컷신', () => {
       for (const { stage, order } of chapterParts(c)) {
         const cut = order === 'pre' ? stage.pre : stage.post;
         if (cut.scenes) for (let i = cut.scenes[0]; i <= cut.scenes[1]; i++) scenes.push(i);
-        lines += cut.lines?.length ?? 0;
+        // 만남 스테이지의 앞 대화는 만남 대본이라 화의 전투 대화와 따로 센다
+        if (!(order === 'pre' && stage.meet)) lines += cut.lines?.length ?? 0;
       }
       expect(scenes, ep.id).toEqual(ep.scenes.map((_, i) => i));
       const want = (ep.battles ?? []).reduce((a, b) => a + (b.intro?.length ?? 0) + (b.outro?.length ?? 0), 0);
       expect(lines, ep.id).toBe(want);
     }
+  });
+
+  it('만남 스테이지 앞에서는 그 식객의 만남 대본이 그 식객 이름표로 나온다', () => {
+    const st = STAGES.find((x) => x.meet?.heroine === 'seorin')!;
+    const html = renderToStaticMarkup(<CutscenePlayer view={newGame(0)} parts={[{ stage: st, order: 'pre' }]} apply onDone={noop} />);
+    expect(html).toContain(st.pre.lines![0].text);
+    expect(st.pre.lines!.some((l) => l.who === 'seorin')).toBe(true);
+    expect(st.pre.lines!.some((l) => l.who === 'her')).toBe(false);
   });
 
   it('1-1 앞 컷신은 첫 화의 첫 대사로 시작하고 건너뛸 수 있다', () => {

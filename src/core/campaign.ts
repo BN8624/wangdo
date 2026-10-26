@@ -6,6 +6,7 @@ import { CHAPTERS as SETS } from '../data/stages';
 import { NODE_BY_ID, REGIONS, type FoeDef } from '../data/world';
 import type { Element, Role } from '../data/roster';
 import { YOKAI_BY_ID } from '../data/yokai';
+import meetsData from '../../content/meets.json';
 import type { CombatResult, CombatSetup, UnitInit } from './combat';
 import { nextRandom } from './rng';
 import type { Episode, GameState, StoryBattle, StoryLine } from './types';
@@ -34,7 +35,19 @@ export interface StageDef {
   pre: Cut;
   post: Cut;
   bg: string;
+  /** 만남: 이 스테이지를 처음 깨면 합류하는 식객(뽑기 없이도 모두 만날 수 있게) */
+  meet?: { heroine: string; name: string };
 }
+
+interface MeetDef {
+  id: string;
+  heroine: string;
+  name: string;
+  lines: StoryLine[];
+}
+/** 만남 이야기를 맡을 장. 그 장에서 이야기 전투가 없는 둘째 스테이지 이후 첫 스테이지가 만남 무대가 된다 */
+const MEET_AT: Record<string, string> = { 'm:seorin': 's1e03', 'm:danhui': 's1e06', 'm:bulsae': 's1e08' };
+const MEETS = (meetsData as MeetDef[]).filter((m) => MEET_AT[m.id] && YOKAI_BY_ID[m.heroine]);
 
 const N = B.stagesPerChapter;
 const OLD_MAX = Math.max(...EPISODES.flatMap((e) => (e.battles ?? []).map((b) => b.level ?? 1)));
@@ -95,6 +108,13 @@ function buildChapter(ep: Episode, chapter: number, startLevel: number): StageDe
       post,
       bg: battle?.bg ?? (battle?.set ?? set),
     });
+  }
+  for (const m of MEETS.filter((x) => MEET_AT[x.id] === ep.id)) {
+    const st = stages.find((x) => x.k >= 2 && !x.battle && !x.boss && !x.meet && !x.pre.lines);
+    if (!st) continue;
+    st.meet = { heroine: m.heroine, name: m.name };
+    // 대본의 'her'는 그 식객
+    st.pre = { ...st.pre, lines: m.lines.map((l) => (l.who === 'her' ? { ...l, who: m.heroine } : l)) };
   }
   return stages;
 }
@@ -273,6 +293,34 @@ export function episodeRecruits(ep: Episode): string[] {
   return (Array.isArray(r) ? r : r ? [r] : []).filter((id) => YOKAI_BY_ID[id]);
 }
 
+/** 이 장에서 합류하는 식객(대장을 깨면 합류 + 만남 스테이지) */
+export const chapterRecruits = (chapter: number): string[] => [...new Set([...chapterStages(chapter).flatMap((st) => (st.meet ? [st.meet.heroine] : [])), ...episodeRecruits(EPISODES[chapter])])];
+
+/** 만남이 생기기 전에 그 스테이지를 지나간 저장은 불러올 때 합류시킨다(제자리에서 고친다) */
+export function catchUpMeets(s: GameState): string[] {
+  const added: string[] = [];
+  for (const st of STAGES) {
+    if (!st.meet || !stageCleared(s, st.id) || s.yokai[st.meet.heroine]) continue;
+    recruit(s, st.meet.heroine, emptyReward());
+    added.push(st.meet.heroine);
+  }
+  return added;
+}
+
+/** 합류시킨다. 이미 있으면 그 식객 조각 */
+function recruit(s: GameState, id: string, reward: StageReward) {
+  if (s.yokai[id]) {
+    s.yokai[id].shards += B.storyDupeShards;
+    reward.shards[id] = (reward.shards[id] ?? 0) + B.storyDupeShards;
+    return;
+  }
+  const top = Object.values(s.yokai).map((y) => y.level).sort((a, b) => b - a).slice(0, 5);
+  const level = Math.max(1, Math.round(top.reduce((a, x) => a + x, 0) / Math.max(1, top.length)));
+  const stars = startStars(id);
+  s.yokai[id] = { level: Math.min(level, levelCap(stars)), stars, shards: 0, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0, gear: {} };
+  reward.recruits.push(id);
+}
+
 /** 스테이지 결과를 반영한다(제자리에서 고친다). 지면 아무것도 주지 않는다 */
 export function applyStage(s: GameState, st: StageDef, team: string[], result: CombatResult): { first: boolean; stars: number; reward: StageReward } {
   const reward = emptyReward();
@@ -289,20 +337,10 @@ export function applyStage(s: GameState, st: StageDef, team: string[], result: C
   if (first) Object.assign(reward, firstClearReward(st));
   reward.jade += (stars - prev) * B.starJade;
   for (const id of team) if (id && s.yokai[id]) s.yokai[id].bond += B.battleBond;
+  if (first && st.meet) recruit(s, st.meet.heroine, reward);
   if (first && st.boss) {
     if (!s.story.done.includes(st.ep.id)) s.story = { ...s.story, done: [...s.story.done, st.ep.id] };
-    const top = Object.values(s.yokai).map((y) => y.level).sort((a, b) => b - a).slice(0, 5);
-    const level = Math.max(1, Math.round(top.reduce((a, x) => a + x, 0) / Math.max(1, top.length)));
-    for (const id of episodeRecruits(st.ep)) {
-      if (s.yokai[id]) {
-        s.yokai[id].shards += B.storyDupeShards;
-        reward.shards[id] = B.storyDupeShards;
-      } else {
-        const stars = startStars(id);
-        s.yokai[id] = { level: Math.min(level, levelCap(stars)), stars, shards: 0, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0, gear: {} };
-        reward.recruits.push(id);
-      }
-    }
+    for (const id of episodeRecruits(st.ep)) recruit(s, id, reward);
   }
   s.res.jade += reward.jade;
   s.res.coin += reward.coin;

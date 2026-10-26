@@ -1,6 +1,6 @@
 // 출정 탭: 장 지도(스테이지 여섯이 굽은 길 위에 놓인다)와 수련장. 스테이지를 누르면 StageFlow가 열린다.
 import { useEffect, useMemo, useState } from 'react';
-import { CHAPTER_COUNT, chapterOpen, chapterStages, chapterStars, nextStage, stageCleared, stageOpen, stagePower, stageStars } from '../core/campaign';
+import { CHAPTER_COUNT, chapterOpen, chapterRecruits, chapterStages, chapterStars, nextStage, stageCleared, stageOpen, stagePower, stageStars } from '../core/campaign';
 import { fmt } from '../core/format';
 import { TRAIN_LEVELS, trainOpen, trainPower, trainReward } from '../core/idle';
 import type { GameState } from '../core/types';
@@ -52,10 +52,7 @@ function ChapterMap({ view, chapter, setChapter, power, open }: { view: GameStat
   const stages = chapterStages(chapter);
   const ep = EPISODES[chapter];
   const stars = chapterStars(view, chapter);
-  const recruits = useMemo(() => {
-    const r = ep.reward?.recruit;
-    return (Array.isArray(r) ? r : r ? [r] : []).filter((id) => YOKAI_BY_ID[id]);
-  }, [ep]);
+  const recruits = useMemo(() => chapterRecruits(chapter), [chapter]);
   const lastOpen = useMemo(() => {
     let n = 0;
     for (let c = 0; c < CHAPTER_COUNT; c++) if (chapterOpen(view, c)) n = c;
@@ -94,7 +91,7 @@ function ChapterMap({ view, chapter, setChapter, power, open }: { view: GameStat
         return (
           <button
             key={st.id}
-            className={['cp-node', cleared && 'done', now && 'now', !isOpen && 'locked', st.boss && 'boss'].filter(Boolean).join(' ')}
+            className={['cp-node', cleared && 'done', now && 'now', !isOpen && 'locked', st.boss && 'boss', st.meet && 'meet'].filter(Boolean).join(' ')}
             style={{ left: `${x}%`, top: `${y}%` }}
             data-guide={`stage-${st.id}`}
             disabled={!isOpen}

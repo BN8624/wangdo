@@ -68,6 +68,8 @@ export const BALANCE = {
   rates: { ssr: 0.04, sr: 0.2 },
   pity: 60,
   dupeShards: [0, 20, 40, 80],
+  /** 옥을 기억 조각으로 바꾸는 값: 뽑기를 하지 않아도 원하는 식객의 별을 확정으로 올릴 수 있게 */
+  memoryTrade: { jade: 100, memory: 5 },
 
   // ── 방치·수련장 ──
   afkCapMinutes: 12 * 60,

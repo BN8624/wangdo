@@ -1034,3 +1034,13 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .bf-bossbar.tgt { animation: bf-tgtbar calc(.16s / var(--spd)) ease-out both; }
 .bf-bossbar.tgt span { font-size: 14px; opacity: .92; }
 @keyframes bf-tgtbar { from { opacity: 0; transform: translateY(-6px); } }
+
+/* 출정 지도: 식객을 만나는 스테이지(깨면 합류) */
+.cp-node.meet .cp-dot { outline: 2px solid #f2c66d; outline-offset: 2px; }
+
+/* 모집: 옥 → 기억 조각 교환 */
+.gc-trade { display: flex; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.18); }
+.gc-trade p { flex: 1; margin: 0; display: grid; line-height: 1.3; }
+.gc-trade b { font: 700 13px var(--sans); }
+.gc-trade small { font-size: 11px; opacity: .8; }
+.gc-trade .btn { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
