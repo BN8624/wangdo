@@ -16,6 +16,8 @@ export const SKILLS: Record<string, BattleSkill> = {
   haejin: { name: '용궁 샘물', kind: 'heal' },
   wolha: { name: '명부 낙인', kind: 'strike' },
   bari: { name: '생명수', kind: 'heal' },
+  yunseul: { name: '운명의 실 엮기', kind: 'weaken' },
+  beori: { name: '벼락 집행', kind: 'stun' },
 };
 
 export const SKILL_LABEL: Record<SkillKind, string> = { strike: '강타', stun: '기절', guard: '방어', heal: '치유', weaken: '약화', rally: '격려' };

@@ -107,6 +107,14 @@ const BG: Record<string, string> = {
   bath: 'an indoor bathhouse with a large steaming stone pool, dark wood beams, rising steam, soft lantern light and floating petals',
   snowcave: 'a shallow mountain cave during a blizzard at night, a small campfire, fur bedding, snow blowing past the entrance',
   bedroom: 'a nobleman bedroom at night, thick silk bedding on the warm floor, a paper lantern, a folding screen with plum blossoms, lattice doors',
+  temple: 'a small mountain temple high on a misty peak at dusk, curved roofs, stone lanterns, mountains below in the mist',
+  skyroad: 'a long stone stairway rising through soft clouds into a pale starry sky',
+  galaxy: 'the quiet shore of the Milky Way river in heaven at night, a calm river of starlight, a small wooden ferry dock with a lantern',
+  loom: 'a weaving room in heaven, a large old wooden loom with fine silver threads, a round window showing the night sky',
+  heavenoffice: 'a heavenly government office hall above the clouds, low desks with stacked ledgers, pale jade pillars',
+  archive: 'a quiet heavenly archive room, tall shelves of scrolls, a reading desk with a lamp',
+  jadecourt: 'the Jade Emperor throne hall of white jade and gold, a tall silk curtain hiding the throne',
+  shrine: 'a heavenly thunder shrine on a floating cliff, a huge war drum on a stone altar, storm clouds',
 };
 
 const BANNER: Record<string, string> = {

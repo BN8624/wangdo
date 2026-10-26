@@ -228,6 +228,10 @@ export interface StoryBattle {
   boss?: boolean;
   /** 상대 그림으로 이 식객의 전신을 쓴다(겨루기) */
   rival?: string;
+  /** 상대 그림(art/<art>.webp). 있으면 set·grunt·boss보다 먼저 쓴다 */
+  art?: string;
+  /** 전투 배경(art/battle/<bg>.webp). 없으면 set의 배경 */
+  bg?: string;
   /** 나설 식객 수(1~3, 기본 3) */
   size?: number;
   /** 판마다 겨룰 능력치. 없으면 순번으로 정한다 */

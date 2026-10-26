@@ -19,6 +19,8 @@ export const COMBOS: ComboDef[] = [
   { id: 'fire-death', pair: ['bulsae', 'wolha'], title: '불과 저승길', text: '불새가 지핀 불 앞에서 월하가 처음으로 웃었다. 훈련장 열기가 식을 줄 모른다.' },
   { id: 'sky-sea', pair: ['cheongyeon', 'haejin'], title: '하늘과 바다', text: '선녀와 용왕의 딸이 서로의 고향 자랑을 하다 상단 거래 길을 하나 뚫었다.' },
   { id: 'dance-coin', pair: ['yeonhwa', 'oryeon'], title: '춤과 장삿속', text: '연화의 춤판에 오련이 상단 손님을 끌어온다. 둘 다 서로 손해 봤다고 투덜댄다.' },
+  { id: 'heaven-scribes', pair: ['cheongyeon', 'yunseul'], title: '서기와 직녀', text: '청연이 쓴 문장을 윤슬이 실로 짠다. 장터 계약서마다 거짓이 한 줄도 안 남는다.' },
+  { id: 'two-bailiffs', pair: ['beori', 'wolha'], title: '두 집행자', text: '하늘의 집달관과 저승의 차사가 규정집을 바꿔 읽는다. 논밭 세곡이 기한보다 하루 먼저 걷힌다.' },
 ];
 
 export const GIFTS: GiftDef[] = [

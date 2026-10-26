@@ -30,8 +30,8 @@ export interface ItemDef {
 }
 
 /** 단계별 무기 주 능력치와 값 */
-const MAIN = [0, 40, 75, 110, 150, 190, 235, 285];
-const PRICE = [0, 600, 2400, 7000, 18000, 45000, 100000, 0];
+const MAIN = [0, 40, 75, 110, 150, 190, 235, 285, 335, 390, 450];
+const PRICE = [0, 600, 2400, 7000, 18000, 45000, 100000, 200000, 380000, 700000, 0];
 
 function weapon(id: string, name: string, tier: number, icon: ItemIcon, main: StatKey, sub: StatKey, desc: string, sold = true): ItemDef {
   return { id, name, slot: 'weapon', tier, icon, desc, stats: { [main]: MAIN[tier], [sub]: Math.round(MAIN[tier] / 3) }, ...(sold ? { price: PRICE[tier] } : {}) };
@@ -45,6 +45,9 @@ export const ITEMS: ItemDef[] = [
   weapon('hwando', '환도', 4, 'sword', 'might', 'politics', '관군이 차는 곧은 칼.'),
   weapon('woldo', '월도', 5, 'sword', 'might', 'charm', '반달 모양 날이 달린 긴 칼.'),
   weapon('dragon-glaive', '청룡 언월도', 6, 'sword', 'might', 'wit', '용 무늬가 새겨진 큰 칼.'),
+  weapon('cloud-spear', '구름 창', 7, 'sword', 'might', 'wit', '구름재 수비병이 쓰던 긴 창. 휘두르면 안개가 갈라진다.'),
+  weapon('thunder-halberd', '뇌전 극', 8, 'sword', 'might', 'politics', '뇌병이 드는 갈래창. 손잡이가 늘 찌릿하다.'),
+  weapon('sky-sword', '하늘 장군검', 9, 'sword', 'might', 'charm', '천상 장군들이 차는 곧고 맑은 칼.'),
   // 지략
   weapon('bamboo-fan', '대나무 부채', 1, 'fan', 'wit', 'charm', '바람보다 말을 일으키는 부채.'),
   weapon('brass-abacus', '놋쇠 주판', 2, 'abacus', 'wit', 'politics', '알이 굴러가는 소리에 상대가 긴장한다.'),
@@ -52,6 +55,9 @@ export const ITEMS: ItemDef[] = [
   weapon('secret-book', '비밀 서책', 4, 'abacus', 'wit', 'might', '아무도 안 읽은 병법이 적혀 있다.'),
   weapon('tortoise-board', '귀갑 점판', 5, 'abacus', 'wit', 'politics', '거북 등딱지로 만든 셈판.'),
   weapon('crow-fan', '삼족오 깃털 부채', 6, 'feather', 'wit', 'charm', '해를 품은 새의 깃털.'),
+  weapon('star-chart', '별자리 점판', 7, 'abacus', 'wit', 'politics', '별의 자리로 상대의 다음 수를 읽는다.'),
+  weapon('magpie-fan', '까치 깃 부채', 8, 'feather', 'wit', 'charm', '오작교 까치들이 떨군 깃으로 만든 부채.'),
+  weapon('galaxy-abacus', '은하 주판', 9, 'abacus', 'wit', 'might', '알마다 작은 별이 들어 있는 주판.'),
   // 정치
   weapon('plain-brush', '붓 한 자루', 1, 'brush', 'politics', 'wit', '서명 한 줄이 칼보다 무겁다.'),
   weapon('office-seal', '관인', 2, 'seal', 'politics', 'might', '찍는 순간 일이 정해진다.'),
@@ -59,6 +65,9 @@ export const ITEMS: ItemDef[] = [
   weapon('royal-tally', '어사 마패', 4, 'seal', 'politics', 'wit', '들어 올리면 모두가 엎드린다.'),
   weapon('judge-scepter', '판관의 홀', 5, 'seal', 'politics', 'might', '해태 뿔을 깎아 만든 홀.'),
   weapon('royal-seal', '왕실 인장', 6, 'seal', 'politics', 'charm', '해를 두른 용이 새겨진 인장.'),
+  weapon('heaven-tablet', '천상 홀기', 7, 'seal', 'politics', 'wit', '하늘 관리가 조회 때 드는 옥 홀.'),
+  weapon('heaven-seal', '하늘 관인', 8, 'seal', 'politics', 'might', '찍으면 구름이 한 장 걷힌다.'),
+  weapon('law-brush', '옥황 법필', 9, 'brush', 'politics', 'charm', '하늘 법을 고쳐 쓸 수 있다는 붓.'),
   // 매력
   weapon('hand-mirror', '손거울', 1, 'mirror', 'charm', 'wit', '웃는 얼굴을 먼저 비춰 준다.'),
   weapon('silk-kerchief', '비단 손수건', 2, 'fan', 'charm', 'politics', '흔들면 눈길이 따라온다.'),
@@ -66,6 +75,9 @@ export const ITEMS: ItemDef[] = [
   weapon('coral-fan', '붉은 산호 부채', 4, 'fan', 'charm', 'wit', '바닷속 산호로 살을 댄 부채.'),
   weapon('phoenix-mirror', '봉황 거울', 5, 'mirror', 'charm', 'politics', '보는 이의 마음까지 비친다.'),
   weapon('fox-ornament', '아홉 꼬리 장식', 6, 'charm', 'charm', 'might', '여우 꼬리털로 엮은 장식.'),
+  weapon('moon-mirror', '달빛 거울', 7, 'mirror', 'charm', 'wit', '달을 비추면 보는 이가 넋을 잃는다.'),
+  weapon('starsilk-fan', '별비단 부채', 8, 'fan', 'charm', 'politics', '은하 비단을 댄 부채.'),
+  weapon('weaver-shuttle', '직녀의 북', 9, 'charm', 'charm', 'wit', '하늘 베틀의 북. 던지면 마음이 엮인다.'),
 
   // 장신구(상점·보물상자)
   { id: 'luck-pouch', name: '복주머니', slot: 'trinket', tier: 1, icon: 'pouch', price: 400, exp: 0.1, desc: '경험치 +10%' },
@@ -80,6 +92,12 @@ export const ITEMS: ItemDef[] = [
   { id: 'dragon-scale', name: '용 비늘 부적', slot: 'trinket', tier: 5, icon: 'charm', price: 30000, hp: 0.3, desc: '체력 +30%' },
   { id: 'phoenix-hairpin', name: '봉황 비녀', slot: 'trinket', tier: 6, icon: 'hairpin', price: 70000, skill: 0.4, desc: '기술 피해 +40%' },
   { id: 'seven-norigae', name: '칠보 노리개', slot: 'trinket', tier: 6, icon: 'norigae', price: 75000, pct: 0.16, desc: '모든 능력치 +16%' },
+  { id: 'star-norigae', name: '별 노리개', slot: 'trinket', tier: 7, icon: 'norigae', price: 190000, pct: 0.2, desc: '모든 능력치 +20%' },
+  { id: 'cloud-pouch', name: '구름 주머니', slot: 'trinket', tier: 7, icon: 'pouch', price: 180000, exp: 0.25, hp: 0.2, desc: '경험치 +25%, 체력 +20%' },
+  { id: 'thunder-ring', name: '뇌전 가락지', slot: 'trinket', tier: 8, icon: 'ring', price: 360000, crit: 0.16, weak: 0.2, desc: '치명타 확률 +16%, 약점 배율 +0.2' },
+  { id: 'magpie-hairpin', name: '까치 비녀', slot: 'trinket', tier: 8, icon: 'hairpin', price: 380000, skill: 0.5, pct: 0.06, desc: '기술 피해 +50%, 모든 능력치 +6%' },
+  { id: 'heaven-norigae', name: '천상 칠보 노리개', slot: 'trinket', tier: 9, icon: 'norigae', price: 680000, pct: 0.26, desc: '모든 능력치 +26%' },
+  { id: 'jade-talisman', name: '옥황 부적', slot: 'trinket', tier: 9, icon: 'charm', price: 700000, hp: 0.4, skill: 0.3, desc: '체력 +40%, 기술 피해 +30%' },
 
   // 대장이 떨어뜨리는 고유 장비(팔지 않음)
   weapon('chief-club', '고개 두목의 철 몽둥이', 2, 'club', 'might', 'charm', '통행세를 뜯던 몽둥이. 묵직하다.', false),
@@ -94,6 +112,12 @@ export const ITEMS: ItemDef[] = [
   weapon('guard-glaive', '친위대장의 언월도', 7, 'sword', 'might', 'charm', '흑운채 친위대장의 큰 칼.', false),
   weapon('general-sword', '사병장의 장검', 7, 'sword', 'might', 'politics', '송씨 사병장의 곧은 장검.', false),
   { id: 'ghost-lantern', name: '원귀의 푸른 등', slot: 'trinket', tier: 7, icon: 'pearl', pct: 0.18, skill: 0.25, desc: '모든 능력치 +18%, 기술 피해 +25%' },
+  { id: 'star-armillary', name: '별지기의 혼천의', slot: 'trinket', tier: 7, icon: 'pearl', pct: 0.14, skill: 0.3, crit: 0.06, desc: '모든 능력치 +14%, 기술 피해 +30%, 치명타 +6%' },
+  weapon('crow-saber', '까마귀 대장의 환도', 8, 'sword', 'might', 'wit', '깃털처럼 가볍고 부리처럼 날카롭다.', false),
+  weapon('clerk-abacus', '서리장의 놋주판', 8, 'abacus', 'wit', 'politics', '하늘 이자를 셈하던 주판. 알이 무겁다.', false),
+  weapon('thunder-drumstick', '천둥 북채', 9, 'club', 'might', 'politics', '내리치면 하늘 북이 울린다.', false),
+  weapon('light-sword', '금빛 천장의 빛칼', 10, 'sword', 'might', 'charm', '빛으로 벼린 칼. 그림자를 남기지 않는다.', false),
+  { id: 'storm-brush', name: '먹구름의 붓', slot: 'trinket', tier: 10, icon: 'brush', pct: 0.3, skill: 0.4, weak: 0.3, desc: '모든 능력치 +30%, 기술 피해 +40%, 약점 배율 +0.3' },
 
   // 식객 개인 퀘스트 보상(그 식객이 끼면 1.5배)
   { id: 'fox-bead', name: '여우 구슬', slot: 'trinket', tier: 4, icon: 'pearl', owner: 'baekseol', pct: 0.08, skill: 0.25, desc: '모든 능력치 +8%, 기술 피해 +25% · 백설이 끼면 1.5배' },
@@ -109,6 +133,12 @@ export const ITEMS: ItemDef[] = [
   { id: 'memory-hat', name: '기억의 감투', slot: 'trinket', tier: 4, icon: 'charm', owner: 'danhui', exp: 0.22, pct: 0.05, desc: '경험치 +22%, 모든 능력치 +5% · 단희가 끼면 1.5배' },
   { id: 'palace-pearl', name: '용궁 진주', slot: 'trinket', tier: 4, icon: 'pearl', owner: 'haejin', hp: 0.3, skill: 0.15, desc: '체력 +30%, 기술 피해 +15% · 해진이 끼면 1.5배' },
   { id: 'ledger-brand', name: '명부 낙인', slot: 'trinket', tier: 4, icon: 'seal', owner: 'wolha', weak: 0.35, crit: 0.08, desc: '약점 배율 +0.35, 치명타 +8% · 월하가 끼면 1.5배' },
+  { id: 'starthread-spool', name: '별실 타래', slot: 'trinket', tier: 7, icon: 'charm', owner: 'yunseul', pct: 0.12, weak: 0.35, desc: '모든 능력치 +12%, 약점 배율 +0.35 · 윤슬이 끼면 1.5배' },
+  { id: 'beori-notebook', name: '벼리의 수첩', slot: 'trinket', tier: 7, icon: 'seal', owner: 'beori', crit: 0.12, hp: 0.25, desc: '치명타 +12%, 체력 +25% · 벼리가 끼면 1.5배' },
+  { id: 'amended-law', name: '고쳐 쓴 하늘 법전', slot: 'trinket', tier: 7, icon: 'brush', owner: 'cheongyeon', pct: 0.12, skill: 0.3, desc: '모든 능력치 +12%, 기술 피해 +30% · 청연이 끼면 1.5배' },
+  { id: 'found-deadline', name: '되찾은 기한', slot: 'trinket', tier: 7, icon: 'seal', owner: 'wolha', hp: 0.3, crit: 0.1, desc: '체력 +30%, 치명타 +10% · 월하가 끼면 1.5배' },
+  { id: 'drought-brazier', name: '가뭄의 화로', slot: 'trinket', tier: 7, icon: 'pearl', owner: 'bulsae', skill: 0.35, pct: 0.08, desc: '기술 피해 +35%, 모든 능력치 +8% · 불새가 끼면 1.5배' },
+  { id: 'ninth-tail', name: '아홉 번째 꼬리털', slot: 'trinket', tier: 7, icon: 'feather', owner: 'baekseol', pct: 0.14, crit: 0.1, desc: '모든 능력치 +14%, 치명타 +10% · 백설이 끼면 1.5배' },
   { id: 'life-bell', name: '생명수 방울', slot: 'trinket', tier: 4, icon: 'charm', owner: 'bari', hp: 0.28, exp: 0.12, desc: '체력 +28%, 경험치 +12% · 바리가 끼면 1.5배' },
 ];
 

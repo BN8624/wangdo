@@ -56,6 +56,8 @@ export function storyBattleInfo(s: GameState, ep: Episode, n: number): StageInfo
     level,
     grunt: b.grunt,
     rival: b.rival,
+    art: b.art,
+    bg: b.bg,
     story: { ep: ep.id, n },
     mercy,
     line: b.line,

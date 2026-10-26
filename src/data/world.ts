@@ -224,6 +224,78 @@ export const NODES: NodeDef[] = [
     ],
     boss: { name: '명부의 원귀', art: 'boss/wongwi', weak: 'guard', line: '내 이름도 지워졌어요. 당신 이름도 지워 줄까요?', drop: 'ghost-lantern' }, req: { ep: 's2e08' },
   },
+
+  // ───────── 3부 하늘 ─────────
+  { kind: 'town', id: 'temple-town', name: '천문산 산사', desc: '하늘 사다리 밑의 마지막 절. 스님들이 구름길 나그네에게 물건을 판다.', shop: ['cloud-spear', 'star-chart', 'heaven-tablet', 'moon-mirror', 'star-norigae', 'cloud-pouch'], req: { ep: 's3e01' } },
+  {
+    kind: 'field', id: 'cloud-field', name: '구름재', desc: '하늘 사다리로 오르는 구름 고갯길. 집달 사자들이 길목을 지킨다.', bg: 'skyroad', levels: [52, 60],
+    foes: [F('구름 집달 사자', 'grunt/sky', 'stun'), F('사다리 학 수비병', 'grunt/sky-2', 'guard'), F('떠도는 별 그림자', 'grunt/underworld', 'weaken')], req: { ep: 's3e01' },
+  },
+  {
+    kind: 'dungeon', id: 'observatory', name: '천문대 폐허', desc: '선왕이 하늘에 비를 빌던 옛 천문대. 별지기의 혼이 아직 하늘을 잰다.', bg: 'observatory',
+    pool: [F('구름 집달 사자', 'grunt/sky', 'stun'), F('사다리 학 수비병', 'grunt/sky-2', 'guard'), F('떠도는 별 그림자', 'grunt/underworld', 'weaken')],
+    floors: [{ name: '무너진 돌계단', level: 54, battles: 2 }, { name: '청동 혼천의 방', level: 55, battles: 2, chest: { item: 'star-norigae' } }, { name: '별 그림 회랑', level: 57, battles: 2 }, { name: '별지기의 관측대', level: 58, battles: 1 }],
+    boss: { name: '별지기', art: 'boss/byeoljigi', weak: 'weaken', line: '선왕은 이 자리에서 비를 빌었소. 값은 아직 아무도 안 치렀지.', drop: 'star-armillary' }, req: { ep: 's3e01' },
+  },
+  { kind: 'town', id: 'galaxy-town', name: '은하 나루 장', desc: '은하수 나루에 서는 하늘 장. 별비단과 까치 깃이 흔하다.', shop: ['thunder-halberd', 'magpie-fan', 'heaven-seal', 'starsilk-fan', 'thunder-ring', 'magpie-hairpin'], req: { ep: 's3e03' } },
+  {
+    kind: 'field', id: 'galaxy-field', name: '은하수 강변', desc: '별빛이 물처럼 흐르는 강변. 뱃사공과 까막까치가 나그네를 시험한다.', bg: 'galaxy', levels: [58, 66],
+    foes: [F('은하 뱃사공', 'grunt/galaxy', 'guard'), F('까막까치 병사', 'grunt/galaxy-2', 'strike'), F('사다리 학 수비병', 'grunt/sky-2', 'rally')], req: { ep: 's3e03' },
+  },
+  {
+    kind: 'dungeon', id: 'magpie-bridge', name: '오작교', desc: '견우와 직녀가 만나던 다리. 먹구름이 다리를 끊고 까마귀 떼를 풀었다.', bg: 'galaxy',
+    pool: [F('까막까치 병사', 'grunt/galaxy-2', 'strike'), F('은하 뱃사공', 'grunt/galaxy', 'guard'), F('먹구름의 서리', 'grunt/heaven', 'stun')],
+    floors: [
+      { name: '다리 어귀', level: 60, battles: 2 }, { name: '끊어진 첫 마디', level: 61, battles: 2, chest: { item: 'thunder-ring' } },
+      { name: '까치 둥지 난간', level: 62, battles: 2 }, { name: '은하 한가운데', level: 64, battles: 2, chest: { coin: 150000 } }, { name: '까마귀 대장의 자리', level: 65, battles: 1 },
+    ],
+    boss: { name: '까마귀 대장', art: 'boss/kkamagwi', weak: 'guard', line: '다리는 끊겨야 값이 오르지. 건너려면 통행세를 내라.', drop: 'crow-saber' }, req: { ep: 's3e03' },
+  },
+  { kind: 'town', id: 'heaven-town', name: '천상 저자', desc: '하늘 관청 앞 저잣거리. 값은 하늘 높은 줄 모른다.', shop: ['sky-sword', 'galaxy-abacus', 'law-brush', 'weaver-shuttle', 'heaven-norigae', 'jade-talisman'], req: { ep: 's3e05' } },
+  {
+    kind: 'field', id: 'garden-field', name: '천상 정원', desc: '구름 위에 가꾼 정원. 관청 사람들이 산책하다 불쑥 시비를 건다.', bg: 'jade', levels: [64, 72],
+    foes: [F('먹구름의 서리', 'grunt/heaven', 'stun'), F('금빛 문지기', 'grunt/jade', 'guard'), F('뇌병', 'grunt/heaven-2', 'rally'), F('불의 정령', 'grunt/fire', 'weaken')], req: { ep: 's3e05' },
+  },
+  {
+    kind: 'dungeon', id: 'ledger-archive', name: '하늘 장부각', desc: '하늘의 모든 빚이 적힌 장부 창고. 먹구름의 서리들이 지킨다.', bg: 'archive',
+    pool: [F('먹구름의 서리', 'grunt/heaven', 'stun'), F('장부를 태우는 불의 정령', 'grunt/fire', 'weaken'), F('금빛 문지기', 'grunt/jade', 'guard')],
+    floors: [
+      { name: '열람실', level: 66, battles: 2 }, { name: '이자 장부 서고', level: 67, battles: 2 }, { name: '봉인된 계약 서가', level: 68, battles: 2, chest: { item: 'magpie-hairpin' } },
+      { name: '불탄 기록실', level: 69, battles: 2, chest: { coin: 250000 } }, { name: '서리장의 책상', level: 70, battles: 1 },
+    ],
+    boss: { name: '장부각 서리장', art: 'boss/seorijang', weak: 'stun', line: '장부에 없으면 없는 일이오. 장부에 있으면? 당연히 갚아야지.', drop: 'clerk-abacus' }, req: { ep: 's3e05' },
+  },
+  {
+    kind: 'dungeon', id: 'thunder-shrine', name: '뇌공 신전', desc: '하늘의 집행을 맡은 뇌공의 신전. 북이 울릴 때마다 땅에 벼락이 떨어진다.', bg: 'thunder',
+    pool: [F('뇌병', 'grunt/heaven-2', 'rally'), F('구름 집달 사자', 'grunt/sky', 'stun'), F('사다리 학 수비병', 'grunt/sky-2', 'guard')],
+    floors: [
+      { name: '젖은 돌길', level: 68, battles: 2 }, { name: '번개 맞은 회랑', level: 69, battles: 2, chest: { item: 'heaven-norigae' } },
+      { name: '북 치는 뜰', level: 70, battles: 2 }, { name: '벼락 제단', level: 71, battles: 2 }, { name: '천둥 북 앞', level: 72, battles: 1 },
+    ],
+    boss: { name: '천둥 북 수호신', art: 'boss/cheondung', weak: 'rally', line: '북이 울리면 장부가 집행된다. 네 이름도 울려 주마.', drop: 'thunder-drumstick' }, req: { ep: 's3e06' },
+  },
+  {
+    kind: 'field', id: 'edge-field', name: '하늘 끝 벼랑', desc: '구름이 끝나는 벼랑. 쫓겨난 천병과 장부의 불씨가 떠돈다.', bg: 'abyss', levels: [72, 85],
+    foes: [F('금빛 천병', 'grunt/jade', 'guard'), F('뇌병', 'grunt/heaven-2', 'rally'), F('불의 정령', 'grunt/fire', 'weaken'), F('구름 집달 사자', 'grunt/sky', 'stun')], req: { ep: 's3e07' },
+  },
+  {
+    kind: 'dungeon', id: 'jade-palace', name: '옥황궁 회랑', desc: '옥황상제의 궁으로 가는 마지막 회랑. 금빛 천병들이 늘어서 있다.', bg: 'jade',
+    pool: [F('금빛 천병', 'grunt/jade', 'guard'), F('뇌병', 'grunt/heaven-2', 'rally'), F('먹구름의 서리', 'grunt/heaven', 'weaken')],
+    floors: [
+      { name: '백옥 계단', level: 72, battles: 2 }, { name: '금빛 회랑', level: 73, battles: 2 }, { name: '구름 다리', level: 74, battles: 2, chest: { item: 'jade-talisman' } },
+      { name: '어좌 앞 뜰', level: 75, battles: 2 }, { name: '천장의 문', level: 76, battles: 1 },
+    ],
+    boss: { name: '금빛 천장', art: 'boss/geumcheonjang', weak: 'guard', line: '이 문 너머는 하늘의 법정이다. 빚진 자는 무릎으로 들어간다.', drop: 'light-sword' }, req: { ep: 's3e07' },
+  },
+  {
+    kind: 'dungeon', id: 'sky-abyss', name: '하늘 끝 무저갱', desc: '하늘이 끝나는 벼랑 아래. 지워진 빚과 버려진 장부가 먹구름이 되어 고였다.', bg: 'abyss',
+    pool: [F('장부 불의 정령', 'grunt/fire', 'weaken'), F('금빛 천병의 망령', 'grunt/jade', 'guard'), F('뇌병의 망령', 'grunt/heaven-2', 'rally'), F('저승 졸개', 'grunt/underworld', 'stun')],
+    floors: [
+      { name: '부서진 옥기둥', level: 78, battles: 2 }, { name: '떠도는 장부', level: 79, battles: 2, chest: { coin: 400000 } }, { name: '먹구름 소용돌이', level: 81, battles: 2 },
+      { name: '지워진 이름들의 골짜기', level: 82, battles: 2, chest: { item: 'heaven-norigae' } }, { name: '바닥 없는 길', level: 84, battles: 2 }, { name: '먹구름의 본체', level: 85, battles: 1 },
+    ],
+    boss: { name: '먹구름의 본체', art: 'boss/meokgureum', weak: 'stun', line: '빚은 지워지지 않아. 먹구름이 될 뿐이지.', drop: 'storm-brush' }, req: { ep: 's3e08' },
+  },
 ];
 
 // 식객 개인 퀘스트(content/quests.json)와 만남(content/meets.json: 끝내면 합류)
@@ -243,4 +315,8 @@ export const REGIONS: RegionDef[] = [
   { id: 'waterway', part: 2, name: '마른 수로', desc: '용궁이 닫아 버린 도성의 물길.', path: ['ep:s2e05', 'q:haejin', 'q:bari', 'q:bulsae', 'water-gate'] },
   { id: 'north', part: 2, name: '북방', desc: '눈보라 너머 흑운채 본진.', path: ['snow-field', 'ep:s2e06', 'q:seorin', 'north-town', 'blackcloud-keep'] },
   { id: 'palace', part: 2, name: '궁궐', desc: '어전 심리와 비밀 통로, 그리고 저승 문턱.', path: ['ep:s2e07', 'palace-passage', 'ep:s2e08', 'q:cheongyeon', 'q:wolha', 'underworld-gate'] },
+  { id: 'heaven-mountain', part: 3, name: '천문산', desc: '하늘 사다리가 내려오는 산. 선왕이 비를 빌던 천문대가 있다.', path: ['ep:s3e01', 'temple-town', 'cloud-field', 'observatory', 'ep:s3e02', 'q2:cheongyeon'] },
+  { id: 'galaxy', part: 3, name: '은하수', desc: '별빛이 강이 되어 흐르는 하늘 나루와 끊어진 오작교.', path: ['ep:s3e03', 'galaxy-town', 'galaxy-field', 'magpie-bridge', 'ep:s3e04', 'q:yunseul'] },
+  { id: 'heaven-office', part: 3, name: '하늘 관청', desc: '하늘의 모든 빚을 적고 집행하는 관청과 장부각, 뇌공의 신전.', path: ['ep:s3e05', 'heaven-town', 'garden-field', 'ledger-archive', 'ep:s3e06', 'q2:bulsae', 'q:beori', 'thunder-shrine', 'ep:s3e07'] },
+  { id: 'jade-throne', part: 3, name: '옥좌', desc: '옥황상제의 법정, 그리고 하늘이 끝나는 무저갱.', path: ['q2:wolha', 'edge-field', 'jade-palace', 'ep:s3e08', 'q2:baekseol', 'sky-abyss'] },
 ];

@@ -18,5 +18,13 @@ import e14 from '../../content/story/s2/s2e05.json';
 import e15 from '../../content/story/s2/s2e06.json';
 import e16 from '../../content/story/s2/s2e07.json';
 import e17 from '../../content/story/s2/s2e08.json';
+import e18 from '../../content/story/s3/s3e01.json';
+import e19 from '../../content/story/s3/s3e02.json';
+import e20 from '../../content/story/s3/s3e03.json';
+import e21 from '../../content/story/s3/s3e04.json';
+import e22 from '../../content/story/s3/s3e05.json';
+import e23 from '../../content/story/s3/s3e06.json';
+import e24 from '../../content/story/s3/s3e07.json';
+import e25 from '../../content/story/s3/s3e08.json';
 
-export const EPISODE_FILES = [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12, e13, e14, e15, e16, e17] as Episode[];
+export const EPISODE_FILES = [e0, e1, e2, e3, e4, e5, e6, e7, e8, e9, e10, e11, e12, e13, e14, e15, e16, e17, e18, e19, e20, e21, e22, e23, e24, e25] as Episode[];

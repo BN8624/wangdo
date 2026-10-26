@@ -140,7 +140,7 @@ export function questEncounter(s: GameState, q: QuestDef): StageInfo | null {
 
 /** 퀘스트 장면 배경(이야기 배경 키)에 어울리는 전투 배경 */
 function battleBgFor(storyBg: string): string {
-  const map: Record<string, string> = { forest: 'backhill', village: 'backhill', camp: 'north', market: 'alley', alley: 'alley', court: 'palace', gibang: 'pleasure', bath: 'waterway', night: 'underworld', field: 'cave', snowcave: 'north' };
+  const map: Record<string, string> = { forest: 'backhill', village: 'backhill', camp: 'north', market: 'alley', alley: 'alley', court: 'palace', gibang: 'pleasure', bath: 'waterway', night: 'underworld', field: 'cave', snowcave: 'north', temple: 'skyroad', skyroad: 'skyroad', galaxy: 'galaxy', loom: 'galaxy', heavenoffice: 'jade', archive: 'archive', jadecourt: 'jade' };
   return map[storyBg] ?? 'alley';
 }
 
