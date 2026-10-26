@@ -231,59 +231,6 @@ function elementTip(waves: UnitInit[][]): { foe: Element; good: Element } | null
 }
 
 /** 편성 화면: 상대 미리보기, 다섯 칸에 전신으로 선 식객, 전투력과 출동 */
-const bodyCenters = new Map<string, number>();
-/** 전신 그림에서 몸이 실제로 그려진 가로 중심(그림 폭 대비, 0.5가 가운데).
- *  꼬리·리본·무기에 덜 끌리게 아래쪽 4분의 3의 불투명한 부분만 센다. 이 값으로 몸을 칸 가운데에 세워 간격을 고르게 한다 */
-function useBodyCenter(src: string): number {
-  const [center, setCenter] = useState(() => bodyCenters.get(src) ?? 0.5);
-  useEffect(() => {
-    const known = bodyCenters.get(src);
-    if (known !== undefined) return setCenter(known);
-    let live = true;
-    const img = new Image();
-    img.onload = () => {
-      const w = 60;
-      const h = 90;
-      const cv = document.createElement('canvas');
-      cv.width = w;
-      cv.height = h;
-      const g = cv.getContext('2d', { willReadFrequently: true });
-      if (!g) return;
-      g.drawImage(img, 0, 0, w, h);
-      const d = g.getImageData(0, 0, w, h).data;
-      let n = 0;
-      let sx = 0;
-      for (let y = Math.floor(h * 0.25); y < h; y++) {
-        for (let x = 0; x < w; x++) {
-          if (d[(y * w + x) * 4 + 3] > 60) {
-            n += 1;
-            sx += x;
-          }
-        }
-      }
-      const c = n ? (sx / n + 0.5) / w : 0.5;
-      bodyCenters.set(src, c);
-      if (live) setCenter(c);
-    };
-    img.src = src;
-    return () => {
-      live = false;
-    };
-  }, [src]);
-  return center;
-}
-
-/** 편성 칸의 전신: 몸 중심을 칸 가운데에 맞춘다 */
-function Stand({ id }: { id: string }) {
-  const src = ART.full(id);
-  const center = useBodyCenter(src);
-  return (
-    <span className="fm-stand-wrap" style={{ ['--cx' as string]: `${(-center * 100).toFixed(1)}%` }}>
-      <Art className="fm-stand" src={src} alt={YOKAI_BY_ID[id].name} fallback={<span className="portrait-fallback">{YOKAI_BY_ID[id].name}</span>} />
-    </span>
-  );
-}
-
 export function Formation({ view, kicker, title, bg, waves, need, reward, onGo, onClose }: {
   view: GameState;
   kicker: string;
@@ -356,7 +303,7 @@ export function Formation({ view, kicker, title, bg, waves, need, reward, onGo, 
             <button key={i} className={`fm-slot ${id ? '' : 'empty'} ${picking === i ? 'on' : ''}`} style={id ? { ['--el' as string]: ELEMENT_COLOR[elementOf(id)] } : undefined} onClick={() => setPicking(i)}>
               {id && y ? (
                 <>
-                  <Stand id={id} />
+                  <Art className="fm-card" src={ART.card(id)} alt={YOKAI_BY_ID[id].name} fallback={<span className="portrait-fallback">{YOKAI_BY_ID[id].name}</span>} />
                   <span className="fm-plate">
                     <b>{YOKAI_BY_ID[id].name}</b>
                     <small>
