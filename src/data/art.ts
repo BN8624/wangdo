@@ -114,6 +114,7 @@ export const ENEMY_FIGURES = new Set([
   'boss/ferry',
   'boss/gamdok',
   'boss/geumcheonjang',
+  'boss/geurimja',
   'boss/noegong',
   'grunt/alley',
   'grunt/backhill',
