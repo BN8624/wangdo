@@ -82,8 +82,10 @@ const lineOf = (id: string, n: number) => {
 
 const SKILL_TINT: Record<SkillKind, string> = { strike: '#e0603c', stun: '#9a6ad0', weaken: '#5b4a8a', rally: '#d9a72a', guard: '#3f87c9', heal: '#3fb86a' };
 
-/** 맞는 순간 세상이 멈추는 시간(ms, 1배속 기준). 배속을 올려도 다른 동작보다 덜 줄어든다 */
-const HOLD = { normal: 90, heavy: 150 };
+/** 맞는 순간 세상이 멈추는 시간(ms, 1배속 기준). 배속을 올려도 다른 동작보다 덜 줄어든다. 무게 0 보통 · 1 묵직 · 2 일격 */
+const HOLD = [90, 150, 210];
+/** 한 대에 최대 체력의 이만큼 이상 깎으면 묵직한 한 방으로 친다(별을 많이 올린 식객일수록 자주 나온다) */
+const CHUNK_HEAVY = 0.4;
 
 export function BattleView({
   setup,
@@ -136,6 +138,8 @@ export function BattleView({
     setLeadState(id);
   };
   const [bubble, setBubble] = useState<{ text: string; n: number } | null>(null);
+  /** 지금 맞고 있는 적(위에 큰 체력 막대로 보여 한 대에 얼마나 깎이는지 보이게) */
+  const [tgtSlot, setTgtSlot] = useState<number | null>(null);
   const said = useRef(0);
 
   const rootRef = useRef<HTMLDivElement>(null);
@@ -334,14 +338,23 @@ export function BattleView({
     }
   };
 
+  /** 한 대의 무게: 0 보통 · 1 묵직(치명타·강타·기절, 또는 최대 체력의 40% 이상) · 2 일격(절반 넘게 깎으며 쓰러뜨림) */
+  const weightOf = (h: Extract<CombatEvent, { t: 'hit' }>, kind: SkillKind | null) => {
+    const chunk = h.dmg / Math.max(1, unitOf(h.tside, h.tslot)?.maxHp ?? 1);
+    if (h.hp <= 0 && chunk >= 0.5) return 2;
+    return h.crit || kind === 'strike' || kind === 'stun' || chunk >= CHUNK_HEAVY ? 1 : 0;
+  };
+
   /** 접촉 한 프레임: 실루엣·베기·조각·밀려남·숫자를 한꺼번에 낸다. 멈춤(hold)은 부르는 쪽이 건다 */
   const impact = (h: Extract<CombatEvent, { t: 'hit' }>, atk: Unit | undefined, kind: SkillKind | null, solo: boolean, loud: boolean) => {
     const tk = K(h.tside, h.tslot);
     const el = atk?.element ?? 'fire';
     const p = pos(tk, 'mid');
     const big = kind === 'strike' || kind === 'stun';
-    const heavy = big || h.crit;
-    const hold = heavy ? HOLD.heavy : HOLD.normal;
+    const w = weightOf(h, kind);
+    const heavy = w > 0;
+    const ko = w === 2;
+    const hold = HOLD[w];
     const node = nodes.current.get(tk);
     // 맞는 순간 밀려난 자세로 바로 튀어 멈춰 있다가, 멈춤이 끝나면 돌아온다
     const kick = (target: HTMLElement | null | undefined, pose: string, back = 380) => {
@@ -350,12 +363,12 @@ export function BattleView({
       anim(target, [{ transform: pose }, { transform: pose, offset: a / (a + b) }, { transform: 'translate(-2px, 1px)', offset: 0.85 }, { transform: 'none' }], a + b, { easing: 'ease-out' });
     };
     if (h.tside === 1) {
-      silhouette(node, h.crit ? '#e0302a' : '#ffffff', hold + 40);
+      silhouette(node, h.crit ? '#e0302a' : '#ffffff', hold + (ko ? 120 : 40));
       fx.current?.slash(p.x, p.y, el, heavy);
-      if (big) fx.current?.slash(p.x, p.y, el, true, 0.7);
-      fx.current?.burst(p.x, p.y, el, heavy ? 20 : 12, heavy ? 1.3 : 0.9);
-      fx.current?.shards(p.x, p.y, heavy ? 12 : 7, h.crit ? '#ffb0a8' : '#e8f2ff', heavy ? 1.5 : 1.1);
-      kick(node, `translate(${heavy ? 18 : 10}px, -6px) rotate(${heavy ? 3 : 1.5}deg)`);
+      if (big || ko) fx.current?.slash(p.x, p.y, el, true, 0.7);
+      fx.current?.burst(p.x, p.y, el, ko ? 30 : heavy ? 20 : 12, ko ? 1.7 : heavy ? 1.3 : 0.9);
+      fx.current?.shards(p.x, p.y, ko ? 20 : heavy ? 12 : 7, h.crit ? '#ffb0a8' : ko ? '#fff1c4' : '#e8f2ff', ko ? 2 : heavy ? 1.5 : 1.1);
+      kick(node, `translate(${ko ? 26 : heavy ? 18 : 10}px, -6px) rotate(${ko ? 5 : heavy ? 3 : 1.5}deg)`);
     } else {
       kick(node, 'translate(-8px, 5px) rotate(-2deg)', 320);
       animate(node?.querySelector('.bf-hurt'), [{ opacity: 1 }, { opacity: 1, offset: 0.3 }, { opacity: 0 }], 460);
@@ -368,11 +381,12 @@ export function BattleView({
       fx.current?.shards(p.x, p.y, 6, '#ffb0a8', 1);
       flash(true, h.crit ? 0.7 : 0.45);
     }
-    if (heavy || h.tside === 0) shake(heavy ? 7 : 4);
-    if (loud) play(h.tside === 0 ? 'hurt' : h.crit ? 'crit' : big ? 'heavy' : 'hit');
-    const label = h.crit ? '치명타' : h.adv === 1 ? '상성 유리' : h.adv === -1 ? '상성 불리' : undefined;
-    const slam = h.tside === 0 ? 2 : solo ? (heavy ? 3.4 : 2.8) : 1.9;
-    number(tk, fmt(h.dmg), `${h.tside === 0 ? 'hurt' : 'dmg'} ${h.crit ? 'crit' : ''} ${h.adv === 1 ? 'adv' : h.adv === -1 ? 'weak' : ''} ${big ? 'big' : ''}`, label, slam);
+    if (heavy || h.tside === 0) shake(ko ? 9 : heavy ? 7 : 4);
+    if (loud) play(h.tside === 0 ? 'hurt' : h.crit ? 'crit' : heavy ? 'heavy' : 'hit');
+    const foe = h.tside === 1;
+    const label = ko && foe ? '일격' : h.crit ? '치명타' : h.adv === 1 ? '상성 유리' : h.adv === -1 ? '상성 불리' : undefined;
+    const slam = !foe ? 2 : solo ? [2.8, 3.4, 4][w] : 1.9 + 0.3 * w;
+    number(tk, fmt(h.dmg), `${foe ? 'dmg' : 'hurt'} ${h.crit ? 'crit' : ''} ${h.adv === 1 ? 'adv' : h.adv === -1 ? 'weak' : ''} ${heavy ? 'big' : ''} ${ko && foe ? 'ko' : ''}`, label, slam);
     if (h.side === 0) damage.current[h.slot] = (damage.current[h.slot] ?? 0) + h.dmg;
     const d = disp.current[tk];
     if (d) d.hp = h.hp;
@@ -416,7 +430,8 @@ export function BattleView({
     if (run.current.cancelled) return;
     const hits = rest.filter((e): e is Extract<CombatEvent, { t: 'hit' }> => e.t === 'hit');
     const targets = [...new Set(hits.map((h) => K(h.tside, h.tslot)))];
-    const heavy = hits.some((h) => h.crit) || kind === 'strike' || kind === 'stun';
+    const weight = Math.max(0, ...hits.map((h) => weightOf(h, kind)));
+    const heavy = weight > 0;
     const node = nodes.current.get(key);
     const mine = act.side === 0;
 
@@ -487,6 +502,7 @@ export function BattleView({
       if (mine) {
         // ② 겨누기: 카메라가 맞을 적에게 다가가고, 식객은 몸을 뒤로 당긴다
         spotlight(targets);
+        if (targets.length === 1 && hits[0].tside === 1) setTgtSlot(hits[0].tslot);
         camTo(targets.length > 1 ? 1.1 : sk ? 1.34 : 1.24, focus(targets), 300);
         poseTo(leadRef.current, { transform: 'translate(-12px, 8px) scale(.98)' }, 300, 'cubic-bezier(.3,0,.3,1)');
         await sleep(300);
@@ -508,7 +524,7 @@ export function BattleView({
       if (fx.current) fx.current.frozen = true;
       hits.forEach((h, i) => impact(h, u, kind, hits.length === 1, i === 0));
       redraw();
-      await beat(heavy ? HOLD.heavy : HOLD.normal);
+      await beat(HOLD[weight]);
       if (fx.current) fx.current.frozen = false;
       // ⑤ 여운: 공격한 쪽이 제자리로
       if (mine) poseTo(leadRef.current, { transform: 'none' }, 460, 'cubic-bezier(.2,.7,.3,1)');
@@ -533,6 +549,7 @@ export function BattleView({
     if (downs.length) await Promise.all(downs.map((d) => die(d.side, d.slot)));
     // ⑥ 카메라가 물러나고 한 박자 쉰다
     spotlight([]);
+    setTgtSlot(null);
     camTo(1, null, 460);
     await sleep(sk ? 380 : 260);
     setDim(false);
@@ -626,6 +643,7 @@ export function BattleView({
     setFoeSkill(null);
     setBanner(null);
     setBubble(null);
+    setTgtSlot(null);
     setDim(false);
     setActing(null);
     const o = conclude();
@@ -645,6 +663,8 @@ export function BattleView({
   const spots = useMemo(() => arrange(foes), [foes]);
   const boss = foes.find((u) => u.boss);
   const bossDisp = boss ? disp.current[K(1, boss.slot)] : null;
+  const tgt = !boss && tgtSlot !== null ? foes.find((u) => u.slot === tgtSlot) : undefined;
+  const tgtDisp = tgt ? disp.current[K(1, tgt.slot)] : null;
   const order = combat.done ? [] : combat.upcoming(6);
   const waveNo = Math.max(1, combat.wave + 1);
 
@@ -741,6 +761,18 @@ export function BattleView({
           <div className="bf-hp big">
             <b className="lag" style={{ width: `${(bossDisp.hp / bossDisp.max) * 100}%` }} />
             <b style={{ width: `${(bossDisp.hp / bossDisp.max) * 100}%` }} />
+          </div>
+        </div>
+      )}
+      {tgt && tgtDisp && !tgtDisp.down && (
+        <div className="bf-bossbar tgt" key={tgt.id}>
+          <span>
+            <i style={{ background: ELEMENT_COLOR[tgt.element] }} />
+            {tgt.name}
+          </span>
+          <div className="bf-hp big">
+            <b className="lag" style={{ width: `${(tgtDisp.hp / tgtDisp.max) * 100}%` }} />
+            <b style={{ width: `${(tgtDisp.hp / tgtDisp.max) * 100}%` }} />
           </div>
         </div>
       )}

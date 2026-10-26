@@ -1011,3 +1011,11 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .bf[data-focus] .bf-foe:not([data-tgt]) .bf-sprite { filter: brightness(.38) saturate(.6) drop-shadow(0 8px 12px rgba(0,0,0,.55)); }
 .bf[data-focus] .bf-foe:not([data-tgt]) .bf-tag { opacity: .35; }
 .bf[data-focus] .bf-bg { filter: brightness(.4) saturate(.7); }
+
+/* 한 방에 쓰러뜨린 숫자(일격): 더 크고 금빛 */
+.bf-num.ko { font-size: 54px; color: #ffe08a; }
+.bf-num.ko small { color: #ffd36b; font-size: 26px; letter-spacing: 4px; }
+/* 맞고 있는 졸개의 큰 체력 막대: 한 대에 얼마나 깎이는지 보인다 */
+.bf-bossbar.tgt { animation: bf-tgtbar calc(.16s / var(--spd)) ease-out both; }
+.bf-bossbar.tgt span { font-size: 14px; opacity: .92; }
+@keyframes bf-tgtbar { from { opacity: 0; transform: translateY(-6px); } }
