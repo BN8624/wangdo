@@ -1,14 +1,16 @@
-// 토벌 전투 화면. 엔진이 미리 계산한 전투 기록(battle.events)을 한 칸씩 재생한다. 모두 자동이고, 2배속과 건너뛰기만 있다.
+// 전투 화면. 엔진이 미리 계산한 전투 기록(battle.events)을 한 칸씩 재생한다. 모두 자동이고, 2배속과 건너뛰기만 있다.
 // 오피스퀸키우기식 대치 구도: 화면을 사선으로 나눠 오른쪽 위에 상대, 왼쪽 아래 앞쪽에 지금 나선 식객을 세우고, 말풍선 한 줄로 주고받는다.
 // 빛 이펙트는 쓰지 않는다. 지금 나서지 않은 쪽은 색을 빼서 진한 색이 한 명에게만 남게 한다.
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { FightResult } from '../core/engine';
+import type { Won } from '../core/engine';
 import { BATTLE, firstSkillTurn, type BattleEvent, type SkillKind, type Status } from '../core/battle';
 import { fmt } from '../core/format';
 import { ART, foeArtPath } from '../data/art';
 import { ALLY_LINES, foeLines } from '../data/battle-lines';
 import { SKILL_LABEL } from '../data/skills';
 import { GIFT_BY_ID } from '../data/village';
+import { ITEM_BY_ID } from '../data/items';
+import { NODE_BY_ID } from '../data/world';
 import { YOKAI_BY_ID } from '../data/yokai';
 import { ResIcon } from './icons';
 import { Art } from './Portrait';
@@ -110,7 +112,7 @@ function Bubble({ side, who, text }: { side: 'ally' | 'foe' | 'skill'; who: stri
   );
 }
 
-export function BattleView({ result, onClose }: { result: Extract<FightResult, { ok: true }>; onClose: () => void }) {
+export function BattleView({ result, onClose }: { result: Won; onClose: () => void }) {
   const { battle, stage } = result;
   const events = battle.events;
   const chapterId = stage.chapter.id;
@@ -121,7 +123,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
   const foeRef = useRef<HTMLDivElement>(null);
   const allyRefs = useRef<(HTMLDivElement | null)[]>([]);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const foeSays = useMemo(() => foeLines(chapterId, stage.isBoss), [chapterId, stage.isBoss]);
+  const foeSays = useMemo(() => (stage.line ? [stage.line, ...foeLines(chapterId, false)] : foeLines(chapterId, stage.isBoss)), [chapterId, stage.isBoss, stage.line]);
 
   useEffect(() => {
     if (done) return;
@@ -245,7 +247,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
   const skillAlly = last?.t === 'skill' ? battle.allies[last.by] : null;
 
   return (
-    <div className="battle" role="dialog" aria-label={`${stage.foe} 토벌`}>
+    <div className="battle" role="dialog" aria-label={`${stage.foe}와(과)의 전투`}>
       <svg className="battle-defs" aria-hidden>
         {/* 낙관 번짐: 가장자리를 조금 흔들고 인주가 고르게 묻지 않은 자국을 낸다 */}
         <filter id="battle-ink" x="-10%" y="-10%" width="120%" height="120%">
@@ -262,7 +264,7 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
       <div ref={stageRef} className="battle-stage">
         <Art
           className="battle-bg"
-          src={ART.battle(chapterId)}
+          src={ART.battle(stage.bg ?? chapterId)}
           fallback={<Art className="battle-bg" src={ART.chapter(chapterId)} fallback={<div className="battle-bg" />} />}
         />
         <div className="battle-pane foe" />
@@ -394,13 +396,13 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
 
       {done && (
         <div className="battle-result">
-          {/* 한지 위에 찍는 낙관: 이기면 인주색 '토벌 완료', 지면 먹색 '퇴각' */}
+          {/* 한지 위에 찍는 낙관: 이기면 인주색 '승리', 지면 먹색 '퇴각' */}
           <div className={`battle-seal ${result.won ? 'win' : 'lose'}`} aria-hidden>
-            {[...(result.won ? '토벌완료' : '퇴각')].map((c, i) => (
+            {[...(result.won ? '승리' : '퇴각')].map((c, i) => (
               <span key={i}>{c}</span>
             ))}
           </div>
-          <div className="title">{result.won ? `${stage.foe} 해결!` : '이번엔 물러났어요'}</div>
+          <div className="title">{result.won ? `${stage.foe} 격파!` : '이번엔 물러났어요'}</div>
           {result.won ? (
             <div className="reward-list">
               <span>
@@ -409,7 +411,13 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
               <span>
                 <ResIcon kind="coin" />+{fmt(result.coin)}
               </span>
+              {!!result.exp && (
+                <span>
+                  <ResIcon kind="exp" />경험치 +{fmt(result.exp)}
+                </span>
+              )}
               {result.gift && <span>선물 〈{GIFT_BY_ID[result.gift].name}〉</span>}
+              {result.drops?.map((d) => <span key={d}>장비 〈{ITEM_BY_ID[d]?.name}〉</span>)}
             </div>
           ) : (
             <div className="sub">
@@ -422,10 +430,27 @@ export function BattleView({ result, onClose }: { result: Extract<FightResult, {
                   <ResIcon kind="coin" />+{fmt(result.coin)}
                 </span>
               </span>
-              {battle.rounds >= BATTLE.maxRounds && !state.hp.every((h) => h <= 0) ? '시간 안에 쓰러뜨리지 못했어요.' : '식객들이 모두 쓰러졌어요.'} 편성을
-              바꾸거나 식객을 더 키워서 다시 도전해요.
+              {battle.rounds >= BATTLE.maxRounds && !state.hp.every((h) => h <= 0) ? '시간 안에 쓰러뜨리지 못했어요.' : '식객들이 모두 쓰러졌어요.'}{' '}
+              {stage.mercy !== undefined ? '다시 도전할수록 상대가 지쳐 약해져요.' : '편성을 바꾸거나 필드에서 식객을 키워서 다시 도전해요.'}
             </div>
           )}
+          {!!result.ups?.length && (
+            <div className="sub levelups">
+              {result.ups.map((u) => (
+                <span key={u.id}>
+                  {YOKAI_BY_ID[u.id]?.name} <b>Lv {u.to}</b>
+                </span>
+              ))}
+            </div>
+          )}
+          {result.chest && (
+            <div className="sub chest">
+              보물상자 · {result.chest.item ? `〈${ITEM_BY_ID[result.chest.item]?.name}〉` : ''}
+              {result.chest.coin ? ` 엽전 ${fmt(result.chest.coin)}` : ''}
+            </div>
+          )}
+          {result.reward && <div className="sub chest">사연의 보답 · 〈{ITEM_BY_ID[result.reward]?.name}〉</div>}
+          {result.cleared && NODE_BY_ID[result.cleared] && <div className="sub cleared">「{NODE_BY_ID[result.cleared].name}」을(를) 끝냈어요!</div>}
           {recruit && (
             <div className="sub">
               <b>{recruit.name}</b>이(가) 식객으로 합류했어요!

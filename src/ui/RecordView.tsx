@@ -37,7 +37,7 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
           </b>
         </div>
         <div>
-          <span>토벌</span>
+          <span>전투</span>
           <b>
             {fmt(view.totals.wins)}승 {fmt(view.totals.losses)}패
           </b>

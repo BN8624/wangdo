@@ -74,7 +74,13 @@ export const ART = {
 
 /** 토벌 상대 그림: 대장이면 대장, 아니면 그 상대에 맞는 졸개 */
 export const foeArtPath = (info: StageInfo) =>
-  info.isBoss ? ART.boss(info.chapter.id) : ART.grunt(info.chapter.id, info.chapter.grunts[info.number - 1] ?? 1);
+  info.rival
+    ? ART.full(info.rival)
+    : info.art
+      ? `art/${info.art}.webp`
+      : info.isBoss
+      ? ART.boss(info.chapter.id)
+      : ART.grunt(info.chapter.id, info.grunt ?? info.chapter.grunts[info.number - 1] ?? 1);
 
 /** 카드·목록에 쓰는 초상(카드 그림) */
 export const portraitPath = ART.card;

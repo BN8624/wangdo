@@ -5,7 +5,7 @@ import { YOKAI_BY_ID } from '../data/yokai';
 import { newGame } from './engine';
 import type { GameState, WorkplaceId, YokaiState } from './types';
 
-const FRESH: YokaiState = { level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0 };
+const FRESH: YokaiState = { level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0, exp: 0, gear: {} };
 
 export const SAVE_KEY = 'wangdo.save';
 
@@ -30,7 +30,9 @@ export function deserialize(text: string, now: number): GameState | null {
   const base = newGame(now);
   // 명부에 없는 식객은 버리고, 일터에는 데리고 있는 식객만 한 번씩 남긴다(어긋난 저장으로 화면이 멈추지 않게).
   const owned = Object.entries(data.yokai).filter(([id]) => YOKAI_BY_ID[id]);
-  const yokai = owned.length ? Object.fromEntries(owned.map(([id, y]) => [id, { ...FRESH, ...(y as Partial<YokaiState>) }])) : base.yokai;
+  const yokai = owned.length
+    ? Object.fromEntries(owned.map(([id, y]) => [id, { ...FRESH, ...(y as Partial<YokaiState>), gear: { ...(y as Partial<YokaiState>).gear } }]))
+    : base.yokai;
   const placed = new Set<string>();
   const work = Object.fromEntries(
     WORKPLACES.map((w) => {
@@ -47,7 +49,6 @@ export function deserialize(text: string, now: number): GameState | null {
     ...base,
     ...data,
     res: { coin: num(data.res.coin, base.res.coin), grain: num(data.res.grain, base.res.grain), fame: num(data.res.fame, base.res.fame) },
-    stamina: { ...base.stamina, ...data.stamina },
     work,
     gifts: { ...data.gifts },
     yokai,
@@ -55,7 +56,20 @@ export function deserialize(text: string, now: number): GameState | null {
     stage: { ...base.stage, ...data.stage },
     combosSeen: data.combosSeen ?? [],
     guide: data.guide ?? 0,
-    story: { done: data.story?.done ?? [], flags: data.story?.flags ?? [] },
+    story: {
+      done: data.story?.done ?? [],
+      flags: data.story?.flags ?? [],
+      won: data.story?.won ?? [],
+      losses: { ...data.story?.losses },
+      ...(data.story?.at ? { at: data.story.at } : {}),
+    },
+    inventory: Object.fromEntries(Object.entries(data.inventory ?? {}).filter(([, n]) => typeof n === 'number' && n > 0)),
+    adv: {
+      cleared: data.adv?.cleared ?? [],
+      floors: { ...data.adv?.floors },
+      chests: data.adv?.chests ?? [],
+      losses: { ...data.adv?.losses },
+    },
     favorite: data.favorite && yokai[data.favorite] ? data.favorite : Object.keys(yokai)[0],
     totals: { ...base.totals, ...data.totals },
   } as GameState;

@@ -4,12 +4,7 @@
   "no": 2,
   "title": "뒷골목의 그림자",
   "summary": "송씨 사병이 숙소까지 따라붙는다. 그날 밤 그림자 첩자 금영이 잠긴 방에 스며들어 값비싼 비밀을 판다. 방망이의 옛 주인은 선왕이었고, 선왕은 흉년에 곡식을 사려고 송 대감에게 방망이를 담보로 잡혔다. 심리에서 지면 방망이는 송씨 것이 된다.",
-  "unlock": {
-    "after": "s2e01",
-    "rank": 9,
-    "power": 26000,
-    "stage": 20
-  },
+  "unlock": {"after": "s2e01", "node": "silk-warehouse"},
   "scenes": [
     {
       "bg": "alley",
@@ -273,9 +268,75 @@
       ]
     }
   ],
+  "battles": [
+    {
+      "after": 0,
+      "foe": "패거리를 몰고 돌아온 송씨 사병대",
+      "set": "alley",
+      "level": 28,
+      "grunt": 1,
+      "weak": "rally",
+      "guests": [
+        "seorin"
+      ],
+      "line": "아까는 방심했다. 이번엔 머릿수가 다르다!",
+      "intro": [
+        {
+          "who": "narration",
+          "text": "골목 끝에서 달아났던 사병들이 패거리를 몰고 돌아왔다. 이번엔 스무 명은 넘어 보였다."
+        },
+        {
+          "who": "seorin",
+          "text": "서른 걸음 안에 스물. 제 뒤로 오십시오. 이번엔 다 맡겠습니다."
+        }
+      ],
+      "outro": [
+        {
+          "who": "narration",
+          "text": "사병대가 골목을 비우고 물러갔다. 서린은 칼을 거두고도 한동안 내 앞에서 비켜서지 않았다."
+        }
+      ]
+    },
+    {
+      "after": 2,
+      "foe": "거짓 소문을 퍼뜨리는 이야기꾼 패",
+      "set": "alley",
+      "level": 30,
+      "grunt": 2,
+      "weak": "stun",
+      "guests": [
+        "geumyeong",
+        "haeryun"
+      ],
+      "line": "방망이 임자가 선왕의 보물을 훔쳤다더라! 다들 들었지?",
+      "intro": [
+        {
+          "who": "narration",
+          "text": "붉은 등 거리로 가는 길목. 부채를 든 이야기꾼들이 저잣거리에 우리에 관한 헛소문을 뿌리고 있었다."
+        },
+        {
+          "who": "geumyeong",
+          "text": "출처는 송씨입니다. 이건 공짜로 알려 드리지요."
+        },
+        {
+          "who": "haeryun",
+          "text": "진술과 소문은 구별해야 합니다. 저 입부터 막겠습니다."
+        }
+      ],
+      "outro": [
+        {
+          "who": "narration",
+          "text": "이야기꾼들이 부채를 접고 흩어졌다. 금영은 그들이 떨어뜨린 종이를 주워 하나하나 품에 넣었다."
+        }
+      ]
+    }
+  ],
   "reward": {
-    "coin": 120000,
-    "fame": 120,
-    "recruit": null
+    "coin": 2500,
+    "fame": 140,
+    "recruit": [
+      "geumyeong",
+      "haeryun"
+    ]
   }
 }

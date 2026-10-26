@@ -41,7 +41,7 @@ export function HomeView({ view, now, open, go, onHeroine }: Props) {
     const wpTarget = step?.target?.startsWith('wp-') ? step.target : null;
     const def = YOKAI_BY_ID[view.favorite] ?? YOKAI_BY_ID[Object.keys(view.yokai)[0]];
     const ep = nextEpisode(view, EPISODES), locked = ep ? lockReason(view, ep) : null;
-    const hint = nextHint(view, now);
+    const hint = nextHint(view);
     const talks = bondContent(def.id).talks;
     const theme = themeOf(def.id);
     const poke = () => { setTaps(n => n + 1); setLine(talks.length ? talks[taps % talks.length].line : null); };
@@ -89,7 +89,7 @@ export function RankSheet({ view, open, onClose }: { view: GameState; open: (m: 
       <div className="soft">다음 관직 · <b>{target.title}</b>{target.recruit && ` · ${YOKAI_BY_ID[target.recruit].name} 합류`}</div>
       <Progress label="권세" have={pw} need={target.powerReq} color="var(--gold)"/>
       <Progress label="명성" have={view.res.fame} need={target.fameCost} color="var(--seal)"/>
-      <div className="soft small-note">권세는 식객 레벨·호감도로, 명성은 주막·연회·토벌로 올라요.</div>
+      <div className="soft small-note">권세는 식객 레벨·장비·호감도로, 명성은 주막·연회·전투로 올라요.</div>
     </> : <div className="soft">가장 높은 관직이에요.</div>}
     <div className="actions"><button className="btn hong" data-guide="promote" disabled={!canPromote} onClick={doPromote}>승급하기</button><button className="btn" onClick={onClose}>닫기</button></div>
   </div></>, document.body);

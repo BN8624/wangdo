@@ -1,6 +1,6 @@
 import { NovelFrame } from './StoryView';
 import { useEffect, useState } from 'react';
-import { chooseWish, levelCap, markSceneSeen, rankMultiplier, talk, wishRewardAmount } from '../core/engine';
+import { chooseWish, markSceneSeen, rankMultiplier, slotsPerWorkplace, talk, wishRewardAmount } from '../core/engine';
 import { fmt, fmtDuration } from '../core/format';
 import { ART } from '../data/art';
 import { bondContent } from '../data/bond-content';
@@ -105,7 +105,7 @@ export function PromoteModal({ rank, recruit, onClose }: { rank: number; recruit
       )}
       <div className="reward-list" style={{ fontSize: 14 }}>
         <span style={{ fontSize: 14 }}>생산량 ×{rankMultiplier(rank).toFixed(1)}</span>
-        <span style={{ fontSize: 14 }}>레벨 상한 {levelCap(rank)}</span>
+        <span style={{ fontSize: 14 }}>일터마다 {slotsPerWorkplace(rank)}칸</span>
       </div>
       <div className="actions">
         <button className="btn hong wide" onClick={onClose}>
@@ -154,11 +154,13 @@ export function TalkModal({ view, id, open, onClose }: { view: GameState; id: st
   const topic = content.talks[view.yokai[id].talks % content.talks.length];
   const [answer, setAnswer] = useState<number | null>(null);
   const [levelUp, setLevelUp] = useState(0);
+  const [gained, setGained] = useState(0);
   const reply = (i: number) => {
     const r = act((s, now) => talk(s, now, id, topic.replies[i].delta));
     if (!r.ok) return onClose();
     buzz(15);
     setAnswer(i);
+    setGained(r.gained);
     if (r.to > r.from) setLevelUp(r.to);
   };
   const finish = () => {
@@ -183,7 +185,7 @@ export function TalkModal({ view, id, open, onClose }: { view: GameState; id: st
         </div>
       ) : (
         <div className="actions">
-          <div className="sub">호감도 +{topic.replies[answer].delta * 2}</div>
+          <div className="sub">{gained > 0 ? `호감도 +${gained}` : '전에 나눈 이야기예요'}</div>
           <button className="btn hong wide" onClick={finish}>
             확인
           </button>

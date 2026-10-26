@@ -1,36 +1,33 @@
-// npm run simulate — 플레이 성향별로 칭호·소동 진행 시점을 표로 출력한다.
-import { RANKS } from '../src/data/ranks';
-import { CHAPTERS } from '../src/data/stages';
-import { bondLevel, ownedYokai, power, ratesPerMinute } from '../src/core/engine';
+// npm run simulate — 쉬지 않고 계속 하는 사람이 1·2부를 다 하는 데 걸리는 시간과, 화·던전마다의 평균 레벨을 표로 출력한다.
+import { simulateRun } from '../src/core/sim';
+import { EPISODES } from '../src/data/story';
+import { NODE_BY_ID } from '../src/data/world';
+import { ownedYokai } from '../src/core/engine';
 import { fmt } from '../src/core/format';
-import { PROFILES, simulate } from '../src/core/sim';
 
-const DAYS = 21;
+const hm = (m: number | undefined) => (m === undefined ? '—' : `${Math.floor(m / 60)}시간 ${Math.round(m % 60)}분`);
 
-function when(hours: number | null): string {
-  if (hours === null || hours === undefined) return '—';
-  if (hours < 1) return `${Math.round(hours * 60)}분`;
-  if (hours < 24) return `${hours.toFixed(1)}시간`;
-  return `${Math.floor(hours / 24) + 1}일차 (${hours.toFixed(0)}h)`;
-}
+const t0 = Date.now();
+const r = simulateRun();
+console.log(`\n## 쉬지 않고 하는 사람 (${((Date.now() - t0) / 1000).toFixed(1)}초 계산)\n`);
+console.log('| 화 | 마친 때 | 평균 레벨 | 엽전 |');
+console.log('|---|---|---|---|');
+for (const ep of EPISODES) console.log(`| ${ep.season}부 ${ep.no}화 ${ep.title} | ${hm(r.episodeAt[ep.id])} | ${r.levelAt[ep.id] ?? '—'} | ${fmt(r.coinAt[ep.id] ?? 0)} |`);
+console.log('\n| 던전·사연·만남 | 끝낸 때 |');
+console.log('|---|---|');
+for (const [id, m] of Object.entries(r.nodeAt).sort((a, b) => a[1] - b[1])) console.log(`| ${NODE_BY_ID[id]?.name ?? id} | ${hm(m)} |`);
+const b = r.battles;
+console.log(`\n전체 ${hm(r.minutes)} · 전투 ${b.story + b.dungeon + b.quest + b.field}판 (이야기 ${b.story}, 던전 ${b.dungeon}, 사연 ${b.quest}, 필드 ${b.field}, 패배 ${b.losses})`);
+console.log(`막힘: ${r.stuck ?? '없음'} · 남은 엽전 ${fmt(r.final.res.coin)}`);
+console.log('식객: ' + ownedYokai(r.final).map((y) => `${y.def.name} Lv${y.state.level}`).join(', '));
 
-for (const profile of Object.values(PROFILES)) {
-  const r = simulate(profile, DAYS);
-  console.log(`\n## ${profile.name} (접속: ${profile.checkInHours.join(', ')}시)\n`);
-  console.log('| 칭호 | 도달 | 막힌 접속(위세/명성) |');
-  console.log('|---|---|---|');
-  RANKS.forEach((rank, i) =>
-    console.log(`| ${i}. ${rank.title} | ${when(r.rankReachedAt[i] ?? null)} | ${r.blockedBy[i].power}/${r.blockedBy[i].fame} |`),
-  );
-  console.log('\n| 소동 | 대장 달램 |');
-  console.log('|---|---|');
-  CHAPTERS.forEach((c, i) => console.log(`| ${c.title} | ${when(r.bossClearedAt[i] ?? null)} |`));
-  const s = r.final;
-  const rates = ratesPerMinute(s);
-  console.log(
-    `\n${DAYS}일 뒤: 칭호 ${s.rank}, 위세 ${fmt(power(s))}, 소동 ${s.stage.index}, ` +
-      `분당 엽전 ${fmt(rates.coin)} 곡식 ${fmt(rates.grain)} 명성 ${rates.fame.toFixed(2)}, ` +
-      `남은 엽전 ${fmt(s.res.coin)} 곡식 ${fmt(s.res.grain)} 명성 ${fmt(s.res.fame)} · 승 ${s.totals.wins} 패 ${s.totals.losses}`,
-  );
-  console.log('식객: ' + ownedYokai(s).map((y) => `${y.def.name} Lv${y.state.level}·인연${bondLevel(y.state.bond)}`).join(', '));
+// 종류별 이길 확률(첫 도전만)과 레벨 차이
+const kinds = ['story', 'dungeon', 'boss', 'quest', 'field'];
+console.log('\n| 종류 | 판 | 평균 확률 | 최저 | 평균(우리−상대 레벨) | 승률 |');
+console.log('|---|---|---|---|---|---|');
+for (const k of kinds) {
+  const f = r.fights.filter((x) => x.kind === k);
+  if (!f.length) continue;
+  const mean = (xs: number[]) => xs.reduce((a, x) => a + x, 0) / xs.length;
+  console.log(`| ${k} | ${f.length} | ${(mean(f.map((x) => x.chance)) * 100).toFixed(0)}% | ${(Math.min(...f.map((x) => x.chance)) * 100).toFixed(0)}% | ${mean(f.map((x) => x.avg - x.level)).toFixed(1)} | ${((f.filter((x) => x.won).length / f.length) * 100).toFixed(0)}% |`);
 }

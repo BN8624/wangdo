@@ -35,7 +35,7 @@ export function GuideBar({ step, index, tab }: { step: GuideStep; index: number;
             </small>
           </div>
           <div className="guide-text">
-            {step.tab && step.tab !== tab ? `아래 〈${{ home: '궁궐', yokai: '식객', stage: '토벌' }[step.tab]}〉 탭으로 가 볼까요? ` : ''}
+            {step.tab && step.tab !== tab ? `아래 〈${{ home: '궁궐', yokai: '식객', adv: '모험' }[step.tab]}〉 탭으로 가 볼까요? ` : ''}
             {step.text}
           </div>
           {!step.done && (

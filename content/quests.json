@@ -1,0 +1,776 @@
+[
+  {
+    "kind": "quest",
+    "id": "q:baekseol",
+    "heroine": "baekseol",
+    "name": "여우 돌의 주인",
+    "bg": "forest",
+    "reward": "fox-bead",
+    "req": {
+      "ep": "s1e04",
+      "owned": "baekseol"
+    },
+    "desc": "뒷산 깊은 곳, 백설이 어릴 적 이름을 맡겼던 여우 돌을 누군가 깨뜨리려 한다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "뒷산 깊은 골짜기. 백설이 이끼 낀 하얀 돌 앞에서 걸음을 멈췄다."
+      },
+      {
+        "who": "her",
+        "text": "어릴 때 이 돌한테 이름을 맡겼어요. 송씨한테 잡히기 전, 마지막으로요."
+      },
+      {
+        "who": "narration",
+        "text": "돌 옆구리에 정 자국이 나 있었다. 누군가 돌을 쪼개 가려 한 흔적이었다."
+      },
+      {
+        "who": "her",
+        "text": "여우 돌을 깨면 거기 맡긴 이름도 흩어져요. 송씨 사람들, 끝까지 쫓아오네요."
+      },
+      {
+        "who": "me",
+        "text": "그럼 지켜야지. 이 돌도, 네 이름도."
+      },
+      {
+        "who": "her",
+        "text": "……나리. 그 말, 돌이 들었으면 좋겠어요."
+      },
+      {
+        "who": "narration",
+        "text": "그때 골짜기 위에서 정과 망치를 든 사내들이 내려왔다."
+      }
+    ],
+    "battles": [
+      {
+        "name": "돌을 노린 정꾼",
+        "art": "grunt/backhill-3",
+        "level": 6,
+        "weak": "guard",
+        "line": "여우 돌 하나에 쌀 열 섬이라더라!"
+      },
+      {
+        "name": "정꾼 우두머리",
+        "art": "grunt/backhill",
+        "level": 8,
+        "weak": "stun",
+        "line": "송 대감 분부다. 돌은 깨고 여우는 잡아라!"
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:sodam",
+    "heroine": "sodam",
+    "name": "열 해 치 품삯",
+    "bg": "village",
+    "reward": "snail-shell",
+    "req": {
+      "ep": "s1e06",
+      "owned": "sodam"
+    },
+    "desc": "소담이 송씨 집에서 일한 열 해 치 품삯. 그 장부가 강나루 객주에 숨겨져 있다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "강나루 객주 뒷방. 소담이 먼지 쌓인 장부 상자를 끌어냈다."
+      },
+      {
+        "who": "her",
+        "text": "제 품삯 장부예요. 열 해 동안 한 칸도 안 채워진."
+      },
+      {
+        "who": "me",
+        "text": "받을 날이 왔군. 이자까지."
+      },
+      {
+        "who": "her",
+        "text": "이자는 안 받을래요. 대신 오늘 하루는 장부 말고 나리 옆에 있고 싶어요."
+      },
+      {
+        "who": "narration",
+        "text": "소담이 장부를 품에 안고 내 어깨에 기댔다. 그때 문밖에서 칼집 부딪치는 소리가 났다."
+      },
+      {
+        "who": "her",
+        "text": "송씨가 장부를 찾으러 사람을 보냈나 봐요. ……이번엔 숨지 않을래요."
+      }
+    ],
+    "battles": [
+      {
+        "name": "장부를 찾는 송씨 하인",
+        "art": "grunt/ferry-2",
+        "level": 12,
+        "weak": "stun",
+        "line": "그 장부는 대감 댁 물건이오!"
+      },
+      {
+        "name": "객주를 막은 나루 호위",
+        "art": "grunt/ferry-3",
+        "level": 14,
+        "weak": "strike",
+        "line": "우렁각시가 감히 장부를 들고 나가?"
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:muyeong",
+    "heroine": "muyeong",
+    "name": "버려진 부하들",
+    "bg": "camp",
+    "reward": "clear-teacup",
+    "req": {
+      "ep": "s1e07",
+      "owned": "muyeong"
+    },
+    "desc": "무영이 흑운채를 떠날 때 두고 온 부하 열둘. 그들이 강경파에게 붙잡혀 있다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "흑운채 아래 버려진 초소. 무영이 깨진 깃발을 주워 들었다."
+      },
+      {
+        "who": "her",
+        "text": "내 부하들 깃발이오. 열둘. 내가 두고 왔소."
+      },
+      {
+        "who": "me",
+        "text": "지금 데리러 가면 되잖소."
+      },
+      {
+        "who": "her",
+        "text": "……데리러 간다는 말, 명령으로 들리지 않아서 좋소."
+      },
+      {
+        "who": "narration",
+        "text": "무영이 깃발을 내 손에 쥐여 주었다. 손끝이 오래 닿아 있었다."
+      },
+      {
+        "who": "her",
+        "text": "임자가 들고 있으시오. 다 데려오면 그때 같이 꽂겠소."
+      }
+    ],
+    "battles": [
+      {
+        "name": "초소를 지키는 척후",
+        "art": "grunt/north",
+        "level": 18,
+        "weak": "rally",
+        "line": "배신자 무영이 돌아왔다!"
+      },
+      {
+        "name": "부하들을 묶은 궁수대",
+        "art": "grunt/north-2",
+        "level": 20,
+        "weak": "guard",
+        "line": "묶인 놈들까지 같이 쏴 버려라!"
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:oryeon",
+    "heroine": "oryeon",
+    "name": "국경 너머의 지분",
+    "bg": "market",
+    "reward": "crow-gold",
+    "req": {
+      "ep": "s2e01",
+      "owned": "oryeon"
+    },
+    "desc": "오련이 이웃 나라에 숨겨 둔 지분 증서. 그것을 노리는 상단 자객이 도성에 들어왔다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "삼족오 상단 금고. 오련이 이중 바닥 아래서 낡은 증서를 꺼냈다."
+      },
+      {
+        "who": "her",
+        "text": "이웃 나라 상단 지분이에요. 손해 보기 싫어서 숨겨 둔 거예요. 아무한테도 말 안 했어요."
+      },
+      {
+        "who": "me",
+        "text": "지금 나한테 말했잖소."
+      },
+      {
+        "who": "her",
+        "text": "그러니까요. 손해 볼 각오가 생겼다는 뜻이에요."
+      },
+      {
+        "who": "narration",
+        "text": "그녀가 증서를 내 손에 쥐여 주고, 그 손을 제 두 손으로 감쌌다."
+      },
+      {
+        "who": "her",
+        "text": "오늘 밤 자객이 올 거예요. 증서를 지켜 주면…… 이자는 제가 직접 드릴게요."
+      }
+    ],
+    "battles": [
+      {
+        "name": "국경 상단 자객",
+        "art": "grunt/alley-3",
+        "level": 25,
+        "weak": "guard",
+        "line": "증서만 넘기면 행수는 살려 주지."
+      },
+      {
+        "name": "상단 호위 무사",
+        "art": "grunt/ferry-3",
+        "level": 27,
+        "weak": "strike",
+        "line": "삼족오의 비밀은 우리 것이다!"
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:danhui",
+    "heroine": "danhui",
+    "name": "감투의 옛 주인",
+    "bg": "market",
+    "reward": "memory-hat",
+    "req": {
+      "ep": "s2e01",
+      "owned": "danhui"
+    },
+    "desc": "단희가 파는 감투 하나에 남은 옛 주인의 기억. 그 주인을 해친 자들이 감투를 되찾으려 한다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "단희의 좌판. 감투 하나가 저 혼자 들썩였다."
+      },
+      {
+        "who": "her",
+        "text": "이 감투, 옛 주인 기억이 남아 있어요. 쓰면 그 사람이 마지막에 본 게 보여요."
+      },
+      {
+        "who": "me",
+        "text": "뭐가 보이는데?"
+      },
+      {
+        "who": "her",
+        "text": "송씨 사병들이요. 그 사람 장사 밑천을 뺏고 산에 묻었어요."
+      },
+      {
+        "who": "narration",
+        "text": "단희가 감투를 꼭 쥐었다. 늘 허풍 섞인 웃음이던 얼굴이 처음으로 굳어 있었다."
+      },
+      {
+        "who": "her",
+        "text": "허풍 말고 진짜로 장사하고 싶어요. 이 빚부터 갚고요."
+      }
+    ],
+    "battles": [
+      {
+        "name": "감투를 쫓는 사병",
+        "art": "grunt/alley",
+        "level": 25,
+        "weak": "rally",
+        "line": "그 감투 이리 내!"
+      },
+      {
+        "name": "묻은 자리를 지키는 자객",
+        "art": "grunt/alley-3",
+        "level": 27,
+        "weak": "guard",
+        "line": "죽은 자 기억은 땅에 묻어 둬야지."
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:geumyeong",
+    "heroine": "geumyeong",
+    "name": "그림자의 이름",
+    "bg": "alley",
+    "reward": "shadow-silk",
+    "req": {
+      "ep": "s2e02",
+      "owned": "geumyeong"
+    },
+    "desc": "금영이 가진 왕실 밀서 사본. 그녀를 쫓는 옛 첩자 조직이 떳떳한 이름을 얻으려는 그녀를 막는다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "밤의 뒷골목. 금영이 그림자 속에서 반쯤만 몸을 드러냈다."
+      },
+      {
+        "who": "her",
+        "text": "옛 조직이 저를 부릅니다. 밀서를 넘기고 돌아오라고요."
+      },
+      {
+        "who": "me",
+        "text": "돌아가고 싶소?"
+      },
+      {
+        "who": "her",
+        "text": "아니요. 처음으로 밝은 데서 살고 싶어졌습니다. 당신 탓입니다."
+      },
+      {
+        "who": "narration",
+        "text": "그녀가 그림자에서 완전히 걸어 나와 내 옷깃을 잡았다."
+      },
+      {
+        "who": "her",
+        "text": "제 이름을 불러 주십시오. 그 이름으로 싸우겠습니다."
+      }
+    ],
+    "battles": [
+      {
+        "name": "옛 조직의 추적자",
+        "art": "grunt/alley-3",
+        "level": 28,
+        "weak": "guard",
+        "line": "그림자가 빛을 탐내면 사라질 뿐이다."
+      },
+      {
+        "name": "조직의 우두머리",
+        "art": "grunt/alley",
+        "level": 30,
+        "weak": "rally",
+        "line": "금영, 네 이름은 우리가 지어 준 것이다."
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:haeryun",
+    "heroine": "haeryun",
+    "name": "추방된 이의 편지",
+    "bg": "court",
+    "reward": "haetae-bell",
+    "req": {
+      "ep": "s2e02",
+      "owned": "haeryun"
+    },
+    "desc": "해륜이 누명을 씌워 추방한 사람. 그가 돌아오는 길을 송씨 자객이 막고 있다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "관아 기록소. 해륜이 오래된 판결문을 펼쳤다."
+      },
+      {
+        "who": "her",
+        "text": "제가 내린 판결입니다. 틀렸습니다. 그분은 누명이었습니다."
+      },
+      {
+        "who": "me",
+        "text": "바로잡으면 되오."
+      },
+      {
+        "who": "her",
+        "text": "그분이 돌아온다는 답장이 왔습니다. 그런데 도성 문 앞에서 기다리는 자들이 있습니다."
+      },
+      {
+        "who": "narration",
+        "text": "해륜의 손이 인장 위에서 떨렸다. 나는 그 손 위에 내 손을 얹었다."
+      },
+      {
+        "who": "her",
+        "text": "……판결은 종이로 하지만, 사과는 몸으로 해야겠지요. 함께 가 주십시오."
+      }
+    ],
+    "battles": [
+      {
+        "name": "길목의 송씨 자객",
+        "art": "grunt/alley-3",
+        "level": 28,
+        "weak": "guard",
+        "line": "그 사람이 입을 열면 곤란한 분이 계시거든."
+      },
+      {
+        "name": "매수된 포도청 포교",
+        "art": "grunt/ferry-3",
+        "level": 30,
+        "weak": "weaken",
+        "line": "판관 나리, 판결을 뒤집으면 나리도 다칩니다."
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:yeonhwa",
+    "heroine": "yeonhwa",
+    "name": "승천을 거부한 춤",
+    "bg": "gibang",
+    "reward": "endless-fan",
+    "req": {
+      "ep": "s2e03",
+      "owned": "yeonhwa"
+    },
+    "desc": "연화가 승천 시험을 거부한 이유. 하늘의 사자가 그녀를 데려가려 붉은 등 거리에 내려왔다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "연화의 분장실. 거울에 비친 그녀 뒤로 비늘 같은 빛이 일렁였다."
+      },
+      {
+        "who": "her",
+        "text": "승천 시험을 거부했어요. 하늘에 오르면 박수 소리가 안 들리니까요."
+      },
+      {
+        "who": "me",
+        "text": "지금은?"
+      },
+      {
+        "who": "her",
+        "text": "지금은…… 당신 박수 하나면 돼요. 그래서 더 못 올라가요."
+      },
+      {
+        "who": "narration",
+        "text": "연화가 부채를 펴서 우리 둘 얼굴을 가렸다. 그 뒤에서 그녀의 숨결이 닿았다."
+      },
+      {
+        "who": "her",
+        "text": "하늘 사자들이 오늘 밤 저를 데리러 와요. 마지막 춤, 같이 춰 주실래요?"
+      }
+    ],
+    "battles": [
+      {
+        "name": "하늘 사자의 시종",
+        "art": "grunt/pleasure",
+        "level": 32,
+        "weak": "guard",
+        "line": "이무기여, 때가 되었다."
+      },
+      {
+        "name": "승천을 재촉하는 사자",
+        "art": "grunt/pleasure-2",
+        "level": 34,
+        "weak": "stun",
+        "line": "땅의 박수 따위에 하늘을 버리겠다는 거냐!"
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:haejin",
+    "heroine": "haejin",
+    "name": "수문의 비밀",
+    "bg": "bath",
+    "reward": "palace-pearl",
+    "req": {
+      "ep": "s2e05",
+      "owned": "haejin"
+    },
+    "desc": "해진이 숨겼던 봉쇄 명령. 그 명령을 내린 용궁의 강경파가 그녀를 데려가려 한다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "손님채 목욕간. 해진이 물에 발을 담근 채 젖은 서찰을 내밀었다."
+      },
+      {
+        "who": "her",
+        "text": "아버지가 아니라 숙부의 명령이었습니다. 저를 시험하려고요."
+      },
+      {
+        "who": "me",
+        "text": "그래서 숨겼던 거요?"
+      },
+      {
+        "who": "her",
+        "text": "체면 때문에요. 이제는 체면보다 당신이 더 중요해졌습니다. ……이런 말은 처음 해 봅니다."
+      },
+      {
+        "who": "narration",
+        "text": "그녀가 내 손을 끌어 물속에 담갔다. 차가운 물이 금세 따뜻해졌다."
+      },
+      {
+        "who": "her",
+        "text": "숙부의 병사들이 오고 있습니다. 함께 막아 주시겠습니까?"
+      }
+    ],
+    "battles": [
+      {
+        "name": "숙부의 용궁 병사",
+        "art": "grunt/yonggung",
+        "level": 37,
+        "weak": "stun",
+        "line": "공주님, 용궁으로 돌아가셔야 합니다."
+      },
+      {
+        "name": "숙부의 물 시녀대",
+        "art": "grunt/yonggung-2",
+        "level": 39,
+        "weak": "guard",
+        "line": "뭍의 사내 따위가 공주님을!"
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:bari",
+    "heroine": "bari",
+    "name": "첫 맹세의 꿈",
+    "bg": "night",
+    "reward": "life-bell",
+    "req": {
+      "ep": "s2e05",
+      "owned": "bari"
+    },
+    "desc": "바리가 꿈에서 듣던 방망이의 첫 맹세. 그 꿈을 따라가면 구하지 못한 혼들이 기다린다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "쉼터 뒤뜰. 바리가 방울을 쥔 채 잠에서 깨어 있었다."
+      },
+      {
+        "who": "her",
+        "text": "또 꿈을 꿨어요. 방망이의 첫 맹세요. 그리고 제가 구하지 못한 사람들이요."
+      },
+      {
+        "who": "me",
+        "text": "그 사람들이 뭐라고 하오?"
+      },
+      {
+        "who": "her",
+        "text": "놓아 달래요. 제가 붙잡고 있어서 못 떠난대요."
+      },
+      {
+        "who": "narration",
+        "text": "바리의 눈에서 눈물이 떨어졌다. 나는 그녀를 끌어안았다. 방울이 우리 사이에서 작게 울렸다."
+      },
+      {
+        "who": "her",
+        "text": "오늘은 보내 줄게요. 대신 끝까지 옆에 있어 주세요."
+      }
+    ],
+    "battles": [
+      {
+        "name": "길 잃은 원혼",
+        "art": "grunt/underworld",
+        "level": 37,
+        "weak": "guard",
+        "line": "바리야…… 왜 우릴 붙잡았니……"
+      },
+      {
+        "name": "원혼을 부리는 저승 졸개",
+        "art": "grunt/underworld",
+        "level": 39,
+        "weak": "rally",
+        "line": "산 무녀가 저승 일에 끼어들지 마라."
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:bulsae",
+    "heroine": "bulsae",
+    "name": "가뭄의 불씨",
+    "bg": "field",
+    "reward": "ember",
+    "req": {
+      "ep": "s2e05",
+      "owned": "bulsae"
+    },
+    "desc": "옛 가뭄의 원인 중 하나였다는 불새. 그 불씨를 무기로 쓰려는 자들이 대장간을 습격했다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "불새의 대장간. 화로 속 불씨 하나가 유난히 붉게 타고 있었다."
+      },
+      {
+        "who": "her",
+        "text": "옛날 가뭄 때, 이 불씨가 들판을 태웠어. 내가 화를 못 참아서."
+      },
+      {
+        "who": "me",
+        "text": "지금은 참고 있잖아."
+      },
+      {
+        "who": "her",
+        "text": "네 옆에 있으면 참아져. 이상하지."
+      },
+      {
+        "who": "narration",
+        "text": "불새가 불집게를 내려놓고 내 손을 잡았다. 손바닥이 화로처럼 뜨거웠다."
+      },
+      {
+        "who": "her",
+        "text": "그 불씨를 훔치러 오는 놈들이 있어. 이번엔 화내지 않고 지킬 거야."
+      }
+    ],
+    "battles": [
+      {
+        "name": "불씨를 노린 광부",
+        "art": "grunt/cave",
+        "level": 37,
+        "weak": "stun",
+        "line": "그 불씨면 무기 백 자루는 벼리겠군!"
+      },
+      {
+        "name": "흑운채 대장장이 패",
+        "art": "grunt/north-3",
+        "level": 39,
+        "weak": "strike",
+        "line": "강철이의 불은 흑운채 몫이다!"
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:seorin",
+    "heroine": "seorin",
+    "name": "북으로 간 동료",
+    "bg": "snowcave",
+    "reward": "tiger-pass",
+    "req": {
+      "ep": "s2e06",
+      "owned": "seorin"
+    },
+    "desc": "서린이 위조 통행패로 데려오려던 동료들. 그들이 설원 감옥에 갇혀 있다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "설원의 동굴. 서린이 지도 위에 감옥 자리를 짚었다."
+      },
+      {
+        "who": "her",
+        "text": "동료 다섯이 저기 있습니다. 혼자 가려 했습니다. 늘 그랬듯이."
+      },
+      {
+        "who": "me",
+        "text": "이번엔?"
+      },
+      {
+        "who": "her",
+        "text": "……도와주십시오. 처음으로 청합니다."
+      },
+      {
+        "who": "narration",
+        "text": "서린이 고개를 숙였다. 나는 그녀의 언 손을 감싸 쥐었다. 그녀가 놀란 듯 숨을 삼켰다."
+      },
+      {
+        "who": "her",
+        "text": "손이 따뜻하십니다. 이 온기로 다섯을 데려오겠습니다."
+      }
+    ],
+    "battles": [
+      {
+        "name": "감옥 앞 설원 척후",
+        "art": "grunt/north",
+        "level": 42,
+        "weak": "rally",
+        "line": "백호 계집이 또 왔군."
+      },
+      {
+        "name": "감옥지기 친위대",
+        "art": "grunt/north-3",
+        "level": 44,
+        "weak": "strike",
+        "line": "통행패도 가짜, 동료도 가짜 아니냐!"
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:cheongyeon",
+    "heroine": "cheongyeon",
+    "name": "훔친 천문서",
+    "bg": "night",
+    "reward": "folded-robe",
+    "req": {
+      "ep": "s2e08",
+      "owned": "cheongyeon"
+    },
+    "desc": "청연이 하늘에서 훔쳐 온 천문서. 선왕의 마지막 채권자를 찾을 단서가 거기 있다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "달빛 아래 정자. 청연이 문서통을 열어 하늘 글씨가 쓰인 두루마리를 펼쳤다."
+      },
+      {
+        "who": "her",
+        "text": "하늘 맹세의 원본입니다. 고치고 싶어서 훔쳤습니다. 미루고 미루다가요."
+      },
+      {
+        "who": "me",
+        "text": "이제는 안 미루는 거요?"
+      },
+      {
+        "who": "her",
+        "text": "당신 곁에서 배웠습니다. 결정은 무섭지만, 미루면 더 무섭다는 것을요."
+      },
+      {
+        "who": "narration",
+        "text": "청연이 두루마리를 내 쪽으로 밀었다. 손끝이 스치자 그녀가 손을 거두지 않았다."
+      },
+      {
+        "who": "her",
+        "text": "하늘에서 이걸 찾으러 사자가 옵니다. 오늘은 도망치지 않겠습니다."
+      }
+    ],
+    "battles": [
+      {
+        "name": "하늘 서고의 파수꾼",
+        "art": "grunt/palace",
+        "level": 49,
+        "weak": "strike",
+        "line": "천문서를 돌려놓아라, 선녀여."
+      },
+      {
+        "name": "하늘 사자의 그림자",
+        "art": "grunt/underworld",
+        "level": 51,
+        "weak": "guard",
+        "line": "땅에 내려간 선녀는 날개를 잃는다."
+      }
+    ]
+  },
+  {
+    "kind": "quest",
+    "id": "q:wolha",
+    "heroine": "wolha",
+    "name": "지워진 기한",
+    "bg": "night",
+    "reward": "ledger-brand",
+    "req": {
+      "ep": "s2e08",
+      "owned": "wolha"
+    },
+    "desc": "월하의 명부에서 지워진 그녀 자신의 기한. 그것을 지운 자의 흔적이 저승 문턱에 남아 있다.",
+    "lines": [
+      {
+        "who": "narration",
+        "text": "손님채 지붕 위. 월하가 붉은 달 아래 명부의 빈칸을 손끝으로 쓸었다."
+      },
+      {
+        "who": "her",
+        "text": "누가 제 기한을 지웠는지 알 것 같습니다. 저승 서고지기입니다."
+      },
+      {
+        "who": "me",
+        "text": "왜 지웠을까."
+      },
+      {
+        "who": "her",
+        "text": "모르겠습니다. 다만 지워진 뒤로 처음으로…… 끝나지 않았으면 하는 시간이 생겼습니다."
+      },
+      {
+        "who": "narration",
+        "text": "월하가 내 손을 끌어 제 심장 위에 올렸다. 차갑던 손이 조금씩 따뜻해지고 있었다."
+      },
+      {
+        "who": "her",
+        "text": "서고지기에게 물으러 가겠습니다. 규정에 없지만, 함께 가 주십시오."
+      }
+    ],
+    "battles": [
+      {
+        "name": "서고를 지키는 저승 졸개",
+        "art": "grunt/underworld",
+        "level": 50,
+        "weak": "guard",
+        "line": "차사가 제 명부를 뒤지러 왔다!"
+      },
+      {
+        "name": "저승 서고지기",
+        "art": "grunt/underworld",
+        "level": 52,
+        "weak": "rally",
+        "line": "그 기한은 지운 게 아니라 아직 안 쓴 것이다."
+      }
+    ]
+  }
+]

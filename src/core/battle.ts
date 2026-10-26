@@ -1,4 +1,4 @@
-// 토벌 자동 전투. 식객 셋이 차례로 공격하고 상대가 반격한다. 순수 함수라 같은 씨앗이면 늘 같은 전투가 나온다.
+// 자동 전투. 식객 셋이 차례로 공격하고 상대가 반격한다. 순수 함수라 같은 씨앗이면 늘 같은 전투가 나온다.
 // 식객은 세 번에 한 번 고유 기술을 쓴다. 첫 기술은 순번마다 한 차례씩 늦춰 한 라운드에 기술이 몰리지 않게 한다.
 // 화면은 이 기록(events)을 순서대로 재생만 한다.
 import { nextRandom } from './rng';
@@ -49,6 +49,14 @@ export interface BattleSkill {
   kind: SkillKind;
 }
 
+/** 장비·기술 단계에서 오는 보정: 체력 %, 기술 피해 %, 치명타 확률 더하기, 약점 배율 더하기 */
+export interface BattleMods {
+  hp?: number;
+  skill?: number;
+  crit?: number;
+  weak?: number;
+}
+
 export interface BattleAlly {
   id: string;
   stat: StatKey;
@@ -56,6 +64,7 @@ export interface BattleAlly {
   power: number;
   maxHp: number;
   skill?: BattleSkill;
+  mods?: BattleMods;
 }
 
 export interface BattleFoe {
@@ -86,7 +95,7 @@ export interface BattleLog {
 }
 
 export interface BattleSetup {
-  allies: { id: string; stat: StatKey; power: number; skill?: BattleSkill }[];
+  allies: { id: string; stat: StatKey; power: number; skill?: BattleSkill; mods?: BattleMods }[];
   /** weak: 이 종류의 기술에 약하다 */
   foe: { name: string; values: number[]; weak?: SkillKind };
 }
@@ -104,7 +113,7 @@ export function runBattle(setup: BattleSetup, seed: number): BattleLog {
   };
   const swing = (amount: number) => 1 + (rand() * 2 - 1) * amount;
 
-  const allies: BattleAlly[] = setup.allies.map((a) => ({ ...a, maxHp: Math.max(1, Math.round(a.power * BATTLE.allyHp)) }));
+  const allies: BattleAlly[] = setup.allies.map((a) => ({ ...a, maxHp: Math.max(1, Math.round(a.power * BATTLE.allyHp * (1 + (a.mods?.hp ?? 0)))) }));
   const sum = setup.foe.values.reduce((x, y) => x + y, 0);
   const foe: BattleFoe = { name: setup.foe.name, maxHp: Math.max(1, Math.round(sum * BATTLE.foeHp)) };
   const foeAtk = (sum / Math.max(1, setup.foe.values.length)) * BATTLE.foeAtk;
@@ -122,8 +131,8 @@ export function runBattle(setup: BattleSetup, seed: number): BattleLog {
   let guarded = false;
   let rallyLeft = 0;
 
-  const strike = (base: number) => {
-    const crit = rand() < BATTLE.critChance;
+  const strike = (base: number, critBonus = 0) => {
+    const crit = rand() < BATTLE.critChance + critBonus;
     return { dmg: Math.max(1, Math.round(base * swing(BATTLE.spread) * (crit ? BATTLE.critMult : 1))), crit };
   };
   const setStatus = (side: 'foe' | 'party', status: Status, on: boolean) => events.push({ t: 'status', side, status, on });
@@ -132,7 +141,7 @@ export function runBattle(setup: BattleSetup, seed: number): BattleLog {
     let base = allies[i].power * cond[i] * mult;
     const rallied = rallyLeft > 0;
     if (rallied) base *= BATTLE.rallyBoost;
-    const { dmg, crit } = strike(base);
+    const { dmg, crit } = strike(base, allies[i].mods?.crit ?? 0);
     foeHp = Math.max(0, foeHp - dmg);
     events.push({ t: 'hit', by: i, target: -1, dmg, crit, hp: foeHp, ...(skill ? { skill: true } : {}), ...(weak ? { weak: true } : {}) });
     if (rallied && --rallyLeft === 0) setStatus('party', 'rally', false);
@@ -142,7 +151,8 @@ export function runBattle(setup: BattleSetup, seed: number): BattleLog {
   const useSkill = (i: number, skill: BattleSkill) => {
     events.push({ t: 'skill', by: i, name: skill.name, kind: skill.kind });
     const weak = setup.foe.weak === skill.kind;
-    allyHit(i, SKILL_DAMAGE[skill.kind] * (weak ? BATTLE.weakHit : 1), true, weak);
+    const mods = allies[i].mods;
+    allyHit(i, SKILL_DAMAGE[skill.kind] * (1 + (mods?.skill ?? 0)) * (weak ? BATTLE.weakHit + (mods?.weak ?? 0) : 1), true, weak);
     if (foeHp <= 0) return;
     if (skill.kind === 'stun' && !stunned) {
       stunned = true;

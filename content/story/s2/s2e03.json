@@ -4,12 +4,7 @@
   "no": 3,
   "title": "붉은 등 아래",
   "summary": "선왕에게 가장 크게 빚진 이는 붉은 등 거리의 정보상, 붉은 여우 홍매였다. 연화의 춤으로 문을 열고 들어간 기방에서, 홍매는 백설의 이름 계약서를 쥐고 나를 시험한다. 보름달이 뜨는 밤, 계약서는 불탄다.",
-  "unlock": {
-    "after": "s2e02",
-    "rank": 9,
-    "power": 30000,
-    "stage": 25
-  },
+  "unlock": {"after": "s2e02", "node": "gambling-den"},
   "scenes": [
     {
       "bg": "gibang",
@@ -254,9 +249,45 @@
       ]
     }
   ],
+  "battles": [
+    {
+      "after": 2,
+      "foe": "휘장 뒤의 여우 가면 무리",
+      "set": "pleasure",
+      "level": 32,
+      "grunt": 1,
+      "weak": "guard",
+      "guests": [
+        "yeonhwa"
+      ],
+      "line": "홍매 언니의 손님을 건드린 값은 비싸요.",
+      "intro": [
+        {
+          "who": "narration",
+          "text": "홍매가 사라지자 휘장 뒤에서 여우 가면을 쓴 무리가 쏟아져 나왔다."
+        },
+        {
+          "who": "yeonhwa",
+          "text": "춤은 끝났어요. 이제부터는 제 부채가 칼이에요."
+        }
+      ],
+      "outro": [
+        {
+          "who": "narration",
+          "text": "여우 가면들이 바닥에 흩어졌다. 그 아래 얼굴들은 모두 홍매에게 빚진 기방 아이들이었다."
+        },
+        {
+          "who": "baekseol",
+          "text": "저 애들도 장부에 묶여 있어요. 언니 장부에요."
+        }
+      ]
+    }
+  ],
   "reward": {
-    "coin": 150000,
+    "coin": 3000,
     "fame": 150,
-    "recruit": null
+    "recruit": [
+      "yeonhwa"
+    ]
   }
 }

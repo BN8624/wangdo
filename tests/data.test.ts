@@ -1,13 +1,14 @@
 // 데이터끼리 맞물리는 규칙. 수치를 바꾸다 게임이 막히는 일을 막는다.
 import { describe, expect, it } from 'vitest';
-import { STAT_KEYS, levelCap, yokaiStats } from '../src/core/engine';
-import { PROFILES, simulate } from '../src/core/sim';
+import { simulateRun } from '../src/core/sim';
+import { NODES, NODE_BY_ID, REGIONS } from '../src/data/world';
+import { ITEM_BY_ID } from '../src/data/items';
 import { ART_ASSETS } from '../src/data/art';
 import { RANKS } from '../src/data/ranks';
 import { CHAPTERS, STAGES_PER_CHAPTER } from '../src/data/stages';
 import { WISHES } from '../src/data/wishes';
 import { EPISODES, EPISODE_BY_ID } from '../src/data/story';
-import { validateEpisode } from '../src/core/story';
+import { episodeRecruits, validateEpisode } from '../src/core/story';
 import { STARTERS, YOKAI, YOKAI_BY_ID } from '../src/data/yokai';
 
 describe('데이터 무결성', () => {
@@ -16,14 +17,33 @@ describe('데이터 무결성', () => {
     expect(new Set(WISHES.map((w) => w.id)).size).toBe(WISHES.length);
   });
 
-  it('관직·이야기가 가리키는 식객이 모두 있고, 겹쳐서 합류하지 않는다', () => {
+  it('이야기·만남·관직으로 합류하는 식객이 모두 있고, 겹쳐서 합류하지 않으며, 모두 합류할 길이 있다', () => {
     const byRank = RANKS.flatMap((r) => (r.recruit ? [r.recruit] : []));
-    const byStory = EPISODES.flatMap((e) => (e.reward?.recruit ? [e.reward.recruit] : []));
-    for (const id of [...byRank, ...byStory]) expect(YOKAI_BY_ID[id], id).toBeDefined();
-    const all = [...byRank, ...byStory];
+    const byStory = EPISODES.flatMap(episodeRecruits);
+    const byMeet = NODES.flatMap((n) => (n.kind === 'quest' && n.recruit ? [n.heroine] : []));
+    const all = [...byRank, ...byStory, ...byMeet];
+    for (const id of all) expect(YOKAI_BY_ID[id], id).toBeDefined();
     expect(new Set(all).size).toBe(all.length);
-    for (const id of byRank) expect(YOKAI_BY_ID[id].join).toBe('recruit');
-    expect(STARTERS.length).toBeGreaterThan(0);
+    for (const y of YOKAI) expect(STARTERS.includes(y.id) || all.includes(y.id), y.id).toBe(true);
+  });
+
+  it('지도: 길의 모든 칸이 있고, 조건이 가리키는 화·노드·식객·장비가 모두 있다', () => {
+    for (const r of REGIONS)
+      for (const p of r.path) expect(p.startsWith('ep:') ? EPISODE_BY_ID[p.slice(3)] : NODE_BY_ID[p], `${r.id}:${p}`).toBeDefined();
+    const onPath = new Set(REGIONS.flatMap((r) => r.path));
+    for (const n of NODES) {
+      expect(onPath.has(n.id), `${n.id}는 지도 위에 없다`).toBe(true);
+      if (n.req.ep) expect(EPISODE_BY_ID[n.req.ep], n.id).toBeDefined();
+      if (n.req.node) expect(NODE_BY_ID[n.req.node], n.id).toBeDefined();
+      if (n.req.owned) expect(YOKAI_BY_ID[n.req.owned], n.id).toBeDefined();
+      if (n.kind === 'town') for (const i of n.shop) expect(ITEM_BY_ID[i]?.price, `${n.id}:${i}`).toBeGreaterThan(0);
+      if (n.kind === 'dungeon') {
+        if (n.boss.drop) expect(ITEM_BY_ID[n.boss.drop], n.id).toBeDefined();
+        for (const f of n.floors) if (f.chest?.item) expect(ITEM_BY_ID[f.chest.item], `${n.id}:${f.name}`).toBeDefined();
+      }
+      if (n.kind === 'quest' && n.reward) expect(ITEM_BY_ID[n.reward], n.id).toBeDefined();
+    }
+    for (const ep of EPISODES) if (ep.unlock.node) expect(NODE_BY_ID[ep.unlock.node], ep.id).toBeDefined();
   });
 
   it('모든 이야기 화가 형식 검사를 통과하고, 앞 화가 실제로 있다', () => {
@@ -50,32 +70,19 @@ describe('데이터 무결성', () => {
     }
   });
 
-  it('칭호 식객만 데리고도 레벨 상한 안에서 다음 칭호의 위세를 채울 수 있다', () => {
-    const roster = [...STARTERS, ...EPISODES.filter((e) => e.season === 1).flatMap((e) => (e.reward?.recruit ? [e.reward.recruit] : []))];
-    for (let r = 0; r < RANKS.length - 1; r++) {
-      if (RANKS[r].recruit) roster.push(RANKS[r].recruit!);
-      const unique = [...new Set(roster)];
-      const atCap = unique.reduce((sum, id) => {
-        const st = yokaiStats(YOKAI_BY_ID[id], levelCap(r), 0);
-        return sum + STAT_KEYS.reduce((a, k) => a + st[k], 0);
-      }, 0);
-      expect(RANKS[r + 1].powerReq, `${RANKS[r + 1].title}`).toBeLessThanOrEqual(atCap * 0.8);
-    }
-  });
 });
 
-describe('진행 속도', { timeout: 60_000 }, () => {
-  it('부지런한 플레이: 첫날 현감, 1~3주 안에 왕', () => {
-    const r = simulate(PROFILES.engaged, 21);
-    expect(r.rankReachedAt[5]!).toBeLessThan(24);
-    const last = r.rankReachedAt[RANKS.length - 1];
-    expect(last).not.toBeNull();
-    expect(last!).toBeGreaterThan(7 * 24);
-    expect(last!).toBeLessThan(21 * 24);
-  });
-
-  it('가끔 하는 플레이도 3주 안에 영의정까지 간다', () => {
-    const r = simulate(PROFILES.casual, 21);
-    expect(r.rankReachedAt[12]).not.toBeNull();
+describe('진행 속도', { timeout: 120_000 }, () => {
+  it('쉬지 않고 하면 1·2부의 모든 이야기·던전·사연을 막힘 없이 몇 시간에 걸쳐 끝낸다', () => {
+    const r = simulateRun();
+    expect(r.stuck).toBeNull();
+    for (const ep of EPISODES) expect(r.episodeAt[ep.id], ep.id).toBeDefined();
+    expect(r.minutes).toBeGreaterThan(4 * 60);
+    expect(r.minutes).toBeLessThan(12 * 60);
+    // 전투는 대체로 이길 만하지만 쉽지만은 않다
+    const fixed = r.fights.filter((f) => f.kind !== 'field');
+    const winRate = fixed.filter((f) => f.won).length / fixed.length;
+    expect(winRate).toBeGreaterThan(0.6);
+    expect(winRate).toBeLessThan(0.95);
   });
 });

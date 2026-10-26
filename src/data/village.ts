@@ -2,8 +2,8 @@ import type { ComboDef, GiftDef, WorkplaceDef } from '../core/types';
 
 // 고을의 일터. 식객을 배치하면 그 식객의 능력치만큼 자원이 저절로 들어온다.
 export const WORKPLACES: WorkplaceDef[] = [
-  { id: 'market', name: '저잣거리', stat: 'wit', produces: 'coin', perStat: 0.2, flavor: '지략이 뛰어난 식객이 상단을 굴린다' },
-  { id: 'woodyard', name: '훈련장', stat: 'might', produces: 'coin', perStat: 0.15, flavor: '무력이 높은 식객이 호위 일을 맡아 벌어 온다' },
+  { id: 'market', name: '저잣거리', stat: 'wit', produces: 'coin', perStat: 0.05, flavor: '지략이 뛰어난 식객이 상단을 굴린다' },
+  { id: 'woodyard', name: '훈련장', stat: 'might', produces: 'coin', perStat: 0.04, flavor: '무력이 높은 식객이 호위 일을 맡아 벌어 온다' },
   { id: 'field', name: '논밭', stat: 'politics', produces: 'grain', perStat: 0.08, flavor: '정치에 밝은 식객이 소작과 세곡을 다스린다' },
   { id: 'tavern', name: '주막', stat: 'charm', produces: 'fame', perStat: 0.0003, flavor: '매력 있는 식객이 손님과 소문을 끈다' },
 ];

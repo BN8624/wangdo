@@ -7,9 +7,10 @@ import { CHAPTERS, STAGES_PER_CHAPTER, TOTAL_STAGES } from '../data/stages';
 import { BOND_LEVELS, COMBOS, GIFTS, GIFT_BY_ID, WORKPLACES } from '../data/village';
 import { WISHES, WISH_BY_ID } from '../data/wishes';
 import { SKILLS } from '../data/skills';
+import { ITEM_BY_ID, type Slot } from '../data/items';
 import { STARTERS, YOKAI, YOKAI_BY_ID } from '../data/yokai';
 import { nextRandom } from './rng';
-import { battleOdds, runBattle, type BattleLog, type BattleSetup, type SkillKind } from './battle';
+import { battleOdds, runBattle, type BattleLog, type BattleMods, type BattleSetup, type SkillKind } from './battle';
 import type {
   ComboDef,
   GameState,
@@ -32,7 +33,7 @@ export const STAT_KEYS: StatKey[] = ['might', 'wit', 'politics', 'charm'];
 
 export type Fail<R extends string> = { ok: false; reason: R };
 
-export const freshYokai = (): YokaiState => ({ level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0 });
+export const freshYokai = (): YokaiState => ({ level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0, exp: 0, gear: {} });
 
 export function newGame(now: number, seed: number = now): GameState {
   return {
@@ -41,7 +42,6 @@ export function newGame(now: number, seed: number = now): GameState {
     lastSettled: now,
     rank: 0,
     res: { ...B.start },
-    stamina: { value: B.staminaMax, lastRegen: now },
     yokai: Object.fromEntries(STARTERS.map((id) => [id, freshYokai()])),
     work: { market: [], woodyard: [], field: [], tavern: [] },
     gifts: {},
@@ -52,7 +52,9 @@ export function newGame(now: number, seed: number = now): GameState {
     totals: { wishes: 0, feasts: 0, wins: 0, losses: 0, talks: 0, gifts: 0, earned: 0 },
     introSeen: false,
     guide: 0,
-    story: { done: [], flags: [] },
+    story: { done: [], flags: [], won: [], losses: {} },
+    inventory: {},
+    adv: { cleared: [], floors: {}, chests: [], losses: {} },
     favorite: STARTERS[0] ?? '',
   };
 }
@@ -80,9 +82,52 @@ export function yokaiStats(def: YokaiDef, level: number, bond = 0): Stats {
   return out;
 }
 
+/** 낀 장비의 효과를 모은다. 개인 퀘스트 장신구는 그 주인이 끼면 1.5배 */
+export interface GearEffects {
+  flat: Partial<Stats>;
+  pct: number;
+  hp: number;
+  skill: number;
+  crit: number;
+  weak: number;
+  exp: number;
+}
+
+export function gearEffects(y: YokaiState | undefined, id: string): GearEffects {
+  const g: GearEffects = { flat: {}, pct: 0, hp: 0, skill: 0, crit: 0, weak: 0, exp: 0 };
+  for (const itemId of [y?.gear?.weapon, y?.gear?.trinket]) {
+    const item = itemId ? ITEM_BY_ID[itemId] : undefined;
+    if (!item) continue;
+    const m = item.owner === id ? 1.5 : 1;
+    for (const [k, v] of Object.entries(item.stats ?? {})) g.flat[k as StatKey] = (g.flat[k as StatKey] ?? 0) + (v ?? 0);
+    g.pct += (item.pct ?? 0) * m;
+    g.hp += (item.hp ?? 0) * m;
+    g.skill += (item.skill ?? 0) * m;
+    g.crit += (item.crit ?? 0) * m;
+    g.weak += (item.weak ?? 0) * m;
+    g.exp += (item.exp ?? 0) * m;
+  }
+  return g;
+}
+
+/** 실제 능력치: 레벨·인연에 장비를 더한다 */
 export function statsOf(s: GameState, id: string): Stats {
   const y = s.yokai[id];
-  return yokaiStats(YOKAI_BY_ID[id], y.level, y.bond);
+  const st = yokaiStats(YOKAI_BY_ID[id], y.level, y.bond);
+  const g = gearEffects(y, id);
+  for (const k of STAT_KEYS) st[k] = Math.floor((st[k] + (g.flat[k] ?? 0)) * (1 + g.pct));
+  return st;
+}
+
+/** 기술 단계: 10·25·40레벨에 한 단계씩 오른다 */
+export const skillTier = (level: number) => (level >= 40 ? 3 : level >= 25 ? 2 : level >= 10 ? 1 : 0);
+
+/** 전투 보정: 장비 효과와 기술 단계 */
+export function battleMods(s: GameState, id: string): BattleMods {
+  const y = s.yokai[id];
+  if (!y) return {};
+  const g = gearEffects(y, id);
+  return { hp: g.hp, skill: g.skill + skillTier(y.level) * B.skillTierBonus, crit: g.crit, weak: g.weak };
 }
 
 export function ownedYokai(s: GameState): { def: YokaiDef; state: YokaiState }[] {
@@ -104,11 +149,55 @@ export function power(s: GameState): number {
   return t.might + t.wit + t.politics + t.charm;
 }
 
-export const levelCap = (rank: number) => B.levelCapBase + rank * B.levelCapPerRank;
+export const MAX_LEVEL = 99;
 
-/** level → level+1 비용(엽전) */
-export function levelCost(def: YokaiDef, level: number): number {
-  return Math.round(B.levelCostBase * B.gradeCostMult[def.grade] * Math.pow(level, B.levelCostExp));
+/** 판마다 겨룰 능력치: 데리고 있는(나설 수 있는) 식객들의 특기 중에서 고르고, 모자라면 나머지 능력치로 채운다 */
+export function roundStats(s: GameState, size: number, rand: () => number): StatKey[] {
+  const shuffle = <T,>(xs: T[]) => {
+    for (let i = xs.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [xs[i], xs[j]] = [xs[j], xs[i]];
+    }
+    return xs;
+  };
+  const specs = shuffle(STAT_KEYS.filter((k) => Object.keys(s.yokai).some((id) => YOKAI_BY_ID[id]?.specialty === k)));
+  const rest = shuffle(STAT_KEYS.filter((k) => !specs.includes(k)));
+  return [...specs, ...rest].slice(0, size);
+}
+
+/** 데리고 있는 식객의 평균 레벨(새로 합류하는 식객이 이 레벨로 온다) */
+export function avgLevel(s: GameState): number {
+  const owned = Object.values(s.yokai);
+  return Math.max(1, Math.round(owned.reduce((a, y) => a + y.level, 0) / Math.max(1, owned.length)));
+}
+
+/** level → level+1에 필요한 경험치 */
+export const expToNext = (level: number) => Math.round(B.expCurveBase * Math.pow(level, B.expCurveExp) + B.expCurveFlat);
+
+/** 상대 레벨에 따른 한 판 경험치(대장은 더) */
+export const battleExp = (foeLevel: number, boss = false) =>
+  Math.round((B.expGainBase * Math.pow(Math.max(1, foeLevel), B.expGainExp) + B.expGainFlat) * (boss ? B.expBossMult : 1));
+
+/** 상대 레벨에 따른 엽전·명성 보상 */
+export const battleCoin = (foeLevel: number) => Math.round(B.battleCoinBase * Math.pow(Math.max(1, foeLevel), B.battleCoinExp) + B.battleCoinFlat);
+export const battleFame = (foeLevel: number) => Math.round(B.battleFameBase * Math.pow(Math.max(1, foeLevel), B.battleFameExp) + 2);
+
+export type FoeKind = 'field' | 'dungeon' | 'story' | 'boss';
+/** 상대 레벨의 한 판 수치: 그 레벨 식객이 장비·인연을 갖췄을 때의 특기 능력치 × 종류 배율 */
+export const foeValue = (level: number, kind: FoeKind) => (B.foeLevelBase + B.foeLevelGrowth * Math.max(1, level)) * B.foeKindMult[kind];
+
+/** 경험치를 주고 레벨을 올린다(제자리에서 고친다). 레벨이 오른 식객 목록을 돌려준다 */
+export function grantExp(s: GameState, id: string, amount: number): { id: string; from: number; to: number } | null {
+  const y = s.yokai[id];
+  if (!y || amount <= 0) return null;
+  const from = y.level;
+  y.exp = (y.exp ?? 0) + Math.round(amount * (1 + gearEffects(y, id).exp));
+  while (y.level < MAX_LEVEL && y.exp >= expToNext(y.level)) {
+    y.exp -= expToNext(y.level);
+    y.level += 1;
+  }
+  if (y.level >= MAX_LEVEL) y.exp = 0;
+  return y.level > from ? { id, from, to: y.level } : null;
 }
 
 // ───────────────────────── 일터 ─────────────────────────
@@ -175,19 +264,10 @@ export function settle(s: GameState, now: number): GameState {
   return next;
 }
 
-function regen(value: number, max: number, last: number, every: number, now: number): [number, number] {
-  if (value >= max) return [value, now];
-  const gained = Math.floor((now - last) / every);
-  const v = Math.min(max, value + gained);
-  return [v, v >= max ? now : last + gained * every];
-}
-
 function settleInPlace(s: GameState, now: number): void {
   // 시계가 뒤로 갔으면 아무것도 주지 않고 기준 시각만 맞춘다.
   if (now < s.lastSettled) {
     s.lastSettled = now;
-    s.wish.lastRegen = Math.min(s.wish.lastRegen, now);
-    s.stamina.lastRegen = Math.min(s.stamina.lastRegen, now);
     return;
   }
   const minutes = Math.min((now - s.lastSettled) / MINUTE, B.offlineCapMinutes);
@@ -197,64 +277,61 @@ function settleInPlace(s: GameState, now: number): void {
     if (k !== 'fame') s.totals.earned += rates[k] * minutes;
   }
   s.lastSettled = now;
-  [s.wish.charges, s.wish.lastRegen] = regen(s.wish.charges, wishMaxCharges(s.rank), s.wish.lastRegen, B.wishRegenMinutes * MINUTE, now);
-  [s.stamina.value, s.stamina.lastRegen] = regen(s.stamina.value, B.staminaMax, s.stamina.lastRegen, B.staminaRegenMinutes * MINUTE, now);
 }
 
-/** 다음 충전까지 남은 시간(ms). 가득 찼으면 null */
-function regenRemaining(value: number, max: number, last: number, every: number, now: number): number | null {
-  if (value >= max) return null;
-  return Math.max(0, every - ((now - last) % every));
-}
-export const wishRegenRemaining = (s: GameState, now: number) =>
-  regenRemaining(s.wish.charges, wishMaxCharges(s.rank), s.wish.lastRegen, B.wishRegenMinutes * MINUTE, now);
-export const staminaRegenRemaining = (s: GameState, now: number) =>
-  regenRemaining(s.stamina.value, B.staminaMax, s.stamina.lastRegen, B.staminaRegenMinutes * MINUTE, now);
+/** 다음 상소까지 더 이겨야 하는 판 수(상소는 기다려서가 아니라 싸워서 쌓인다) */
+export const winsToPetition = (s: GameState) => B.winsPerPetition - (s.totals.wins % B.winsPerPetition);
 
-// ───────────────────────── 레벨업 ─────────────────────────
+// ───────────────────────── 장비·상점 ─────────────────────────
 
-export type LevelUpResult = { ok: true; levels: number; spent: number } | Fail<'not-owned' | 'max-level' | 'no-coin'>;
+export type BuyResult = { ok: true; item: string } | Fail<'no-item' | 'not-sold' | 'no-coin'>;
 
-export function levelUp(s: GameState, now: number, id: string, count = 1): [GameState, LevelUpResult] {
-  const def = YOKAI_BY_ID[id];
-  if (!def || !s.yokai[id]) return [s, { ok: false, reason: 'not-owned' }];
-  const cap = levelCap(s.rank);
-  if (s.yokai[id].level >= cap) return [s, { ok: false, reason: 'max-level' }];
-  if (s.res.coin < levelCost(def, s.yokai[id].level)) return [s, { ok: false, reason: 'no-coin' }];
-  // 생산량이 바뀌기 전에 지금까지 쌓인 몫을 먼저 정산한다.
+/** 상점에서 장비를 산다 */
+export function buyItem(s: GameState, now: number, itemId: string): [GameState, BuyResult] {
+  const item = ITEM_BY_ID[itemId];
+  if (!item) return [s, { ok: false, reason: 'no-item' }];
+  if (!item.price) return [s, { ok: false, reason: 'not-sold' }];
   const next = clone(s);
   settleInPlace(next, now);
-  let levels = 0;
-  let spent = 0;
-  const y = next.yokai[id];
-  while (levels < count && y.level < cap) {
-    const cost = levelCost(def, y.level);
-    if (next.res.coin < cost) break;
-    next.res.coin -= cost;
-    spent += cost;
-    y.level += 1;
-    levels += 1;
-  }
-  return [next, { ok: true, levels, spent }];
+  if (next.res.coin < item.price) return [s, { ok: false, reason: 'no-coin' }];
+  next.res.coin -= item.price;
+  next.inventory[itemId] = (next.inventory[itemId] ?? 0) + 1;
+  return [next, { ok: true, item: itemId }];
 }
 
-export function affordableLevels(s: GameState, id: string, count: number): { levels: number; cost: number } {
-  const def = YOKAI_BY_ID[id];
-  if (!def || !s.yokai[id]) return { levels: 0, cost: 0 };
-  const cap = levelCap(s.rank);
-  let level = s.yokai[id].level;
-  let coin = s.res.coin;
-  let cost = 0;
-  let levels = 0;
-  while (levels < count && level < cap) {
-    const c = levelCost(def, level);
-    if (coin < c) break;
-    coin -= c;
-    cost += c;
-    level += 1;
-    levels += 1;
+export type EquipResult = { ok: true } | Fail<'not-owned' | 'no-item' | 'wrong-slot'>;
+
+/** 장비를 낀다(itemId가 null이면 뺀다). 끼던 것은 소지품으로 돌아간다 */
+export function equip(s: GameState, now: number, id: string, slot: Slot, itemId: string | null): [GameState, EquipResult] {
+  if (!s.yokai[id]) return [s, { ok: false, reason: 'not-owned' }];
+  if (itemId) {
+    const item = ITEM_BY_ID[itemId];
+    if (!item) return [s, { ok: false, reason: 'no-item' }];
+    if (item.slot !== slot) return [s, { ok: false, reason: 'wrong-slot' }];
+    if (!(s.inventory[itemId] > 0)) return [s, { ok: false, reason: 'no-item' }];
   }
-  return { levels, cost };
+  // 일터 생산량이 바뀌므로 먼저 정산한다
+  const next = clone(s);
+  settleInPlace(next, now);
+  const y = next.yokai[id];
+  const old = y.gear[slot];
+  if (old) next.inventory[old] = (next.inventory[old] ?? 0) + 1;
+  if (itemId) {
+    next.inventory[itemId] -= 1;
+    if (next.inventory[itemId] <= 0) delete next.inventory[itemId];
+    y.gear = { ...y.gear, [slot]: itemId };
+  } else {
+    const gear = { ...y.gear };
+    delete gear[slot];
+    y.gear = gear;
+  }
+  return [next, { ok: true }];
+}
+
+/** 장비 하나를 소지품에 넣는다(제자리에서 고친다) */
+export function addItem(s: GameState, itemId: string, count = 1) {
+  if (!ITEM_BY_ID[itemId]) return;
+  s.inventory[itemId] = (s.inventory[itemId] ?? 0) + count;
 }
 
 // ───────────────────────── 인연 ─────────────────────────
@@ -268,25 +345,23 @@ function addBond(s: GameState, id: string, amount: number): BondResult {
   return { ok: true, gained: amount, from, to: bondLevel(y.bond) };
 }
 
-export const talkReadyIn = (s: GameState, id: string, now: number) =>
-  Math.max(0, s.yokai[id].talkAt + B.talkCooldownMinutes * MINUTE - now);
-export const outingReadyIn = (s: GameState, id: string, now: number) =>
-  Math.max(0, s.yokai[id].outingAt + B.outingCooldownMinutes * MINUTE - now);
+/** 아직 듣지 않은 대화가 남았는지(새 대화만 호감도를 올린다) */
+export const hasNewTalk = (s: GameState, id: string) => (s.yokai[id]?.talks ?? 0) < B.talkTopics;
 export const priceAt = (base: number, rank: number) => Math.round(base * Math.pow(B.priceGrowth, rank));
 export const giftPrice = (giftId: string, rank: number) => priceAt(GIFT_BY_ID[giftId].cost, rank);
 export const outingPrice = (rank: number) => priceAt(B.outingCost, rank);
 
-/** 대화. delta는 고른 대답의 점수(1·4·8) */
-export function talk(s: GameState, now: number, id: string, delta: number): [GameState, BondResult | Fail<'not-owned' | 'cooldown'>] {
+/** 대화. delta는 고른 대답의 점수(1·4·8). 언제든 할 수 있고, 처음 듣는 대화만 호감도를 올린다 */
+export function talk(s: GameState, now: number, id: string, delta: number): [GameState, BondResult | Fail<'not-owned'>] {
   if (!s.yokai[id]) return [s, { ok: false, reason: 'not-owned' }];
-  if (talkReadyIn(s, id, now) > 0) return [s, { ok: false, reason: 'cooldown' }];
   const next = clone(s);
   settleInPlace(next, now);
   const d = [1, 4, 8].includes(delta) ? delta : 1;
+  const fresh = hasNewTalk(next, id);
   next.yokai[id].talkAt = now;
   next.yokai[id].talks += 1;
   next.totals.talks += 1;
-  return [next, addBond(next, id, d * B.talkMult)];
+  return [next, addBond(next, id, fresh ? d * B.talkMult : 0)];
 }
 
 /** 선물. 가진 게 없으면 그 자리에서 사서 준다. */
@@ -309,9 +384,8 @@ export function giveGift(
   return [next, { ...addBond(next, id, liked ? B.giftBond.liked : B.giftBond.normal), liked, bought: !owned }];
 }
 
-export function outing(s: GameState, now: number, id: string): [GameState, BondResult | Fail<'not-owned' | 'cooldown' | 'no-coin'>] {
+export function outing(s: GameState, now: number, id: string): [GameState, BondResult | Fail<'not-owned' | 'no-coin'>] {
   if (!s.yokai[id]) return [s, { ok: false, reason: 'not-owned' }];
-  if (outingReadyIn(s, id, now) > 0) return [s, { ok: false, reason: 'cooldown' }];
   const price = outingPrice(s.rank);
   if (s.res.coin < price) return [s, { ok: false, reason: 'no-coin' }];
   const next = clone(s);
@@ -340,7 +414,6 @@ export function markSceneSeen(s: GameState, id: string, level: number): GameStat
 
 // ───────────────────────── 잔치·승급 ─────────────────────────
 
-export const wishMaxCharges = (rank: number) => B.wishBaseCharges + Math.floor(rank / B.wishChargeEveryRanks);
 export const feastCost = (rank: number) => Math.round(B.feastGrainBase * Math.pow(B.feastGrainGrowth, rank));
 
 export function feastFame(s: GameState): number {
@@ -405,7 +478,6 @@ export function useWish(s: GameState, now: number): [GameState, UseWishResult] {
   const fresh = eligible.filter((w) => !next.wish.recent.includes(w.id));
   const pool = fresh.length > 0 ? fresh : eligible;
   const wish = pool[Math.floor(roll(next) * pool.length)];
-  if (next.wish.charges >= wishMaxCharges(next.rank)) next.wish.lastRegen = now;
   next.wish.charges -= 1;
   next.wish.pending = { id: wish.id };
   next.wish.recent = [wish.id, ...next.wish.recent].slice(0, 8);
@@ -420,8 +492,8 @@ export function wishRewardAmount(s: GameState, reward: WishReward): number {
       const target = nextRank(s) ?? rankDef(s.rank);
       return Math.max(1, Math.ceil((target.fameCost * reward.pct * B.wishRewardScale) / 100));
     }
-    case 'stamina':
-      return reward.amount;
+    case 'exp':
+      return battleExp(avgLevel(s)) * reward.amount;
     case 'gift':
       return 1;
     default: {
@@ -440,9 +512,9 @@ export function chooseWish(s: GameState, now: number, choice: 0 | 1): [GameState
   const reward = WISH_BY_ID[next.wish.pending!.id].choices[choice].reward;
   const amount = wishRewardAmount(next, reward);
   next.wish.pending = null;
-  if (reward.kind === 'stamina') {
-    next.stamina.value += amount;
-    return [next, { ok: true, kind: 'stamina', amount }];
+  if (reward.kind === 'exp') {
+    for (const id of Object.keys(next.yokai)) grantExp(next, id, amount);
+    return [next, { ok: true, kind: 'exp', amount }];
   }
   if (reward.kind === 'gift') {
     const gift = GIFTS[Math.floor(roll(next) * GIFTS.length)].id;
@@ -526,6 +598,7 @@ export function battleSetup(s: GameState, info: StageInfo, party: string[]): Bat
       stat: r.stat,
       power: party[i] && s.yokai[party[i]] ? statsOf(s, party[i])[r.stat] : 0,
       skill: SKILLS[party[i]],
+      mods: battleMods(s, party[i]),
     })),
     foe: { name: info.foe, values: info.rounds.map((r) => r.value), weak: info.weak },
   };
@@ -533,54 +606,55 @@ export function battleSetup(s: GameState, info: StageInfo, party: string[]): Bat
 
 /** 실제 전투를 여러 번 돌려 본 승률 */
 export function battleChance(s: GameState, info: StageInfo, party: string[]): number {
-  if (party.length !== 3 || party.some((id) => !s.yokai[id])) return 0;
+  if (party.length !== info.rounds.length || party.some((id) => !s.yokai[id])) return 0;
   return battleOdds(battleSetup(s, info, party));
+}
+
+/** ids에서 서로 다른 n명을 골라 순서대로 늘어놓는 모든 경우(칸마다 후보가 다를 수 있다) */
+function arrangements(cands: string[][]): string[][] {
+  const out: string[][] = [];
+  const walk = (i: number, acc: string[]) => {
+    if (i === cands.length) return void out.push(acc);
+    for (const id of cands[i]) if (!acc.includes(id)) walk(i + 1, [...acc, id]);
+  };
+  walk(0, []);
+  return out;
 }
 
 /** 판마다 따로 이길 확률만 보고 고른 편성(식객이 많을 때 후보를 추리는 데 쓴다) */
 function quickParty(s: GameState, info: StageInfo, ids: string[]): string[] {
-  const p = ids.map((id) => {
-    const st = statsOf(s, id);
-    return info.rounds.map((r) => winChance(st[r.stat], r.value));
-  });
-  let best = [0, 1, 2];
+  const p = Object.fromEntries(ids.map((id) => [id, info.rounds.map((r) => winChance(statsOf(s, id)[r.stat], r.value))]));
+  let best: string[] = ids.slice(0, info.rounds.length);
   let bestP = -1;
-  for (let a = 0; a < ids.length; a++)
-    for (let b = 0; b < ids.length; b++)
-      for (let c = 0; c < ids.length; c++) {
-        if (a === b || a === c || b === c) continue;
-        const chance = partyChance([p[a][0], p[b][1], p[c][2]]);
-        if (chance > bestP) {
-          bestP = chance;
-          best = [a, b, c];
-        }
-      }
-  return best.map((i) => ids[i]).filter(Boolean);
+  for (const party of arrangements(info.rounds.map(() => ids))) {
+    const ps = party.map((id, i) => p[id][i]);
+    // 세 판이면 두 판 이상, 그보다 적으면 모든 판을 이길 확률로 견준다
+    const chance = ps.length === 3 ? partyChance(ps) : ps.reduce((a, b) => a * b, 1);
+    if (chance > bestP) [bestP, best] = [chance, party];
+  }
+  return best;
 }
 
 /** 이길 확률이 가장 높은 편성. 칸마다 그 능력치가 높은 식객을 몇 명씩 추린 뒤, 고유 기술까지 넣은 실제 전투로 비교한다. */
 export function bestParty(s: GameState, info: StageInfo): string[] {
   const ids = Object.keys(s.yokai);
-  if (ids.length < 3) return quickParty(s, info, ids);
+  const n = info.rounds.length;
+  if (ids.length < n) return quickParty(s, info, ids);
   const stats = Object.fromEntries(ids.map((id) => [id, statsOf(s, id)]));
   const picks = info.rounds.map((r) => [...ids].sort((a, b) => stats[b][r.stat] - stats[a][r.stat]).slice(0, B.partyPick));
   let best: string[] = [];
   let bestP = -1;
   let bestPower = -1;
-  for (const a of picks[0])
-    for (const b of picks[1])
-      for (const c of picks[2]) {
-        if (a === b || a === c || b === c) continue;
-        const party = [a, b, c];
-        const odds = battleOdds(battleSetup(s, info, party), B.partyRuns);
-        const pow = stats[a][info.rounds[0].stat] + stats[b][info.rounds[1].stat] + stats[c][info.rounds[2].stat];
-        if (odds > bestP || (odds === bestP && pow > bestPower)) {
-          bestP = odds;
-          bestPower = pow;
-          best = party;
-        }
-      }
-  return best.length === 3 ? best : quickParty(s, info, ids);
+  for (const party of arrangements(picks)) {
+    const odds = battleOdds(battleSetup(s, info, party), B.partyRuns);
+    const pow = party.reduce((sum, id, i) => sum + stats[id][info.rounds[i].stat], 0);
+    if (odds > bestP || (odds === bestP && pow > bestPower)) {
+      bestP = odds;
+      bestPower = pow;
+      best = party;
+    }
+  }
+  return best.length === n ? best : quickParty(s, info, ids);
 }
 
 // 추천 편성 계산은 무거우므로(실제 전투를 여러 번 돌린다), 토벌과 식객 능력치가 같으면 앞서 계산한 결과를 다시 쓴다.
@@ -588,8 +662,8 @@ const plans = new Map<string, { party: string[]; chance: number }>();
 
 /** 추천 편성과 그 편성의 승률. 화면 알림처럼 자주 묻는 곳에서 쓴다. */
 export function partyPlan(s: GameState, info: StageInfo): { party: string[]; chance: number } {
-  const key = `${info.index}|${Object.keys(s.yokai)
-    .map((id) => `${id}:${Object.values(statsOf(s, id)).join(',')}`)
+  const key = `${info.index}|${info.rounds.map((r) => r.stat + r.value).join(',')}|${Object.keys(s.yokai)
+    .map((id) => `${id}:${Object.values(statsOf(s, id)).join(',')}:${Object.values(battleMods(s, id)).join(',')}`)
     .join('|')}`;
   let plan = plans.get(key);
   if (!plan) {
@@ -601,38 +675,67 @@ export function partyPlan(s: GameState, info: StageInfo): { party: string[]; cha
   return plan;
 }
 
+export type LevelUp = { id: string; from: number; to: number };
+
 export type FightResult =
-  | { ok: true; won: boolean; stage: StageInfo; battle: BattleLog; fame: number; coin: number; gift: string | null; recruit: string | null }
-  | Fail<'all-clear' | 'no-stamina' | 'bad-party'>;
+  | {
+      ok: true;
+      won: boolean;
+      stage: StageInfo;
+      battle: BattleLog;
+      fame: number;
+      coin: number;
+      gift: string | null;
+      recruit: string | null;
+      /** 나선 식객 한 명이 받은 경험치, 레벨이 오른 식객, 얻은 장비 */
+      exp?: number;
+      ups?: LevelUp[];
+      drops?: string[];
+      /** 모험: 연 보물상자, 끝낸 던전·퀘스트, 퀘스트 보상 장비 */
+      chest?: { item?: string; coin?: number };
+      cleared?: string;
+      reward?: string;
+    }
+  | Fail<'all-clear' | 'bad-party'>;
 
-export function fight(s: GameState, now: number, party: string[]): [GameState, FightResult] {
-  const info = stageInfo(s.stage.index);
-  if (!info) return [s, { ok: false, reason: 'all-clear' }];
-  if (party.length !== 3 || new Set(party).size !== 3 || party.some((id) => !s.yokai[id])) {
-    return [s, { ok: false, reason: 'bad-party' }];
-  }
-  const next = clone(s);
-  settleInPlace(next, now);
-  if (next.stamina.value < 1) return [s, { ok: false, reason: 'no-stamina' }];
-  if (next.stamina.value >= B.staminaMax) next.stamina.lastRegen = now;
-  next.stamina.value -= 1;
+/** 치른 전투의 결과(이겼든 졌든) */
+export type Won = Extract<FightResult, { ok: true }>;
 
-  const battle = runBattle(battleSetup(next, info, party), Math.floor(roll(next) * 4294967296));
+/** 전투를 치르고 보상을 나눈다. next: 이미 정산한 사본(제자리에서 고친다), arena: 나설 식객(손님 포함)이 든 상태.
+ *  나선 식객은 경험치를 다 받고 쉬던 식객은 일부를 받는다. 지면 경험치·엽전·명성의 일부만 받는다. */
+export function playBattle(
+  next: GameState,
+  arena: GameState,
+  info: StageInfo,
+  party: string[],
+  o: { boss?: boolean; drop?: string; giftChance?: number } = {},
+): Won {
+  const battle = runBattle(battleSetup(arena, info, party), Math.floor(roll(next) * 4294967296));
   const won = battle.won;
-  if (!won) {
-    // 져도 빈손은 아니다: 이겼을 때 보상의 일부를 위로금으로
-    const fame = Math.round(info.fame * B.loseRewardRatio);
-    const coin = Math.round(info.coin * B.loseRewardRatio);
-    next.res.fame += fame;
-    next.res.coin += coin;
-    next.totals.losses += 1;
-    return [next, { ok: true, won, stage: info, battle, fame, coin, gift: null, recruit: null }];
+  const exp = Math.round(battleExp(info.level ?? 1, o.boss) * (won ? 1 : B.expLoseRatio));
+  const ups: LevelUp[] = [];
+  for (const id of Object.keys(next.yokai)) {
+    const up = grantExp(next, id, exp * (party.includes(id) ? 1 : B.expBenchRatio));
+    if (up) ups.push(up);
   }
-  next.stage.index += 1;
-  next.res.fame += info.fame;
-  next.res.coin += info.coin;
-  next.totals.wins += 1;
-  const gift = GIFTS[Math.floor(roll(next) * GIFTS.length)].id;
-  next.gifts[gift] = (next.gifts[gift] ?? 0) + 1;
-  return [next, { ok: true, won, stage: info, battle, fame: info.fame, coin: info.coin, gift, recruit: null }];
+  const fame = won ? info.fame : Math.round(info.fame * B.loseRewardRatio);
+  const coin = won ? info.coin : Math.round(info.coin * B.loseRewardRatio);
+  next.res.fame += fame;
+  next.res.coin += coin;
+  next.totals = { ...next.totals, [won ? 'wins' : 'losses']: next.totals[won ? 'wins' : 'losses'] + 1 };
+  // 함께 싸운 식객은 정이 든다. 이길수록 상소가 쌓인다.
+  for (const id of party) if (next.yokai[id]) next.yokai[id].bond += won ? B.battleBond : 1;
+  if (won && next.totals.wins % B.winsPerPetition === 0) next.wish = { ...next.wish, charges: next.wish.charges + 1 };
+  const drops: string[] = [];
+  if (won && o.drop && ITEM_BY_ID[o.drop]) {
+    addItem(next, o.drop);
+    drops.push(o.drop);
+  }
+  let gift: string | null = null;
+  if (won && roll(next) < (o.giftChance ?? 0)) {
+    gift = GIFTS[Math.floor(roll(next) * GIFTS.length)].id;
+    next.gifts[gift] = (next.gifts[gift] ?? 0) + 1;
+  }
+  return { ok: true, won, stage: info, battle, fame, coin, gift, recruit: null, exp, ups, drops };
 }
+

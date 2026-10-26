@@ -7,6 +7,7 @@ import { EPISODES } from '../src/data/story';
 import { CHAPTERS, STAGES_PER_CHAPTER } from '../src/data/stages';
 import { stageInfo } from '../src/core/engine';
 import { YOKAI } from '../src/data/yokai';
+import { NODES } from '../src/data/world';
 
 const has = (path: string) => existsSync(`public/${path}`);
 
@@ -38,5 +39,24 @@ describe('그림 파일', () => {
       if (!has(p)) missing.push(p);
     }
     expect([...new Set(missing)]).toEqual([]);
+  });
+
+  it('모험의 전투 배경·상대·장면 배경 그림이 있다', () => {
+    const used = new Set<string>([ART.bg('map')]);
+    for (const n of NODES) {
+      if (n.kind === 'field') {
+        used.add(ART.battle(n.bg));
+        for (const f of n.foes) used.add(`art/${f.art}.webp`);
+      }
+      if (n.kind === 'dungeon') {
+        used.add(ART.battle(n.bg));
+        for (const f of [...n.pool, n.boss]) used.add(`art/${f.art}.webp`);
+      }
+      if (n.kind === 'quest') {
+        used.add(ART.bg(n.bg));
+        for (const f of n.battles) used.add(`art/${f.art}.webp`);
+      }
+    }
+    expect([...used].filter((p) => !has(p))).toEqual([]);
   });
 });

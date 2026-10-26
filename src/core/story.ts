@@ -1,23 +1,20 @@
 // 메인 이야기(연재). 화 파일은 content/story/<부>/<화>.json이고, 여기서는 열림 조건과 보상만 다룬다.
 import { BOND_LEVELS } from '../data/village';
-import { rankDef } from '../data/ranks';
+import { NODE_BY_ID } from '../data/world';
+
+const NODE_NAMES: Record<string, string> = Object.fromEntries(Object.values(NODE_BY_ID).map((n) => [n.id, n.name]));
 import { YOKAI_BY_ID } from '../data/yokai';
-import { bondLevel, freshYokai, power } from './engine';
-import { fmt } from './format';
+import { avgLevel, bondLevel, freshYokai } from './engine';
 import type { Episode, GameState, StoryLine } from './types';
 
 export function sortEpisodes(list: Episode[]): Episode[] {
   return [...list].sort((a, b) => a.season - b.season || a.no - b.no);
 }
 
+/** 앞 화를 봤고, (있으면) 앞 던전을 돌파했으면 열린다 */
 export function isUnlocked(s: GameState, ep: Episode): boolean {
-  const u = ep.unlock ?? {};
-  return (
-    (!u.after || s.story.done.includes(u.after)) &&
-    s.rank >= (u.rank ?? 0) &&
-    power(s) >= (u.power ?? 0) &&
-    s.stage.index >= (u.stage ?? 0)
-  );
+  const { after, node } = ep.unlock ?? {};
+  return (!after || s.story.done.includes(after)) && (!node || (s.adv?.cleared ?? []).includes(node));
 }
 
 /** 아직 안 본 화 중 가장 앞의 것 */
@@ -29,25 +26,33 @@ export function nextEpisode(s: GameState, all: Episode[]): Episode | null {
 export function lockReason(s: GameState, ep: Episode): string | null {
   // 이미 본 화는 조건이 바뀌어도 언제든 다시 볼 수 있다.
   if (s.story.done.includes(ep.id)) return null;
-  const u = ep.unlock ?? {};
-  if (u.after && !s.story.done.includes(u.after)) return '앞 화를 먼저 봐야 해요';
-  if (s.rank < (u.rank ?? 0)) return `관직 〈${rankDef(u.rank!).title}〉에 오르면 열려요`;
-  if (power(s) < (u.power ?? 0)) return `권세 ${fmt(u.power!)}이 되면 열려요 · 지금 ${fmt(power(s))}`;
-  if (s.stage.index < (u.stage ?? 0)) return `토벌을 ${u.stage}번 해내면 열려요`;
-  return null;
+  if (isUnlocked(s, ep)) return null;
+  const after = ep.unlock?.after;
+  if (after && !s.story.done.includes(after)) return '앞 화를 먼저 봐야 해요';
+  return `모험에서 「${NODE_NAMES[ep.unlock.node!] ?? ep.unlock.node}」을(를) 돌파하면 열려요`;
 }
 
 /** 깃발 조건에 맞는 대사만 */
 export const visibleLines = (s: GameState, lines: StoryLine[]) => lines.filter((l) => !l.if || s.story.flags.includes(l.if));
 
 export interface EpisodeResult {
-  recruit: string | null;
+  recruits: string[];
   bondUps: { id: string; level: number }[];
 }
 
+/** 화를 마치면 합류하는 식객들 */
+export const episodeRecruits = (ep: Episode): string[] => {
+  const r = ep.reward?.recruit;
+  return !r ? [] : Array.isArray(r) ? r : [r];
+};
+
+/** 이 화의 전투를 모두 이겼는지(다시 보는 화는 늘 참) */
+export const battlesCleared = (s: GameState, ep: Episode) =>
+  s.story.done.includes(ep.id) || (ep.battles ?? []).every((_, n) => s.story.won.includes(`${ep.id}#${n}`));
+
 /** 화를 다 봤을 때: 고른 선택지의 효과와 보상을 적용한다. choices[i]는 i번째 장면에서 고른 번호 */
 export function completeEpisode(s: GameState, ep: Episode, choices: (number | null)[]): [GameState, EpisodeResult] {
-  if (s.story.done.includes(ep.id) || !isUnlocked(s, ep)) return [s, { recruit: null, bondUps: [] }];
+  if (s.story.done.includes(ep.id) || !isUnlocked(s, ep) || !battlesCleared(s, ep)) return [s, { recruits: [], bondUps: [] }];
   const next = structuredClone(s);
   const before = Object.fromEntries(Object.entries(next.yokai).map(([id, y]) => [id, bondLevel(y.bond)]));
 
@@ -65,17 +70,21 @@ export function completeEpisode(s: GameState, ep: Episode, choices: (number | nu
   next.res.coin += r.coin ?? 0;
   next.res.grain += r.grain ?? 0;
   next.res.fame += r.fame ?? 0;
-  let recruit: string | null = null;
-  if (r.recruit && YOKAI_BY_ID[r.recruit] && !next.yokai[r.recruit]) {
-    next.yokai[r.recruit] = freshYokai();
-    recruit = r.recruit;
+  // 이야기로 합류하는 식객은 지금 식객들의 평균 레벨로 온다(뒤늦게 와도 바로 싸울 수 있게)
+  const recruits: string[] = [];
+  const level = avgLevel(next);
+  for (const id of episodeRecruits(ep)) {
+    if (!YOKAI_BY_ID[id] || next.yokai[id]) continue;
+    next.yokai[id] = { ...freshYokai(), level };
+    recruits.push(id);
   }
   next.story.done.push(ep.id);
+  if (next.story.at?.ep === ep.id) delete next.story.at;
 
   const bondUps = Object.entries(next.yokai)
     .filter(([id, y]) => before[id] !== undefined && bondLevel(y.bond) > before[id] && bondLevel(y.bond) < BOND_LEVELS.length)
     .map(([id, y]) => ({ id, level: bondLevel(y.bond) }));
-  return [next, { recruit, bondUps }];
+  return [next, { recruits, bondUps }];
 }
 
 /** 이야기에 띄울 수 있는 물건 그림 */
@@ -115,6 +124,16 @@ export function validateEpisode(ep: Episode, heroineIds: Set<string>): string[] 
       for (const id of Object.keys(o.effects?.bond ?? {})) if (!heroineIds.has(id)) errs.push(`선택지 bond에 없는 식객: ${id}`);
     }
   }
-  if (ep.reward?.recruit && !heroineIds.has(ep.reward.recruit)) errs.push(`reward.recruit에 없는 식객: ${ep.reward.recruit}`);
+  for (const id of episodeRecruits(ep)) if (!heroineIds.has(id)) errs.push(`reward.recruit에 없는 식객: ${id}`);
+  for (const [n, b] of (ep.battles ?? []).entries()) {
+    if (b.after < 0 || b.after >= (ep.scenes ?? []).length) errs.push(`${n + 1}번째 전투의 after가 장면 밖이에요: ${b.after}`);
+    if (!b.foe) errs.push(`${n + 1}번째 전투에 상대 이름이 없어요`);
+    for (const id of [...(b.guests ?? []), ...(b.rival ? [b.rival] : [])]) if (!heroineIds.has(id)) errs.push(`${n + 1}번째 전투에 없는 식객: ${id}`);
+    for (const l of [...(b.intro ?? []), ...(b.outro ?? [])]) {
+      const ok = l.who === 'narration' || l.who === 'me' || l.who.startsWith('npc:') || heroineIds.has(l.who);
+      if (!ok) errs.push(`${n + 1}번째 전투 대사의 who가 이상해요: ${l.who}`);
+      if (/[一-鿿]/.test(l.text ?? '')) errs.push(`${n + 1}번째 전투 대사에 한자가 있어요: ${l.text}`);
+    }
+  }
   return errs;
 }

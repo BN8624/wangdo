@@ -8,12 +8,10 @@ import {
   chooseWish,
   feast,
   feastCost,
-  fight,
+  expToNext,
+  grantExp,
   giftPrice,
   giveGift,
-  levelCap,
-  levelCost,
-  levelUp,
   newGame,
   outing,
   partyChance,
@@ -29,16 +27,19 @@ import {
   unseenScene,
   markSceneSeen,
   useWish,
-  wishMaxCharges,
   winChance,
+  buyItem,
+  equip,
   workplaceRate,
   freshYokai,
 } from '../src/core/engine';
 import { GUIDE, advanceGuide } from '../src/core/guide';
+import { advFight, dungeonEncounter, fieldEncounter, questEncounter, reenterDungeon } from '../src/core/adventure';
+import { NODE_BY_ID, type DungeonDef, type FieldDef, type QuestDef } from '../src/data/world';
+import { ITEM_BY_ID } from '../src/data/items';
 import { deserialize, exportCode, importCode, serialize } from '../src/core/save';
 import { BALANCE } from '../src/data/balance';
 import { RANKS } from '../src/data/ranks';
-import { STAGES_PER_CHAPTER } from '../src/data/stages';
 import { BOND_LEVELS, WORKPLACE_BY_ID } from '../src/data/village';
 import { YOKAI_BY_ID } from '../src/data/yokai';
 
@@ -100,25 +101,39 @@ describe('일터와 생산', () => {
   });
 });
 
-describe('식객 레벨업', () => {
-  it('엽전을 내고 능력치가 오르며, 칭호 상한을 넘지 못한다', () => {
+describe('경험치와 장비', () => {
+  it('경험치가 차면 레벨이 오르고 남은 경험치는 이어진다', () => {
     const s = game();
-    const cost = levelCost(YOKAI_BY_ID.muyeong, 1);
-    const [next, r] = levelUp(s, T0, 'muyeong', 1);
-    expect(r).toEqual({ ok: true, levels: 1, spent: cost });
-    expect(power(next)).toBeGreaterThan(power(s));
-    next.res.coin = 1e12;
-    expect(levelUp(next, T0, 'muyeong', 999)[0].yokai.muyeong.level).toBe(levelCap(0));
+    const before = power(s);
+    const up = grantExp(s, 'muyeong', expToNext(1) + expToNext(2) + 5);
+    expect(up).toEqual({ id: 'muyeong', from: 1, to: 3 });
+    expect(s.yokai.muyeong.exp).toBe(5);
+    expect(power(s)).toBeGreaterThan(before);
+  });
+
+  it('상점에서 산 장비를 끼면 능력치가 오르고, 빼면 소지품으로 돌아온다', () => {
+    const s = game();
+    s.res.coin = 100_000;
+    const [a, r] = buyItem(s, T0, 'oak-club');
+    expect(r.ok).toBe(true);
+    expect(a.res.coin).toBe(s.res.coin - ITEM_BY_ID['oak-club'].price!);
+    const [b] = equip(a, T0, 'muyeong', 'weapon', 'oak-club');
+    expect(statsOf(b, 'muyeong').might).toBeGreaterThan(statsOf(a, 'muyeong').might);
+    expect(b.inventory['oak-club']).toBeUndefined();
+    const [c] = equip(b, T0, 'muyeong', 'weapon', null);
+    expect(c.inventory['oak-club']).toBe(1);
+    expect(equip(a, T0, 'muyeong', 'trinket', 'oak-club')[1]).toEqual({ ok: false, reason: 'wrong-slot' });
   });
 });
 
 describe('인연', () => {
-  it('대화는 대답 점수만큼 호감도를 올리고, 한동안 다시 할 수 없다', () => {
-    const s = game();
+  it('대화는 기다릴 필요 없이 언제든 하고, 처음 듣는 대화만 호감도를 올린다', () => {
+    let s = game();
     const [a, r] = talk(s, T0, 'muyeong', 8);
     expect(r.ok && r.gained).toBe(8 * BALANCE.talkMult);
-    expect(talk(a, T0 + MINUTE, 'muyeong', 8)[1]).toEqual({ ok: false, reason: 'cooldown' });
-    expect(talk(a, T0 + BALANCE.talkCooldownMinutes * MINUTE, 'muyeong', 8)[1].ok).toBe(true);
+    expect(talk(a, T0, 'muyeong', 4)[1]).toMatchObject({ ok: true, gained: 4 * BALANCE.talkMult });
+    for (let i = 0; i < BALANCE.talkTopics; i++) s = talk(s, T0, 'muyeong', 8)[0];
+    expect(talk(s, T0, 'muyeong', 8)[1]).toMatchObject({ ok: true, gained: 0 });
   });
 
   it('좋아하는 선물은 더 기뻐하고, 없으면 엽전으로 사서 준다', () => {
@@ -159,15 +174,15 @@ describe('잔치와 승급', () => {
     expect(next.yokai.sodam.bond).toBe(BALANCE.feastBond);
   });
 
-  it('위세와 명성이 모두 차야 승급하고, 관직 식객이 합류한다', () => {
+  it('위세와 명성이 모두 차야 승급하고, 명성을 쓴다', () => {
     const s = newGame(T0, 1);
     s.rank = 1;
     s.res.fame = RANKS[2].fameCost;
     expect(promote(s, T0)[1]).toEqual({ ok: false, reason: 'need-power' });
     s.yokai.baekseol.level = 20;
     const [next, r] = promote(s, T0);
-    expect(r).toEqual({ ok: true, rank: 2, recruit: RANKS[2].recruit });
-    expect(next.yokai[RANKS[2].recruit!].level).toBe(1);
+    expect(r).toEqual({ ok: true, rank: 2, recruit: null });
+    expect(next.res.fame).toBe(0);
   });
 });
 
@@ -183,11 +198,21 @@ describe('뚝딱 소원', () => {
     expect(b.wish.pending).toBeNull();
   });
 
-  it('횟수는 일정 시간마다 최대치까지 다시 찬다', () => {
+  it('상소는 기다려서가 아니라 싸워 이겨서 쌓인다', () => {
     let s = game();
-    for (let i = 0; i < wishMaxCharges(0); i++) s = chooseWish(useWish(s, T0)[0], T0, 0)[0];
+    for (let i = 0; i < BALANCE.wishBaseCharges; i++) s = chooseWish(useWish(s, T0)[0], T0, 0)[0];
     expect(useWish(s, T0)[1]).toEqual({ ok: false, reason: 'no-charge' });
-    expect(settle(s, T0 + BALANCE.wishRegenMinutes * MINUTE).wish.charges).toBe(1);
+    expect(settle(s, T0 + 24 * 60 * MINUTE).wish.charges).toBe(0);
+    for (const id of Object.keys(s.yokai)) s.yokai[id].level = 30;
+    const field = NODE_BY_ID['backhill-field'] as FieldDef;
+    s.story.done.push('s1e01');
+    let wins = 0;
+    for (let i = 0; i < 20 && wins < BALANCE.winsPerPetition; i++) {
+      const [next, r] = advFight(s, T0, field.id, bestParty(s, fieldEncounter(s, field)));
+      s = next;
+      if (r.ok && r.won) wins++;
+    }
+    expect(s.wish.charges).toBe(1);
   });
 });
 
@@ -209,30 +234,80 @@ describe('소동 겨루기', () => {
     }
   });
 
-  it('기력을 쓰고, 이기면 다음 소동으로 넘어가 보상을 받는다', () => {
+});
+
+describe('모험', () => {
+  function strong() {
     const s = game();
-    for (const id of ['muyeong', 'geumyeong', 'sodam']) s.yokai[id].level = 10;
-    const info = stageInfo(0)!;
-    const [next, r] = fight(s, T0, bestParty(s, info));
-    expect(next.stamina.value).toBe(BALANCE.staminaMax - 1);
+    for (const id of Object.keys(s.yokai)) s.yokai[id].level = 40;
+    s.story.done.push('s1e01', 's1e02');
+    return s;
+  }
+
+  it('필드는 몇 번이고 싸울 수 있고, 싸울 때마다 다음 상대가 바뀐다', () => {
+    let s = strong();
+    const field = NODE_BY_ID['backhill-field'] as FieldDef;
+    const first = fieldEncounter(s, field);
+    const [next, r] = advFight(s, T0, field.id, bestParty(s, first));
     expect(r.ok && r.won).toBe(true);
-    expect(next.stage.index).toBe(1);
-    expect(fight(s, T0, ['muyeong', 'muyeong', 'sodam'])[1]).toEqual({ ok: false, reason: 'bad-party' });
+    s = next;
+    expect(s.adv.floors['f:backhill-field']).toBe(1);
+    expect(fieldEncounter(s, field).index).not.toBe(first.index);
+    expect(advFight(s, T0, field.id, ['muyeong', 'muyeong', 'sodam'])[1]).toEqual({ ok: false, reason: 'bad-party' });
   });
 
-  it('기력이 없으면 출동할 수 없다', () => {
-    const s = game();
-    s.stamina.value = 0;
-    expect(fight(s, T0, ['muyeong', 'geumyeong', 'sodam'])[1]).toEqual({ ok: false, reason: 'no-stamina' });
+  it('던전은 층마다 싸워 내려가고, 보물상자를 열고, 대장을 이기면 돌파한다', () => {
+    let s = strong();
+    const cave = NODE_BY_ID['bandit-cave'] as DungeonDef;
+    const coin = s.res.coin;
+    let chests = 0;
+    for (let guard = 0; guard < 40 && dungeonEncounter(s, cave); guard++) {
+      const [next, r] = advFight(s, T0, cave.id, bestParty(s, dungeonEncounter(s, cave)!));
+      if (r.ok && r.chest) chests++;
+      s = next;
+    }
+    expect(s.adv.cleared).toContain('bandit-cave');
+    expect(chests).toBe(cave.floors.filter((f) => f.chest).length);
+    expect(s.inventory[cave.boss.drop!]).toBe(1);
+    expect(s.res.coin).toBeGreaterThan(coin);
+    // 다시 들어가면 처음부터, 보물상자와 대장 장비는 다시 안 나온다
+    s = reenterDungeon(s, cave.id);
+    expect(dungeonEncounter(s, cave)).not.toBeNull();
+    for (let guard = 0; guard < 40 && dungeonEncounter(s, cave); guard++) s = advFight(s, T0, cave.id, bestParty(s, dungeonEncounter(s, cave)!))[0];
+    expect(s.inventory[cave.boss.drop!]).toBe(1);
   });
 
-  it('장의 우두머리를 이기면 다음 장으로 넘어간다', () => {
+  it('던전에서 지면 상대가 지친다', () => {
     const s = game();
-    s.stage.index = STAGES_PER_CHAPTER - 1;
-    for (const id of Object.keys(s.yokai)) s.yokai[id].level = 200;
-    const [next, r] = fight(s, T0, bestParty(s, stageInfo(s.stage.index)!));
-    expect(r.ok && r.won && r.stage.isBoss).toBe(true);
-    expect(stageInfo(next.stage.index)!.chapterIndex).toBe(1);
+    s.story.done.push('s2e08');
+    const cave = NODE_BY_ID['underworld-gate'] as DungeonDef;
+    const before = dungeonEncounter(s, cave)!;
+    const [next, r] = advFight(s, T0, cave.id, bestParty(s, before));
+    expect(r.ok && !r.won).toBe(true);
+    const after = dungeonEncounter(next, cave)!;
+    expect(after.rounds[0].value).toBeLessThan(before.rounds[0].value);
+  });
+
+  it('만남을 끝내면 그 식객이 합류한다', () => {
+    let s = strong();
+    s.adv.cleared.push('bandit-cave');
+    const meet = NODE_BY_ID['m:seorin'] as QuestDef;
+    expect(s.yokai.seorin).toBeUndefined();
+    for (let guard = 0; guard < 10 && questEncounter(s, meet); guard++) s = advFight(s, T0, meet.id, bestParty(s, questEncounter(s, meet)!))[0];
+    expect(s.yokai.seorin?.level).toBeGreaterThan(1);
+  });
+
+  it('질 때도 경험치와 엽전의 일부는 받는다', () => {
+    const s = game();
+    s.story.done.push('s2e08');
+    const cave = NODE_BY_ID['underworld-gate'] as DungeonDef;
+    const before = s.res.coin;
+    const [after, r] = advFight(s, T0, cave.id, bestParty(s, dungeonEncounter(s, cave)!));
+    expect(r.ok && !r.won).toBe(true);
+    if (!r.ok) return;
+    expect(r.coin).toBe(Math.round(r.stage.coin * BALANCE.loseRewardRatio));
+    expect(after.res.coin).toBeCloseTo(before + r.coin);
+    expect(r.exp).toBeGreaterThan(0);
   });
 });
 
@@ -281,29 +356,19 @@ describe('안내', () => {
   });
 });
 
-describe('권세가 모자랄 때 할 일 안내', () => {
-  /** 3화를 보고 사직이 된 뒤, 할 수 있는 건 다 해서 권세만 남은 상태 */
-  function blocked(coin: number) {
+describe('할 일 안내', () => {
+  it('앞 던전을 돌파해야 열리는 화면, 그 던전으로 안내한다', () => {
     const now = 1_000_000_000;
     const s = newGame(now, 3);
-    s.rank = 3;
-    for (const id of ['baekseol', 'muyeong', 'sodam', 'seorin', 'danhui']) s.yokai[id] = { level: 1, bond: 0, talkAt: now, outingAt: now, seen: 0, talks: 0 };
-    for (const id of Object.keys(s.yokai)) s.yokai[id].talkAt = now;
-    s.work = { market: ['baekseol', 'seorin'], woodyard: ['muyeong'], field: ['danhui'], tavern: ['sodam'] };
-    s.story.done = ['s1e01', 's1e02', 's1e03'];
-    s.stage.index = 6;
-    s.stamina.value = 0;
+    for (const id of ['muyeong', 'sodam']) s.yokai[id] = freshYokai();
+    s.work = { market: ['baekseol'], woodyard: ['muyeong'], field: ['sodam'], tavern: [] };
+    s.story.done = ['s1e01', 's1e02'];
     s.wish.charges = 0;
-    s.res = { coin, grain: 0, fame: 999_999 };
-    return { s, now };
-  }
-
-  it('엽전이 있으면 레벨을 올리라고, 없으면 얼마나 기다리면 되는지 알려 준다', () => {
-    const rich = blocked(1_000_000);
-    expect(power(rich.s)).toBeLessThan(2600);
-    expect(nextHint(rich.s, rich.now).text).toMatch(/^4화까지 권세 .+ 남았어요\. 식객 레벨을 올려 보세요\.$/);
-    const poor = blocked(0);
-    expect(nextHint(poor.s, poor.now).text).toMatch(/엽전이 모이면 레벨을 올릴 수 있어요 · 약 \d+분$/);
+    for (const id of Object.keys(s.yokai)) s.yokai[id].talks = 99;
+    s.res = { coin: 0, grain: 0, fame: 0 };
+    const hint = nextHint(s);
+    expect(hint.target).toBe('adv');
+    expect(hint.text).toContain('고갯길 산적굴');
   });
 });
 
@@ -313,21 +378,5 @@ describe('저장 지키기', () => {
     const now = 10 * 86_400_000;
     expect(backupDue(newGame(now - 3_600_000, 1), now)).toBe(false);
     expect(backupDue(newGame(now - 2 * 86_400_000, 1), now)).toBe(true);
-  });
-});
-
-describe('토벌 위로금', () => {
-  it('져도 이겼을 때 보상의 일부를 받는다', () => {
-    const now = 1_000_000_000;
-    const s = newGame(now, 5);
-    s.stage.index = 30;
-    for (const id of ['baekseol', 'muyeong', 'sodam']) s.yokai[id] = { level: 1, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0 };
-    const before = s.res.coin;
-    const [after, r] = fight(s, now, ['baekseol', 'muyeong', 'sodam']);
-    expect(r.ok).toBe(true);
-    if (!r.ok) return;
-    expect(r.won).toBe(false);
-    expect(r.coin).toBe(Math.round(r.stage.coin * BALANCE.loseRewardRatio));
-    expect(after.res.coin).toBe(before + r.coin);
   });
 });

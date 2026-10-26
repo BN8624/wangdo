@@ -2,7 +2,8 @@ import { StoryView } from './StoryView';
 import { BattleView } from './BattleView';
 import { useNewVersion } from './update';
 import { useEffect, useMemo, useState } from 'react';
-import { RESOURCE_KEYS, partyPlan, power, promoteCheck, settle, stageInfo, talkReadyIn, unseenScene, type FightResult } from '../core/engine';
+import { RESOURCE_KEYS, hasNewTalk, power, promoteCheck, settle, unseenScene, type Won } from '../core/engine';
+import { nextAdventure } from '../core/adventure';
 import { fmt } from '../core/format';
 import type { HintTarget } from '../core/hints';
 import type { ComboDef } from '../core/types';
@@ -20,7 +21,7 @@ import {
   WishModal,
 } from './modals';
 import { RecordView } from './RecordView';
-import { StageView } from './StageView';
+import { AdventureView } from './AdventureView';
 import { act, takeOfflineSummary, useGame, type OfflineSummary } from './store';
 import { pushToast, useToasts } from './toast';
 import { GuideBar, rewardText } from './Guide';
@@ -29,11 +30,13 @@ import { YokaiSheet, YokaiView } from './YokaiView';
 import { AdultGate, adultConfirmed } from './Backup';
 import { warmArt } from './warm';
 import { setMood } from './sound';
+import { EPISODES } from '../data/story';
+import { lockReason, nextEpisode } from '../core/story';
 
 export type ModalRequest =
   | { kind: 'wish' }
   | { kind: 'promote'; rank: number; recruit: string | null }
-  | { kind: 'fight'; result: Extract<FightResult, { ok: true }> }
+  | { kind: 'fight'; result: Won }
   | { kind: 'offline'; summary: OfflineSummary }
   | { kind: 'story'; episode?: string }
   | { kind: 'talk'; id: string }
@@ -42,12 +45,12 @@ export type ModalRequest =
   | { kind: 'scene'; id: string; level: number }
   | { kind: 'combo'; combo: ComboDef };
 
-type Tab = 'home' | 'yokai' | 'stage' | 'record';
+type Tab = 'home' | 'yokai' | 'adv' | 'record';
 
 const TABS: { id: Tab; label: string; icon: 'home' | 'yokai' | 'stage' | 'record' }[] = [
   { id: 'home', label: '궁궐', icon: 'home' },
   { id: 'yokai', label: '식객', icon: 'yokai' },
-  { id: 'stage', label: '토벌', icon: 'stage' },
+  { id: 'adv', label: '모험', icon: 'stage' },
   { id: 'record', label: '기록', icon: 'record' },
 ];
 
@@ -77,17 +80,22 @@ export function App() {
     window.scrollTo(0, 0);
   }, [tab]);
 
-  // 곧 쓸 그림(식객 전신, 지금 토벌 상대)을 한가할 때 미리 받아 둔다.
+  // 곧 쓸 그림(식객 전신, 다음 모험 상대)을 한가할 때 미리 받아 둔다.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => warmArt(state), [state.stage.index, Object.keys(state.yokai).length]);
+  useEffect(() => warmArt(state), [state.adv.cleared.length, state.story.done.length, Object.keys(state.yokai).length]);
 
   const open = (m: ModalRequest) => setQueue((q) => [...q, m]);
   const closeTop = () => setQueue((q) => q.slice(1));
-  const go = (t: HintTarget) => setTab(t);
+  const go = (t: HintTarget) => {
+    if (t !== 'story') return setTab(t);
+    // 이야기: 다음 화(보다 멈춘 화)를 바로 연다
+    const ep = nextEpisode(state, EPISODES);
+    open({ kind: 'story', episode: ep && !lockReason(state, ep) ? ep.id : undefined });
+  };
   const top = queue[0];
   const step = guideStep(state);
 
-  // 배경음 분위기: 토벌은 북 장단, 이야기·인연 장면은 잔잔하게, 나머지는 궁궐 가락
+  // 배경음 분위기: 전투는 북 장단, 이야기·인연 장면은 잔잔하게, 나머지는 궁궐 가락
   useEffect(() => {
     setMood(!adult ? 'off' : top?.kind === 'fight' ? 'battle' : top?.kind === 'story' || top?.kind === 'scene' ? 'story' : 'home');
   }, [adult, top?.kind]);
@@ -101,11 +109,10 @@ export function App() {
 
   const badges = useMemo(() => {
     const ids = Object.keys(view.yokai);
-    const info = stageInfo(view.stage.index);
     return {
       home: promoteCheck(view).ok || view.wish.charges > 0,
-      yokai: ids.some((id) => unseenScene(view, id) > 0 || talkReadyIn(view, id, now) === 0),
-      stage: !!info && view.stamina.value > 0 && partyPlan(view, info).chance >= 0.5,
+      yokai: ids.some((id) => unseenScene(view, id) > 0 || hasNewTalk(view, id)),
+      adv: nextAdventure(view) !== null,
       record: false,
     } satisfies Record<Tab, boolean>;
     // 1초마다 다시 계산하지 않도록 분 단위로만 갱신한다.
@@ -134,18 +141,12 @@ export function App() {
               {fmt(view.res[k])}
             </span>
           ))}
-          {tab === 'stage' && (
-            <span className="pill" aria-label="기력">
-              <ResIcon kind="stamina" size={16} />
-              {view.stamina.value}
-            </span>
-          )}
         </div>
       </header>
 
       {tab === 'home' && <HomeView view={view} now={now} open={open} go={go} onHeroine={setSheet} />}
-      {tab === 'yokai' && <YokaiView view={view} now={now} onOpen={setSheet} />}
-      {tab === 'stage' && <StageView view={view} now={now} open={open} />}
+      {tab === 'yokai' && <YokaiView view={view} onOpen={setSheet} />}
+      {tab === 'adv' && <AdventureView view={view} open={open} />}
       {tab === 'record' && <RecordView view={view} now={now} />}
 
       <nav className="nav">
@@ -159,7 +160,7 @@ export function App() {
       </nav>
 
       {rankOpen && !top && <RankSheet view={view} open={open} onClose={() => setRankOpen(false)} />}
-      {sheet && !top && <YokaiSheet view={view} now={now} id={sheet} open={open} onClose={() => setSheet(null)} />}
+      {sheet && !top && <YokaiSheet view={view} id={sheet} open={open} onClose={() => setSheet(null)} />}
 
       {top?.kind === 'story' && <StoryView view={view} episode={top.episode} onClose={closeTop} open={open} />}
       {top?.kind === 'offline' && <OfflineModal summary={top.summary} onClose={closeTop} />}

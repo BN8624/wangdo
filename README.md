@@ -6,12 +6,13 @@
 
 **플레이:** https://bn8624.github.io/wangdo/ (휴대폰 브라우저 권장)
 
-- **이야기**: 부 → 화로 이어지는 연재. 관직·권세·토벌 진행에 따라 다음 화가 열린다. `content/story/`에 화 파일을 넣으면 바로 붙고, `npm run story:next`로 Codex가 다음 화를 이어 쓴다.
+- **이야기**: 부 → 화로 이어지는 연재. 앞 화를 보고 (있으면) 앞 던전을 돌파하면 다음 화가 열린다. 권세·관직·시간으로는 막지 않는다. `content/story/`에 화 파일을 넣으면 바로 붙고, `npm run story:next`로 Codex가 다음 화를 이어 쓴다.
 - **관직**: 서민 → 참봉 → 현감 → … → 영의정 → 섭정 → 왕, 그 뒤 치세 단계가 끝없이 이어진다.
 - **일터**: 저잣거리(지략→엽전)·훈련장(무력→엽전)·논밭(정치→곡식)·주막(매력→명성)에 식객을 보내 자동 수입.
 - **정무**: 관아에 올라온 상소(60건)를 판결해 보상을 받는다.
 - **인연**: 대화·선물·나들이·연회로 호감도 5단계, 단계마다 개인 이야기와 특별 그림.
-- **토벌**: 식객 셋이 자동으로 싸우는 라운드제 전투. 10라운드 안에 상대를 쓰러뜨리면 해결. 식객마다 고유 기술(강타·기절·방어·치유·약화·격려)이 있고, 상대마다 약점 기술이 있어 맞는 기술은 1.7배로 들어간다. 추천 편성은 실제 전투 승률로 고른다. 대치 구도와 말풍선 대사로 재생되며 2배속·건너뛰기가 있고, 져도 위로금(30%)을 받는다.
+- **모험**: 파이널판타지식 지도. 지역마다 마을(상점), 필드(몇 번이고 수련), 던전(층마다 전투·보물상자, 끝에 대장), 식객 개인 사연과 만남이 길처럼 이어진다. 레벨은 전투 경험치로 오르고, 식객마다 무기·장신구를 낀다. 기력·대기 시간 같은 기다림은 없다.
+- **전투**: 식객 셋이 자동으로 싸우는 라운드제 전투. 10라운드 안에 상대를 쓰러뜨리면 해결. 식객마다 고유 기술(강타·기절·방어·치유·약화·격려)이 있고, 상대마다 약점 기술이 있어 맞는 기술은 1.7배로 들어간다. 추천 편성은 실제 전투 승률로 고른다. 대치 구도와 말풍선 대사로 재생되며 2배속·건너뛰기가 있고, 져도 위로금(30%)을 받는다.
 - **소리**: 음원 파일 없이 브라우저에서 합성하는 가야금풍 배경음과 효과음(`src/ui/sound.ts`). 기록 탭에서 끈다.
 - **저장 지키기**: 저장은 기기 브라우저에만 있다. 파일 백업·코드 복사·불러오기, 사흘마다 백업 알림, 홈 화면 추가 안내(`src/ui/Backup.tsx`). 서비스 워커(`public/sw.js`)가 그림을 기기에 담아 둔다.
 
@@ -30,7 +31,7 @@ npm run simulate   # 플레이 성향별 칭호·소동 진행 시점 표
 - 게임 규칙: `src/core/engine.ts` (순수 함수, 시간은 인자로 받음)
 - 밸런스 수치: `src/data/balance.ts`, `src/data/ranks.ts` — 바꾼 뒤 `npm run simulate`와 `npm test`로 확인
 - 전투: `src/core/battle.ts`(순수 함수, 전투 기록을 만든다) · 화면 `src/ui/BattleView.tsx` · 기술 `src/data/skills.ts` · 대사 `src/data/battle-lines.ts`
-- 내용: 식객 `content/heroines.json`, 인연 `content/bonds/`, 정무 `src/data/wishes.ts`, 토벌 `src/data/stages.ts`
+- 내용: 식객 `content/heroines.json`, 인연 `content/bonds/`, 정무 `src/data/wishes.ts`, 모험 지도 `src/data/world.ts`·사연 `content/quests.json`·만남 `content/meets.json`·장비 `src/data/items.ts`
 - 그림 기준: `docs/CHARACTER_GUIDE.md`
 - 화면: `src/ui/`
 
@@ -50,4 +51,4 @@ npm run art:prompts         # 손으로 뽑을 때 쓸 프롬프트 목록 → d
 
 `main`에 푸시하면 GitHub Actions가 타입 검사·테스트·빌드를 통과한 뒤 GitHub Pages에 올린다. 처음 한 번 저장소 **Settings → Pages → Source**를 **GitHub Actions**로 바꿔야 한다.
 
-방문 통계(선택): [GoatCounter](https://www.goatcounter.com/)에서 무료 사이트를 만들고, 저장소 **Settings → Secrets and variables → Actions → Variables**에 `GOATCOUNTER`(예: `https://wangdo.goatcounter.com/count`)를 넣으면 다음 배포부터 켜진다. 이야기를 다 본 화, 승급, 토벌 승패가 이정표로 잡힌다.
+방문 통계(선택): [GoatCounter](https://www.goatcounter.com/)에서 무료 사이트를 만들고, 저장소 **Settings → Secrets and variables → Actions → Variables**에 `GOATCOUNTER`(예: `https://wangdo.goatcounter.com/count`)를 넣으면 다음 배포부터 켜진다. 이야기를 다 본 화, 승급, 모험 전투 승패가 이정표로 잡힌다.

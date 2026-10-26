@@ -13,20 +13,42 @@ export const BALANCE = {
 
   start: { coin: 300, grain: 120, fame: 0 },
 
-  levelCapBase: 10,
-  levelCapPerRank: 10,
-  levelCostBase: 5,
-  levelCostExp: 2,
-  gradeCostMult: { 1: 1, 2: 1.5, 3: 2.2 } as Record<number, number>,
+  /** 경험치: 다음 레벨까지 = expCurveBase × 레벨^expCurveExp + expCurveFlat */
+  expCurveBase: 10,
+  expCurveExp: 1.6,
+  expCurveFlat: 20,
+  /** 한 판 경험치 = expGainBase × 상대레벨^expGainExp + expGainFlat (대장은 expBossMult배) */
+  expGainBase: 8,
+  expGainExp: 1.25,
+  expGainFlat: 10,
+  expBossMult: 3,
+  /** 쉬던 식객이 받는 몫, 졌을 때 받는 몫 */
+  expBenchRatio: 0.3,
+  expLoseRatio: 0.3,
+  /** 전투 엽전·명성 = base × 상대레벨^exp + flat */
+  battleCoinBase: 5,
+  battleCoinExp: 1.6,
+  battleCoinFlat: 20,
+  battleFameBase: 0.6,
+  battleFameExp: 1.3,
+  /** 상대 한 판 수치 = (foeLevelBase + foeLevelGrowth × 레벨) × 종류 배율.
+   *  그 레벨 식객 셋이 장비·인연까지 갖췄을 때의 특기 능력치에 맞춘 값(모의 플레이로 잰다) */
+  foeLevelBase: 200,
+  foeLevelGrowth: 36,
+  foeKindMult: { field: 0.9, dungeon: 1.05, story: 1.1, boss: 1.2 } as Record<'field' | 'dungeon' | 'story' | 'boss', number>,
+  /** 기술 단계마다 기술 피해 증가(10·25·40레벨) */
+  skillTierBonus: 0.15,
 
   /** 호감도 단계당 능력치 보너스 */
   bondStatBonus: 0.08,
-  talkCooldownMinutes: 3 * 60,
+  /** 식객마다 새 대화 수(처음 듣는 대화만 호감도를 올린다) */
+  talkTopics: 8,
+  /** 함께 싸워 이기면 오르는 호감도(지면 1) */
+  battleBond: 2,
   /** 대화 대답의 delta(1·4·8)에 곱하는 값 */
   talkMult: 2,
   giftBond: { liked: 30, normal: 12 },
   outingBond: 45,
-  outingCooldownMinutes: 20 * 60,
   /** 나들이 비용 = 칭호 0 기준 엽전 × 1.5^칭호 */
   outingCost: 150,
   /** 선물·나들이 값이 칭호마다 오르는 비율 */
@@ -34,8 +56,8 @@ export const BALANCE = {
   feastBond: 2,
 
   wishBaseCharges: 3,
-  wishChargeEveryRanks: 4,
-  wishRegenMinutes: 60,
+  /** 이만큼 이길 때마다 상소가 하나 올라온다 */
+  winsPerPetition: 3,
   wishMinReward: 20,
   wishRewardScale: 0.5,
 
@@ -44,8 +66,6 @@ export const BALANCE = {
   feastFamePerCharm: 0.015,
   feastFameRankBonus: 0.05,
 
-  staminaMax: 6,
-  staminaRegenMinutes: 30,
   /** 소동 상대 수치 = foeBase × foeGrowth^순번 */
   foeBase: 80,
   foeGrowth: 1.09,
@@ -59,6 +79,13 @@ export const BALANCE = {
   bossRewardMult: 3,
   /** 져도 이기면 받을 명성·엽전의 이만큼은 위로금으로 받는다 */
   loseRewardRatio: 0.3,
+  /** 질 때마다 상대가 이만큼 지치고, 이 아래로는 내려가지 않는다 */
+  storyMercyStep: 0.1,
+  storyMercyFloor: 0.55,
+  /** 필드·던전 잡졸을 이기면 이 확률로 선물을 줍는다(대장·이야기 전투는 언제나) */
+  fieldGiftChance: 0.08,
+  dungeonGiftChance: 0.25,
+
   /** 추천 편성: 칸마다 그 능력치 상위 몇 명을 후보로 두고, 조합마다 몇 번 싸워 볼지 */
   partyPick: 4,
   partyRuns: 40,

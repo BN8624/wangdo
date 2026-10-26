@@ -36,7 +36,7 @@
     "minRank": 1,
     "choices": [
       { "label": "밀린 품삯을 곡식으로 지급하라", "reward": { "kind": "grain", "minutes": 40 } },
-      { "label": "교대표와 품삯 기준을 세워라", "reward": { "kind": "stamina", "amount": 1 } }
+      { "label": "교대표와 품삯 기준을 세워라", "reward": { "kind": "exp", "amount": 2 } }
     ]
   },
   {
@@ -56,7 +56,7 @@
     "minRank": 2,
     "choices": [
       { "label": "청소 품삯을 공동 부담하라", "reward": { "kind": "grain", "minutes": 40 } },
-      { "label": "취수 시간과 관리 몫을 정하라", "reward": { "kind": "stamina", "amount": 1 } }
+      { "label": "취수 시간과 관리 몫을 정하라", "reward": { "kind": "exp", "amount": 2 } }
     ]
   },
   {
@@ -106,7 +106,7 @@
     "minRank": 5,
     "choices": [
       { "label": "벌목 구역과 보식 몫을 정하라", "reward": { "kind": "grain", "minutes": 50 } },
-      { "label": "묵은 관아 목재부터 빌려주라", "reward": { "kind": "stamina", "amount": 1 } }
+      { "label": "묵은 관아 목재부터 빌려주라", "reward": { "kind": "exp", "amount": 2 } }
     ]
   },
   {
@@ -176,7 +176,7 @@
     "minRank": 8,
     "choices": [
       { "label": "마른 창고로 옮겨 손실을 막아라", "reward": { "kind": "grain", "minutes": 70 } },
-      { "label": "긴급 수리비를 우선 배정하라", "reward": { "kind": "stamina", "amount": 1 } }
+      { "label": "긴급 수리비를 우선 배정하라", "reward": { "kind": "exp", "amount": 2 } }
     ]
   },
   {
@@ -246,7 +246,7 @@
     "minRank": 12,
     "choices": [
       { "label": "개별 심사로 귀환 의사를 확인하라", "reward": { "kind": "fame", "pct": 9 } },
-      { "label": "중립 숙소를 열고 신원을 대조하라", "reward": { "kind": "stamina", "amount": 1 } }
+      { "label": "중립 숙소를 열고 신원을 대조하라", "reward": { "kind": "exp", "amount": 2 } }
     ]
   },
   {
@@ -276,7 +276,7 @@
     "minRank": 13,
     "choices": [
       { "label": "신분과 별개로 증언을 검증하라", "reward": { "kind": "fame", "pct": 10 } },
-      { "label": "증언자를 보호하고 물증을 찾으라", "reward": { "kind": "stamina", "amount": 1 } }
+      { "label": "증언자를 보호하고 물증을 찾으라", "reward": { "kind": "exp", "amount": 2 } }
     ]
   },
   {
@@ -375,7 +375,7 @@
     "text": "도깨비들이 씨름에 지면 밤마다 이긴 사람 집에 찾아와 재경기를 청합니다. 이긴 총각이 잠을 못 자 장가간 지 석 달째 각방이랍니다.",
     "minRank": 3,
     "choices": [
-      { "label": "재경기는 장날 낮에만 하라", "reward": { "kind": "stamina", "amount": 1 } },
+      { "label": "재경기는 장날 낮에만 하라", "reward": { "kind": "exp", "amount": 2 } },
       { "label": "도깨비 씨름판을 정식 대회로 만들라", "reward": { "kind": "fame", "pct": 5 } }
     ]
   },
@@ -436,7 +436,7 @@
     "minRank": 6,
     "choices": [
       { "label": "야간 뱃삯을 정식으로 정하라", "reward": { "kind": "grain", "minutes": 55 } },
-      { "label": "나루에 정자를 세워 주라", "reward": { "kind": "stamina", "amount": 1 } }
+      { "label": "나루에 정자를 세워 주라", "reward": { "kind": "exp", "amount": 2 } }
     ]
   },
   {
@@ -516,7 +516,7 @@
     "minRank": 10,
     "choices": [
       { "label": "궁에 들이는 고기를 저울에 달라", "reward": { "kind": "coin", "minutes": 60 } },
-      { "label": "납품처를 공개 입찰하라", "reward": { "kind": "stamina", "amount": 1 } }
+      { "label": "납품처를 공개 입찰하라", "reward": { "kind": "exp", "amount": 2 } }
     ]
   },
   {
@@ -565,7 +565,7 @@
     "text": "밤하늘에 처음 보는 글씨가 떠올랐다가 사라집니다. 읽을 줄 아는 이는 선녀 출신 식객 하나뿐이라는데, 그분은 자꾸 대답을 미룹니다.",
     "minRank": 13,
     "choices": [
-      { "label": "천문 기록을 매일 밤 남기라", "reward": { "kind": "stamina", "amount": 1 } },
+      { "label": "천문 기록을 매일 밤 남기라", "reward": { "kind": "exp", "amount": 2 } },
       { "label": "대답을 기다리고 재촉하지 마라", "reward": { "kind": "fame", "pct": 8 } }
     ]
   },
