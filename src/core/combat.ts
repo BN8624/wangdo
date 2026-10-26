@@ -156,6 +156,14 @@ export class Combat {
     return !!u && u.hp > 0 && !!u.skill && u.cd === 0;
   }
 
+  /** 앞으로 움직일 차례: 이번 라운드에 남은 순서, 모자라면 다음 라운드 순서(화면의 차례 표시용) */
+  upcoming(n = 6): { side: Side; slot: number }[] {
+    const order = (list: Unit[]) => [...list].sort((a, b) => b.spd - a.spd || a.side - b.side || a.slot - b.slot);
+    const out = this.queue.filter((u) => u.hp > 0);
+    if (out.length < n) out.push(...order([...this.alive(0), ...this.alive(1)]));
+    return out.slice(0, n).map((u) => ({ side: u.side, slot: u.slot }));
+  }
+
   private alive(side: Side) {
     return (side === 0 ? this.allies : this.foes).filter((u) => u.hp > 0);
   }

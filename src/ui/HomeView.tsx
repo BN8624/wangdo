@@ -1,4 +1,5 @@
-// 로비: 대표 식객을 크게 세우고, 방치 보상 상자·다음 출정·할 일 한 줄을 둔다.
+// 로비: 배경 위에 대표 식객을 전신으로 크게 세우고, 왼쪽에 작은 둥근 버튼, 아래에 방치 보상 상자와 출정 버튼만 둔다.
+// 할 일 안내는 대표 식객의 말풍선으로 한다.
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { nextStage } from '../core/campaign';
@@ -12,15 +13,13 @@ import { BALANCE as B } from '../data/balance';
 import { ART } from '../data/art';
 import { bondContent } from '../data/bond-content';
 import { rankDef } from '../data/ranks';
-import { RARITY_LABEL } from '../data/roster';
-import { themeOf } from '../data/themes';
 import { YOKAI_BY_ID } from '../data/yokai';
 import { LineIcon } from './icons';
 import { Art } from './Portrait';
 import { act } from './store';
 import { stageName } from './StageFlow';
 import { BackupSheet } from './Backup';
-import { backupDue, lastBackupAt, snoozeBackup } from './backup';
+import { backupDue } from './backup';
 import type { ModalRequest } from './App';
 
 interface Props {
@@ -32,123 +31,94 @@ interface Props {
 }
 
 export function HomeView({ view, now, open, go, onHeroine }: Props) {
-  const [taps, setTaps] = useState(0);
-  const [line, setLine] = useState<string | null>(null);
-  const [backup, setBackup] = useState(false);
-  const [snoozed, setSnoozed] = useState(false);
-  useEffect(() => {
-    if (!line) return;
-    const t = setTimeout(() => setLine(null), 5000);
-    return () => clearTimeout(t);
-  }, [line, taps]);
   const step = guideStep(view);
-  const def = YOKAI_BY_ID[view.favorite] ?? YOKAI_BY_ID[Object.keys(view.yokai)[0]];
   const hint = nextHint(view, now);
+  // 들어오면 할 일을 한마디로 알려 주고, 누를 때마다 인연 대사를 한다
+  const [say, setSay] = useState<{ text: string; hint: boolean } | null>(() => (!step && hint.target !== 'camp' ? { text: hint.text, hint: true } : null));
+  const [taps, setTaps] = useState(0);
+  const [backup, setBackup] = useState(false);
+  useEffect(() => {
+    if (!say) return;
+    const t = setTimeout(() => setSay(null), 6000);
+    return () => clearTimeout(t);
+  }, [say]);
+
+  const def = YOKAI_BY_ID[view.favorite] ?? YOKAI_BY_ID[Object.keys(view.yokai)[0]];
   const talks = bondContent(def.id).talks;
   const afk = afkPending(view, now);
   const frontier = nextStage(view);
+  const wishOn = !!view.wish.pending || view.wish.charges > 0;
+
   const poke = () => {
     setTaps((n) => n + 1);
-    setLine(talks.length ? talks[taps % talks.length].line : null);
+    if (talks.length) setSay({ text: talks[taps % talks.length].line, hint: false });
+  };
+  const followHint = () => {
+    setSay(null);
+    if (hint.target !== 'home') return go(hint.target);
+    if (view.wish.pending) open({ kind: 'wish' });
+    else open({ kind: 'afk' });
   };
   const doWish = () => {
     const r = act(useWish);
     if (r.ok) open({ kind: 'wish' });
   };
-  const followHint = () => {
-    if (hint.target !== 'home') return go(hint.target);
-    if (view.wish.pending) open({ kind: 'wish' });
-    else open({ kind: 'afk' });
-  };
 
   return (
-    <div className="view home">
-      <div className="home-menu">
-        <button className="menu-icon" data-guide="ttuk" disabled={!view.wish.pending && view.wish.charges <= 0} onClick={doWish}>
-          <LineIcon name="flag" size={24} />
-          <span>정무</span>
-          {(view.wish.pending || view.wish.charges > 0) && <i className="badge">{view.wish.pending ? '!' : view.wish.charges}</i>}
+    <div className="view lb">
+      <Art className="lb-bg" src={ART.bg('palace')} fallback={<div className="lb-bg" />} />
+      <button className="lb-hero" aria-label={`${def.name}에게 말 걸기`} onClick={poke}>
+        <Art key={def.id} src={ART.full(def.id)} alt={def.name} fallback={<span className="portrait-fallback">{def.name}</span>} />
+      </button>
+
+      {say && !(say.hint && say.text !== hint.text) && (
+        <div className="lb-say" role="status">
+          <b>{def.name}</b>
+          <span>{say.text}</span>
+          {say.hint ? <button onClick={followHint}>가기 ›</button> : <button onClick={() => onHeroine(def.id)}>대화 ›</button>}
+        </div>
+      )}
+
+      <div className="lb-side">
+        <button className="lb-icon" data-guide="ttuk" disabled={!wishOn} onClick={doWish}>
+          <span>
+            <LineIcon name="flag" size={22} />
+            {wishOn && <i className="dot" />}
+          </span>
+          정무
         </button>
-        <button className="menu-icon" data-guide="story" onClick={() => open({ kind: 'story' })}>
-          <LineIcon name="scroll" size={24} />
-          <span>이야기</span>
+        <button className="lb-icon" data-guide="story" onClick={() => open({ kind: 'story' })}>
+          <span>
+            <LineIcon name="scroll" size={22} />
+          </span>
+          이야기
         </button>
-        <button className="menu-icon" onClick={() => open({ kind: 'rankinfo' })}>
-          <LineIcon name="crown" size={24} />
-          <span>관직</span>
+        <button className="lb-icon" onClick={() => open({ kind: 'rankinfo' })}>
+          <span>
+            <LineIcon name="crown" size={22} />
+          </span>
+          관직
         </button>
-        <button className="menu-icon" onClick={() => setBackup(true)}>
-          <LineIcon name="book" size={24} />
-          <span>백업</span>
+        <button className="lb-icon" onClick={() => setBackup(true)}>
+          <span>
+            <LineIcon name="book" size={22} />
+            {backupDue(view, now) && <i className="dot" />}
+          </span>
+          백업
         </button>
       </div>
 
-      <div className="heroine card-stage">
-        <button className="heroine-art" aria-label={`${def.name}에게 말 걸기`} onClick={poke}>
-          <Art className="heroine-card" src={ART.card(def.id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>} />
-        </button>
-        <div className="nameplate">
-          <small style={{ background: themeOf(def.id) }}>
-            {RARITY_LABEL[def.grade]} · {def.kind}
-          </small>
-          <b>{def.name}</b>
-        </div>
-        <button className={`afk-btn ${afk.minutes >= 60 ? 'ready' : ''}`} data-guide="afk" onClick={() => open({ kind: 'afk' })}>
-          <LineIcon name="chest" size={34} />
+      <div className="lb-bottom">
+        <button className={`lb-chest ${afk.minutes >= 60 ? 'ready' : ''}`} data-guide="afk" onClick={() => open({ kind: 'afk' })}>
+          <LineIcon name="chest" size={30} />
           <span>{afk.minutes >= B.afkCapMinutes ? '가득 참' : fmtDuration(afk.minutes * 60_000)}</span>
           <i style={{ width: `${Math.min(100, (afk.minutes / B.afkCapMinutes) * 100)}%` }} />
         </button>
-        {line && (
-          <div className="say" role="status">
-            <b>{def.name}</b>
-            <span>{line}</span>
-            <button onClick={() => onHeroine(def.id)}>대화하기 ›</button>
-          </div>
-        )}
-        {!line && !step && !snoozed && backupDue(view, now) && (
-          <div className="backup-nudge" role="status">
-            <span>
-              <b>진행을 백업해 두세요</b>
-              <small>{lastBackupAt() ? `마지막 백업 ${Math.floor((now - lastBackupAt()) / 86_400_000)}일 전` : '저장은 이 기기에만 있어요'}</small>
-            </span>
-            <button className="go" onClick={() => setBackup(true)}>
-              백업
-            </button>
-            <button
-              className="later"
-              onClick={() => {
-                snoozeBackup();
-                setSnoozed(true);
-              }}
-            >
-              나중에
-            </button>
-          </div>
-        )}
+        <button className="lb-go" onClick={() => (frontier ? open({ kind: 'stage', id: frontier.id }) : go('camp'))}>
+          <b>출정</b>
+          <small>{frontier ? `${frontier.label} ${stageName(frontier)}` : '모든 장을 깼어요'}</small>
+        </button>
       </div>
-
-      {frontier ? (
-        <button className="home-go" onClick={() => open({ kind: 'stage', id: frontier.id })}>
-          <small>출정</small>
-          <b>
-            {frontier.label} {stageName(frontier)}
-          </b>
-          <em>›</em>
-        </button>
-      ) : (
-        <button className="home-go" onClick={() => go('camp')}>
-          <small>출정</small>
-          <b>모든 장을 깼어요 · 수련장</b>
-          <em>›</em>
-        </button>
-      )}
-      {!step && (
-        <button className="quest" onClick={followHint}>
-          <b>할 일</b>
-          <span>{hint.text}</span>
-          <em>가기 ›</em>
-        </button>
-      )}
       {backup && <BackupSheet view={view} now={now} onClose={() => setBackup(false)} />}
     </div>
   );

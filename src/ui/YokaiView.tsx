@@ -54,54 +54,50 @@ export function YokaiView({ view, onOpen }: { view: GameState; onOpen: (id: stri
   const first = owned[0];
 
   return (
-    <div className="view">
-      <div className="page-title">
-        식객{' '}
+    <div className="view yk">
+      <div className="yk-head">
+        <b>식객</b>
         <span>
           {owned.length} / {YOKAI.length}
         </span>
+        <div className="yk-filter">
+          {(['all', 'fire', 'water', 'wood', 'light', 'dark'] as const).map((e) => (
+            <button key={e} className={filter === e ? 'on' : ''} aria-label={e === 'all' ? '전체' : ELEMENT_LABEL[e]} onClick={() => setFilter(e)}>
+              {e === 'all' ? '전체' : <i style={{ background: ELEMENT_COLOR[e] }} />}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="yk-filter">
-        {(['all', 'fire', 'water', 'wood', 'light', 'dark'] as const).map((e) => (
-          <button key={e} className={filter === e ? 'on' : ''} onClick={() => setFilter(e)} style={e !== 'all' ? { color: ELEMENT_COLOR[e] } : undefined}>
-            {e === 'all' ? '전체' : ELEMENT_LABEL[e]}
-          </button>
-        ))}
-      </div>
-      <div className="grid">
+      <div className="yk-grid">
         {owned.filter(show).map((id) => {
           const def = YOKAI_BY_ID[id];
           const y = view.yokai[id];
-          const badge = unseenScene(view, id) > 0 ? '새 이야기' : starReady(view, id) ? '★ 올리기' : null;
+          const badge = unseenScene(view, id) > 0 || starReady(view, id);
           const guide = [id === first ? 'levelup' : '', id === 'baekseol' ? 'talk' : ''].filter(Boolean).join(' ');
           return (
-            <button className={`ycard r${def.grade}`} key={id} data-guide={guide || undefined} onClick={() => onOpen(id)}>
+            <button className={`yc r${def.grade}`} key={id} data-guide={guide || undefined} onClick={() => onOpen(id)}>
+              <Portrait def={def} />
               <em className={`rar r${def.grade}`}>{RARITY_LABEL[def.grade]}</em>
-              <i className="yc-el" style={{ background: ELEMENT_COLOR[elementOf(id)] }} title={ELEMENT_LABEL[elementOf(id)]} />
-              {badge && <span className="can-up">{badge}</span>}
-              <div className="pic">
-                <Portrait def={def} />
-              </div>
-              <div className="nm">{def.name}</div>
-              <div className="yc-stars">{'★'.repeat(y.stars)}</div>
-              <div className="kd">
-                Lv <b>{y.level}</b> · {ROLE_LABEL[roleOf(id)]}
-              </div>
-              <div className="lv">전투력 {fmt(heroPower(view, id, []))}</div>
+              <i className="yc-el" style={{ background: ELEMENT_COLOR[elementOf(id)] }} />
+              {badge && <i className="yc-dot" />}
+              <span className="yc-info">
+                <b>{def.name}</b>
+                <small>
+                  Lv {y.level} <i>{'★'.repeat(y.stars)}</i>
+                </small>
+              </span>
             </button>
           );
         })}
         {locked
           .filter((d) => show(d.id))
           .map((def) => (
-            <div className="ycard locked" key={def.id}>
-              <em className={`rar r${def.grade}`}>{RARITY_LABEL[def.grade]}</em>
-              <div className="pic">
-                <Portrait def={def} />
-              </div>
-              <div className="nm">{def.name}</div>
-              <div className="kd">{joinCondition(def.id)}</div>
-              <div className="lv">&nbsp;</div>
+            <div className="yc locked" key={def.id}>
+              <Portrait def={def} />
+              <span className="yc-info">
+                <b>{def.name}</b>
+                <small>{joinCondition(def.id)}</small>
+              </span>
             </div>
           ))}
       </div>
@@ -116,32 +112,35 @@ export function YokaiSheet({ view, id, open, onClose }: { view: GameState; id: s
   if (!def || !y) return null;
   const el = elementOf(id);
   return (
-    <>
-      <div className="dim" onClick={onClose} />
-      <div className="sheet yk-sheet" role="dialog" aria-label={`${def.name} 정보`}>
-        <div className="grab" />
-        <div className="yk-top">
-          <div className={`yk-art r${def.grade}`}>
-            <Art src={ART.card(id)} alt={def.name} fallback={<Portrait def={def} />} />
+    <div className="ykp" role="dialog" aria-label={`${def.name} 정보`}>
+      <div className={`ykp-art r${def.grade}`}>
+        <Art src={ART.card(id)} alt={def.name} fallback={<Portrait def={def} />} />
+        <button className="ykp-back" aria-label="닫기" onClick={onClose}>
+          ‹
+        </button>
+        <div className="ykp-id">
+          <div className="ykp-tags">
+            <em className={`rar r${def.grade}`}>{RARITY_LABEL[def.grade]}</em>
+            <span style={{ background: ELEMENT_COLOR[el] }}>{ELEMENT_LABEL[el]}</span>
+            <span>{ROLE_LABEL[roleOf(id)]}</span>
           </div>
-          <div className="yk-id">
-            <div className="yk-tags">
-              <em className={`rar r${def.grade}`}>{RARITY_LABEL[def.grade]}</em>
-              <span style={{ background: ELEMENT_COLOR[el] }}>{ELEMENT_LABEL[el]}</span>
-              <span>{ROLE_LABEL[roleOf(id)]}</span>
-            </div>
-            <div className="sd-name">{def.name}</div>
-            <div className="sd-kind">{def.kind}</div>
-            <div className="yk-stars">{'★'.repeat(y.stars)}<i>{'★'.repeat(6 - y.stars)}</i></div>
-            <div className="yk-pow">
-              전투력 <b>{fmt(heroPower(view, id, []))}</b>
-            </div>
-            <button className="link-btn" disabled={view.favorite === id} onClick={() => act((s) => [setFavorite(s, id), null])}>
-              {view.favorite === id ? '로비 대표 식객' : '로비 대표로 세우기'}
-            </button>
+          <b>{def.name}</b>
+          <small>{def.kind}</small>
+          <div className="ykp-stars">
+            {'★'.repeat(y.stars)}
+            <i>{'★'.repeat(6 - y.stars)}</i>
           </div>
         </div>
-        <div className="tabs">
+        <div className="ykp-pow">
+          <small>전투력</small>
+          <b>{fmt(heroPower(view, id, []))}</b>
+          <button disabled={view.favorite === id} onClick={() => act((s) => [setFavorite(s, id), null])}>
+            {view.favorite === id ? '로비 대표' : '로비에 세우기'}
+          </button>
+        </div>
+      </div>
+      <div className="ykp-body">
+        <div className="ykp-tabs">
           <button className={tab === 'grow' ? 'on' : ''} onClick={() => setTab('grow')}>
             성장
           </button>
@@ -151,7 +150,7 @@ export function YokaiSheet({ view, id, open, onClose }: { view: GameState; id: s
         </div>
         {tab === 'grow' ? <GrowTab view={view} id={id} /> : <BondTab view={view} id={id} open={open} />}
       </div>
-    </>
+    </div>
   );
 }
 

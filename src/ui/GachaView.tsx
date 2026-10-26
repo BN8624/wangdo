@@ -20,11 +20,13 @@ const FEATURED = YOKAI.filter((y) => y.grade === 3).map((y) => y.id);
 export function GachaView({ view }: { view: GameState }) {
   const [feat, setFeat] = useState(0);
   const [results, setResults] = useState<PullResult[] | null>(null);
+  const [info, setInfo] = useState(false);
   useEffect(() => {
-    const t = setInterval(() => setFeat((n) => (n + 1) % FEATURED.length), 4500);
+    const t = setInterval(() => setFeat((n) => (n + 1) % FEATURED.length), 5000);
     return () => clearInterval(t);
   }, []);
   const featured = FEATURED[feat];
+  const fdef = YOKAI_BY_ID[featured];
 
   const doPull = (count: 1 | 10) => {
     const r = act((s) => pull(s, count));
@@ -36,66 +38,76 @@ export function GachaView({ view }: { view: GameState }) {
 
   const left = B.pity - view.gacha.pity;
   return (
-    <div className="view gacha">
-      <div className="gc-banner">
-        <Art key={featured} className="gc-art" src={ART.card(featured)} alt={YOKAI_BY_ID[featured].name} fallback={<div className="art-placeholder" />} />
-        <div className="gc-label">
-          <small>상설 모집</small>
-          <b>해랑국 식객 모집</b>
-          <span>
-            {YOKAI_BY_ID[featured].name} · {YOKAI_BY_ID[featured].kind}
-          </span>
-        </div>
+    <div className="view gc">
+      <Art key={featured} className="gc-art" src={ART.card(featured)} alt={fdef.name} fallback={<div className="gc-art" />} />
+      <div className="gc-top">
         <div className="gc-dots">
           {FEATURED.map((id, i) => (
-            <i key={id} className={i === feat ? 'on' : ''} />
+            <button key={id} className={i === feat ? 'on' : ''} aria-label={YOKAI_BY_ID[id].name} onClick={() => setFeat(i)} />
           ))}
         </div>
-      </div>
-
-      <div className="gc-info">
-        <span>
-          SSR {Math.round(B.rates.ssr * 100)}% · SR {Math.round(B.rates.sr * 100)}% · R {Math.round((1 - B.rates.ssr - B.rates.sr) * 100)}%
-        </span>
-        <span>
-          SSR 확정까지 <b>{left}</b>회
-        </span>
-        {!view.gacha.firstTen && <span className="gc-first">첫 열 번 모집은 SSR 하나 확정!</span>}
-        <span className="soft">열 번 모집은 SR 이상 하나 확정 · 이미 있는 식객은 조각이 되어 별을 올려요</span>
-      </div>
-
-      <div className="gc-btns">
-        <button className="btn" disabled={view.res.jade < pullCost(1)} onClick={() => doPull(1)}>
-          한 번 모집
-          <span>
-            <ResIcon kind="jade" size={16} />
-            {fmt(pullCost(1))}
-          </span>
-        </button>
-        <button className="btn hong" data-guide="pull10" disabled={view.res.jade < pullCost(10)} onClick={() => doPull(10)}>
-          열 번 모집
-          <span>
-            <ResIcon kind="jade" size={16} />
-            {fmt(pullCost(10))}
-          </span>
+        <button className="gc-info-btn" onClick={() => setInfo(true)}>
+          확률·목록
         </button>
       </div>
+      <div className="gc-panel">
+        <div className="gc-name">
+          <small>상설 모집</small>
+          <b>{fdef.name}</b>
+          <span>
+            <em className="rar r3">SSR</em> {fdef.kind}
+          </span>
+        </div>
+        <p className="gc-pity">{!view.gacha.firstTen ? '첫 열 번 모집은 새 SSR 하나 확정!' : `SSR 확정까지 ${left}회`}</p>
+        <div className="gc-btns">
+          <button className="btn" disabled={view.res.jade < pullCost(1)} onClick={() => doPull(1)}>
+            한 번
+            <span>
+              <ResIcon kind="jade" size={14} />
+              {fmt(pullCost(1))}
+            </span>
+          </button>
+          <button className="btn hong" data-guide="pull10" disabled={view.res.jade < pullCost(10)} onClick={() => doPull(10)}>
+            열 번
+            <span>
+              <ResIcon kind="jade" size={14} />
+              {fmt(pullCost(10))}
+            </span>
+          </button>
+        </div>
+      </div>
 
-      <div className="section-title">모집할 수 있는 식객</div>
-      {([3, 2, 1] as const).map((g) => (
-        <div key={g} className="gc-pool">
-          <em className={`rar r${g}`}>{RARITY_LABEL[g]}</em>
-          <div>
-            {YOKAI.filter((y) => y.grade === g).map((y) => (
-              <span key={y.id} className={`gc-face ${view.yokai[y.id] ? 'own' : ''}`} title={y.name}>
-                <Portrait def={y} />
-                <small>{y.name}</small>
-              </span>
+      {info && (
+        <>
+          <div className="dim" onClick={() => setInfo(false)} />
+          <div className="sheet" role="dialog" aria-label="모집 확률과 목록">
+            <div className="sheet-head">
+              <div className="sheet-title">모집 안내</div>
+              <button className="close" onClick={() => setInfo(false)}>
+                닫기
+              </button>
+            </div>
+            <p className="gc-rates">
+              SSR {Math.round(B.rates.ssr * 100)}% · SR {Math.round(B.rates.sr * 100)}% · R {Math.round((1 - B.rates.ssr - B.rates.sr) * 100)}%
+              <br />
+              {B.pity}번째 안에 SSR 확정 · 열 번 모집은 SR 이상 하나 확정 · 이미 있는 식객은 조각이 되어 별을 올려요. 이야기 식객은 그 장을 끝까지 깨면 확정으로 합류해요.
+            </p>
+            {([3, 2, 1] as const).map((g) => (
+              <div key={g} className="gc-pool">
+                <em className={`rar r${g}`}>{RARITY_LABEL[g]}</em>
+                <div>
+                  {YOKAI.filter((y) => y.grade === g).map((y) => (
+                    <span key={y.id} className={`gc-face ${view.yokai[y.id] ? 'own' : ''}`}>
+                      <Portrait def={y} />
+                      <small>{y.name}</small>
+                    </span>
+                  ))}
+                </div>
+              </div>
             ))}
           </div>
-        </div>
-      ))}
-      <p className="soft camp-note">이야기 식객은 그 장을 끝까지 깨면 확정으로 합류해요. 모집에서 먼저 만나면 이야기에서는 조각을 받아요.</p>
+        </>
+      )}
 
       {results && <PullReveal key={view.gacha.pulls} results={results} jade={view.res.jade} onAgain={() => doPull(10)} onClose={() => setResults(null)} />}
     </div>

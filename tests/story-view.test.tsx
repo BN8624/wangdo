@@ -75,12 +75,12 @@ describe('출정 화면', () => {
     const html = renderToStaticMarkup(<CampaignView view={newGame(0)} open={noop} />);
     for (const st of chapterStages(0)) expect(html).toContain(`data-guide="stage-${st.id}"`);
     expect(html.match(/disabled=""/g)?.length).toBeGreaterThanOrEqual(5);
-    expect(html).toContain('출정 ›');
+    expect(html).toContain('cp-node now');
   });
 
   it('편성 화면은 다섯 칸·권장 전투력·자동 편성·출동을 보여 준다', () => {
     const st = STAGES[1];
-    const html = renderToStaticMarkup(<Formation view={newGame(0)} kicker={st.label} title="시험" sub="부제" waves={stageWaves(st)} need={stagePower(st)} reward={null} onGo={noop} onClose={noop} />);
+    const html = renderToStaticMarkup(<Formation view={newGame(0)} kicker={st.label} title="시험" bg={st.bg} waves={stageWaves(st)} need={stagePower(st)} reward={null} onGo={noop} onClose={noop} />);
     expect(html.match(/class="fm-slot[ "]/g)).toHaveLength(5);
     expect(html).toContain('data-guide="auto-team"');
     expect(html).toContain('data-guide="go"');
@@ -92,12 +92,12 @@ describe('모집·식객 화면', () => {
   it('모집 화면은 열 번 모집과 첫 열 번 SSR 확정을 알린다', () => {
     const html = renderToStaticMarkup(<GachaView view={newGame(0)} />);
     expect(html).toContain('data-guide="pull10"');
-    expect(html).toContain('첫 열 번 모집은 SSR 하나 확정');
+    expect(html).toContain('첫 열 번 모집은 새 SSR 하나 확정');
   });
 
   it('식객 목록은 가진 식객을 먼저, 없는 식객은 만나는 길과 함께 보여 준다', () => {
     const html = renderToStaticMarkup(<YokaiView view={newGame(0)} onOpen={noop} />);
-    expect(html.indexOf(YOKAI_BY_ID.baekseol.name)).toBeLessThan(html.indexOf('ycard locked'));
+    expect(html.indexOf(YOKAI_BY_ID.baekseol.name)).toBeLessThan(html.indexOf('yc locked'));
     expect(html).toContain('2장 합류');
   });
 

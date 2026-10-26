@@ -7,13 +7,14 @@ import { autoTeam, finishStage, finishTrain, markWatched, setTeam, type StageOut
 import { fmt } from '../core/format';
 import { TRAIN_LEVELS, trainPower, trainReward, trainSetup, trainWaves } from '../core/idle';
 import type { GameState } from '../core/types';
-import { heroPower, levelCap, teamPower } from '../core/units';
-import { ELEMENT_COLOR, ELEMENT_LABEL, RARITY_LABEL, ROLE_LABEL, advantage, elementOf, roleOf, type Element } from '../data/roster';
+import { heroPower, teamPower } from '../core/units';
+import { ELEMENT_COLOR, ELEMENT_LABEL, ROLE_LABEL, advantage, elementOf, roleOf, type Element } from '../data/roster';
 import { YOKAI_BY_ID } from '../data/yokai';
 import { BattleView, type BattleOutcome } from './BattleView';
 import { CutscenePlayer, cutKey, hasCut } from './StoryView';
 import { RecruitCard } from './modals';
 import { Art, Portrait } from './Portrait';
+import { ART } from '../data/art';
 import { ResIcon } from './icons';
 import { act, getState } from './store';
 import { buzz, pushToast } from './toast';
@@ -127,25 +128,23 @@ export function StageFlow({ id, open, onClose }: { id: string; open: (m: ModalRe
   return (
     <Formation
       view={view}
-      kicker={`${st.ep.season}부 ${st.chapter + 1}장 · ${st.label}${st.boss ? ' · 대장' : ''}`}
+      kicker={`${st.label}${st.boss ? ' 대장' : ''} · ${st.ep.title}`}
       title={stageName(st)}
-      sub={st.ep.title}
+      bg={st.bg}
       waves={stageWaves(st)}
       need={stagePower(st)}
       reward={
         cleared ? (
           <div className="fm-reward">
+            <small>별</small>
             <span className="fm-stars">
-              {[1, 2, 3].map((n) => (
-                <i key={n} className={n <= stageStars(view, st.id) ? 'on' : ''}>
-                  ★
-                </i>
-              ))}
+              {'★'.repeat(stageStars(view, st.id))}
+              <em>{'★'.repeat(3 - stageStars(view, st.id))}</em>
             </span>
-            <small>별 하나마다 옥 10 · 승리, 아무도 쓰러지지 않음, 15라운드 안에 승리</small>
+            <em>승리 · 아무도 안 쓰러짐 · 15라운드 안</em>
           </div>
         ) : (
-          <RewardChips label="첫 클리어" items={[['jade', reward.jade], ['coin', reward.coin], ['exp', reward.exp], ['fame', reward.fame]]} extra={st.boss ? `기억 조각 ${reward.memory}${st.ep.reward?.recruit ? ' · 새 식객 합류' : ''}` : undefined} />
+          <RewardChips label="첫 클리어" items={[['jade', reward.jade], ['coin', reward.coin], ['exp', reward.exp], ['fame', reward.fame]]} extra={st.boss && st.ep.reward?.recruit ? '새 식객 합류' : undefined} />
         )
       }
       onGo={(team) => {
@@ -191,9 +190,9 @@ export function TrainFlow({ tier, open, onClose }: { tier: number; open: (m: Mod
   return (
     <Formation
       view={view}
-      kicker={`수련장 · ${tier + 1}단계 · Lv ${TRAIN_LEVELS[tier]}`}
+      kicker={`수련장 ${tier + 1}단계 · Lv ${TRAIN_LEVELS[tier]}`}
       title="수련 대련"
-      sub="몇 번이고 다시 할 수 있어요. 이기면 늘 같은 보상을 받아요."
+      bg="palace"
       waves={trainWaves(tier)}
       need={trainPower(tier)}
       reward={<RewardChips label="승리마다" items={[['exp', r.exp], ['coin', r.coin], ['fame', r.fame]]} />}
@@ -207,17 +206,15 @@ function RewardChips({ label, items, extra }: { label: string; items: ['jade' | 
   return (
     <div className="fm-reward">
       <small>{label}</small>
-      <div>
-        {items
-          .filter(([, n]) => n > 0)
-          .map(([k, n]) => (
-            <span key={k}>
-              <ResIcon kind={k} size={16} />
-              {fmt(n)}
-            </span>
-          ))}
-      </div>
-      {extra && <small className="fm-extra">{extra}</small>}
+      {items
+        .filter(([, n]) => n > 0)
+        .map(([k, n]) => (
+          <span key={k}>
+            <ResIcon kind={k} size={14} />
+            {fmt(n)}
+          </span>
+        ))}
+      {extra && <em>{extra}</em>}
     </div>
   );
 }
@@ -232,12 +229,12 @@ function elementTip(waves: UnitInit[][]): { foe: Element; good: Element } | null
   return good ? { foe: top, good } : null;
 }
 
-/** 편성 화면: 상대 미리보기, 권장 전투력, 다섯 칸, 자동 편성, 출동 */
-export function Formation({ view, kicker, title, sub, waves, need, reward, onGo, onClose }: {
+/** 편성 화면: 상대 미리보기, 다섯 칸에 전신으로 선 식객, 전투력과 출동 */
+export function Formation({ view, kicker, title, bg, waves, need, reward, onGo, onClose }: {
   view: GameState;
   kicker: string;
   title: string;
-  sub: string;
+  bg: string;
   waves: UnitInit[][];
   need: number;
   reward: ReactNode;
@@ -250,8 +247,8 @@ export function Formation({ view, kicker, title, sub, waves, need, reward, onGo,
   const ratio = need > 0 ? power / need : 2;
   const foes = useMemo(() => {
     const seen = new Map<string, UnitInit>();
-    for (const u of waves.flat()) if (!seen.has(u.name + u.element) || u.boss) seen.set(u.name + u.element, u);
-    return [...seen.values()].sort((a, b) => Number(!!b.boss) - Number(!!a.boss)).slice(0, 6);
+    for (const u of waves.flat()) if (!seen.has(u.name) || u.boss) seen.set(u.name, u);
+    return [...seen.values()].sort((a, b) => Number(!!b.boss) - Number(!!a.boss)).slice(0, 5);
   }, [waves]);
   const tip = useMemo(() => elementTip(waves), [waves]);
   const filled = team.filter(Boolean).length;
@@ -269,125 +266,127 @@ export function Formation({ view, kicker, title, sub, waves, need, reward, onGo,
   };
 
   return (
-    <>
-      <div className="dim" onClick={onClose} />
-      <div className="sheet fm" role="dialog" aria-label={`${title} 편성`}>
-        <div className="sheet-head">
-          <div className="fm-head">
-            <small>{kicker}</small>
-            <b>{title}</b>
-            <span>{sub}</span>
-          </div>
-          <button className="close" onClick={onClose}>
-            닫기
-          </button>
-        </div>
-
-        <div className="fm-foes">
-          <div className="fm-foe-row">
-            {foes.map((u) => (
-              <div key={u.id} className={`fm-foe ${u.boss ? 'boss' : ''}`} style={{ borderColor: ELEMENT_COLOR[u.element] }}>
-                <Art src={u.art} alt={u.name} fallback={<div className="portrait-fallback">{u.name}</div>} />
-                {u.boss && <em>대장</em>}
-              </div>
-            ))}
-          </div>
-          <small>
-            웨이브 {waves.length} · 적 {waves.reduce((a, w) => a + w.length, 0)}
-            {tip && (
-              <>
-                {' · '}주로 <b style={{ color: ELEMENT_COLOR[tip.foe] }}>{ELEMENT_LABEL[tip.foe]}</b> → <b style={{ color: ELEMENT_COLOR[tip.good] }}>{ELEMENT_LABEL[tip.good]}</b> 속성이 유리
-              </>
-            )}
-          </small>
-        </div>
-
-        <div className={`fm-power ${ratio >= 1 ? 'ok' : ratio >= 0.85 ? 'close' : 'low'}`}>
-          <span>
-            내 전투력 <b>{fmt(power)}</b>
-          </span>
-          <span>
-            권장 <b>{fmt(need)}</b>
-          </span>
-        </div>
-        {ratio < 0.85 && filled > 0 && <p className="fm-warn">전투력이 많이 모자라요. 식객 탭에서 레벨·별을 올리거나, 수련장에서 수련치를 모아요.</p>}
-
-        <div className="fm-slots">
-          {team.map((id, i) => {
-            const y = id ? view.yokai[id] : null;
-            return (
-              <button key={i} className={`fm-slot ${id ? '' : 'empty'} ${picking === i ? 'on' : ''}`} onClick={() => setPicking(picking === i ? null : i)}>
-                {id && y ? (
-                  <>
-                    <Portrait def={YOKAI_BY_ID[id]} />
-                    <i className="fm-elem" style={{ background: ELEMENT_COLOR[elementOf(id)] }} />
-                    <span className="fm-lv">Lv{y.level}</span>
-                    <span className="fm-role">{ROLE_LABEL[roleOf(id)]}</span>
-                  </>
-                ) : (
-                  <span className="fm-plus">+</span>
-                )}
-              </button>
-            );
-          })}
-        </div>
-
-        {picking !== null && (
-          <div className="fm-pick">
-            {team[picking] && (
-              <button className="fm-pick-row off" onClick={() => put(picking, null)}>
-                <b>이 칸 비우기</b>
-              </button>
-            )}
-            {Object.keys(view.yokai)
-              .sort((a, b) => heroPower(view, b, []) - heroPower(view, a, []))
-              .map((id) => {
-                const y = view.yokai[id];
-                const def = YOKAI_BY_ID[id];
-                const at = team.indexOf(id);
-                return (
-                  <button key={id} className={`fm-pick-row ${at >= 0 ? 'in' : ''}`} onClick={() => put(picking, id)}>
-                    <span className="fm-pick-pic">
-                      <Portrait def={def} />
-                    </span>
-                    <span className="fm-pick-info">
-                      <b>
-                        {def.name} <em className={`rar r${def.grade}`}>{RARITY_LABEL[def.grade]}</em>
-                      </b>
-                      <small>
-                        <i style={{ color: ELEMENT_COLOR[elementOf(id)] }}>●</i> {ELEMENT_LABEL[elementOf(id)]} · {ROLE_LABEL[roleOf(id)]} · Lv {y.level}/{levelCap(y.stars)} · {'★'.repeat(y.stars)}
-                      </small>
-                    </span>
-                    <span className="fm-pick-pow">
-                      {fmt(heroPower(view, id, []))}
-                      {at >= 0 && <small>{at + 1}번 칸</small>}
-                    </span>
-                  </button>
-                );
-              })}
-          </div>
-        )}
-
-        {reward}
-
-        <div className="fm-actions">
-          <button
-            className="btn"
-            data-guide="auto-team"
-            onClick={() => {
-              save(autoTeam(getState()));
-              setPicking(null);
-              buzz(15);
-              if (owned < 2) pushToast({ text: '식객이 더 있어야 칸을 채울 수 있어요. 모집 탭에서 모아요' });
-            }}
-          >
-            자동 편성
-          </button>
-          <button className="btn hong go" data-guide="go" disabled={filled === 0} onClick={() => onGo(team)}>
-            출동
-          </button>
+    <div className="fm" role="dialog" aria-label={`${title} 편성`}>
+      <Art className="fm-bg" src={ART.battle(bg)} fallback={<div className="fm-bg" />} />
+      <div className="fm-top">
+        <button className="fm-back" aria-label="닫기" onClick={onClose}>
+          ‹
+        </button>
+        <div className="fm-head">
+          <small>{kicker}</small>
+          <b>{title}</b>
         </div>
       </div>
-    </>
+
+      <div className="fm-foes">
+        {foes.map((u) => (
+          <span key={u.id} className={`fm-foe ${u.boss ? 'boss' : ''}`} style={{ ['--el' as string]: ELEMENT_COLOR[u.element] }}>
+            <Art src={u.art} alt={u.name} fallback={<i />} />
+          </span>
+        ))}
+        <small>
+          WAVE {waves.length}
+          {tip && (
+            <>
+              {' · '}
+              <b style={{ color: ELEMENT_COLOR[tip.good] }}>{ELEMENT_LABEL[tip.good]}</b> 속성 유리
+            </>
+          )}
+        </small>
+      </div>
+
+      <div className="fm-team">
+        {team.map((id, i) => {
+          const y = id ? view.yokai[id] : null;
+          return (
+            <button key={i} className={`fm-slot ${id ? '' : 'empty'} ${picking === i ? 'on' : ''}`} style={id ? { ['--el' as string]: ELEMENT_COLOR[elementOf(id)] } : undefined} onClick={() => setPicking(i)}>
+              {id && y ? (
+                <>
+                  <Art className="fm-stand" src={ART.full(id)} alt={YOKAI_BY_ID[id].name} fallback={<span className="portrait-fallback">{YOKAI_BY_ID[id].name}</span>} />
+                  <span className="fm-plate">
+                    <b>{YOKAI_BY_ID[id].name}</b>
+                    <small>
+                      Lv{y.level} <i>{'★'.repeat(y.stars)}</i>
+                    </small>
+                  </span>
+                </>
+              ) : (
+                <span className="fm-plus">+</span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {reward}
+      {ratio < 0.85 && filled > 0 && <p className="fm-warn">전투력이 모자라요 · 식객 레벨·별을 올리거나 수련장에서 키워요</p>}
+
+      <div className="fm-bar">
+        <div className={`fm-power ${ratio >= 1 ? 'ok' : ratio >= 0.85 ? 'close' : 'low'}`}>
+          <small>전투력</small>
+          <b>{fmt(power)}</b>
+          <small>권장 {fmt(need)}</small>
+        </div>
+        <button
+          className="fm-auto"
+          data-guide="auto-team"
+          onClick={() => {
+            save(autoTeam(getState()));
+            buzz(15);
+            if (owned < 2) pushToast({ text: '식객이 더 있어야 칸을 채울 수 있어요. 모집 탭에서 모아요' });
+          }}
+        >
+          자동
+          <br />
+          편성
+        </button>
+        <button className="fm-go" data-guide="go" disabled={filled === 0} onClick={() => onGo(team)}>
+          출동
+        </button>
+      </div>
+
+      {picking !== null && (
+        <>
+          <div className="dim" onClick={() => setPicking(null)} />
+          <div className="sheet fm-pick" role="dialog" aria-label="식객 고르기">
+            <div className="sheet-head">
+              <div className="sheet-title">{picking + 1}번 칸</div>
+              <span className="fm-pick-btns">
+                {team[picking] && (
+                  <button className="close" onClick={() => put(picking, null)}>
+                    비우기
+                  </button>
+                )}
+                <button className="close" onClick={() => setPicking(null)}>
+                  닫기
+                </button>
+              </span>
+            </div>
+            <div className="fm-grid">
+              {Object.keys(view.yokai)
+                .sort((a, b) => heroPower(view, b, []) - heroPower(view, a, []))
+                .map((id) => {
+                  const y = view.yokai[id];
+                  const def = YOKAI_BY_ID[id];
+                  const at = team.indexOf(id);
+                  return (
+                    <button key={id} className={`fm-cell r${def.grade} ${at >= 0 ? 'in' : ''}`} onClick={() => put(picking, id)}>
+                      <Portrait def={def} />
+                      <i className="fm-el" style={{ background: ELEMENT_COLOR[elementOf(id)] }} />
+                      {at >= 0 && <em>{at + 1}</em>}
+                      <span>
+                        <b>{def.name}</b>
+                        <small>
+                          Lv{y.level} · {ROLE_LABEL[roleOf(id)]}
+                        </small>
+                      </span>
+                    </button>
+                  );
+                })}
+            </div>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

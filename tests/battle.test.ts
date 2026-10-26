@@ -106,6 +106,16 @@ describe('턴제 자동 전투', () => {
     expect(later).toContain('skill');
   });
 
+  it('차례 표시는 실제로 움직이는 순서와 같다', () => {
+    const c = new Combat({ allies: [unit({ id: 'a', spd: 90 }), unit({ id: 'b', spd: 130 })], waves: [[unit({ id: 'f', spd: 110, hp: 9e6 })]] }, 1);
+    c.step();
+    c.step();
+    const want = c.upcoming(3);
+    const got: string[] = [];
+    while (got.length < 3) for (const e of c.step()) if (e.t === 'act') got.push(`${e.side}:${e.slot}`);
+    expect(want.map((u) => `${u.side}:${u.slot}`)).toEqual(got);
+  });
+
   it('식객마다 고유 기술·속성·전투 대사가 있다', () => {
     const kinds = new Set<SkillKind>();
     for (const y of YOKAI) {
