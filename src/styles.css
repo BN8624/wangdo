@@ -529,23 +529,38 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .small-note { font-size: 13px; line-height: 1.5; margin: 0 0 8px; }
 
 /* 턴제 전투: 전장 */
-.bf { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 46; overflow: hidden; background: #0f0b12; color: #fff; user-select: none; -webkit-user-select: none; --spd: 1; }
+.bf { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 46; overflow: hidden; background: #0f0b12; color: #fff; user-select: none; -webkit-user-select: none; --spd: 1; --field-haze: rgba(32,25,36,.2); --field-edge: rgba(22,15,28,.34); }
+/* 지역의 색과 광원은 남기고, 인물이 서는 중간과 화면 가장자리만 정돈한다. */
+.bf[data-region="backhill"], .bf[data-region="cave"], .bf[data-region="cellar"] { --field-haze: rgba(47,31,21,.2); --field-edge: rgba(29,20,16,.38); }
+.bf[data-region="alley"], .bf[data-region="palace"] { --field-haze: rgba(22,29,51,.22); --field-edge: rgba(14,20,37,.38); }
+.bf[data-region="ferry"], .bf[data-region="waterway"] { --field-haze: rgba(20,43,47,.18); --field-edge: rgba(12,29,35,.34); }
+.bf[data-region="pleasure"], .bf[data-region="gambling"] { --field-haze: rgba(48,20,35,.24); --field-edge: rgba(34,12,27,.4); }
+.bf[data-region="north"] { --field-haze: rgba(32,49,64,.12); --field-edge: rgba(19,35,52,.28); }
+.bf[data-region="underworld"], .bf[data-region="abyss"] { --field-haze: rgba(23,36,61,.16); --field-edge: rgba(13,21,41,.4); }
+.bf[data-region="galaxy"], .bf[data-region="observatory"], .bf[data-region="skyroad"] { --field-haze: rgba(39,34,66,.16); --field-edge: rgba(24,23,48,.32); }
+.bf[data-region="jade"], .bf[data-region="archive"] { --field-haze: rgba(39,55,52,.1); --field-edge: rgba(28,40,40,.24); }
+.bf[data-region="thunder"] { --field-haze: rgba(41,35,61,.2); --field-edge: rgba(25,20,40,.36); }
 .bf-scene { position: absolute; inset: 0; transform-origin: 50% 42%; }
 .bf-field { position: absolute; inset: 0; transition: filter 1s ease; }
-.bf-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(.6) saturate(.85); background: #241c2a; }
-.bf-fog { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(10,6,14,.75) 0%, rgba(10,6,14,0) 20%, rgba(10,6,14,0) 58%, rgba(10,6,14,.82) 78%, #0c0910 100%); }
+.bf-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #241c2a; }
+.bf-atmosphere { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 43%, var(--field-haze) 0%, transparent 58%), radial-gradient(ellipse at 50% 43%, transparent 28%, var(--field-edge) 100%); }
+.bf-fog { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(10,6,14,.75) 0%, transparent 20%, transparent 60%, rgba(10,6,14,.76) 80%, #0c0910 100%); }
 .bf.end-lose .bf-field { filter: grayscale(.85) brightness(.55); }
 .bf-foe { position: absolute; aspect-ratio: 2 / 3; transform: translateX(-50%); pointer-events: none; transition: opacity .4s ease; animation: bf-enter calc(.6s / var(--spd)) ease both; }
 @keyframes bf-enter { from { opacity: 0; translate: 0 -6%; } }
 .bf-foe.dead { opacity: 0; }
 .bf-body { position: absolute; inset: 0; transform-origin: 50% 100%; }
 .bf-sprite, .bf-sprite-fb { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 100%; filter: drop-shadow(0 8px 12px rgba(0,0,0,.55)); animation: bf-idle 2.8s ease-in-out infinite; }
-.bf-sprite { -webkit-mask-image: linear-gradient(to top, transparent 0, #000 9%); mask-image: linear-gradient(to top, transparent 0, #000 9%); }
+.bf-foe.portrait .bf-sprite { -webkit-mask-image: linear-gradient(to top, transparent 0, #000 9%); mask-image: linear-gradient(to top, transparent 0, #000 9%); }
 .bf-sprite-fb { display: grid; place-items: end center; font: 400 18px var(--title); color: #fff; }
 .bf-foe:nth-child(even) .bf-sprite { animation-delay: -1.4s; }
 @keyframes bf-idle { 50% { transform: scaleY(1.014) translateY(-.6%); } }
+.bf-foe.full .bf-sprite { animation-name: bf-breathe; }
+@keyframes bf-breathe { 50% { transform: scaleY(1.008); } }
 .bf-foe.acting .bf-sprite { filter: drop-shadow(0 0 14px rgba(255,90,60,.75)) drop-shadow(0 8px 12px rgba(0,0,0,.5)); }
 .bf-shadow { position: absolute; left: 20%; right: 20%; bottom: -2.5%; height: 7%; border-radius: 50%; background: radial-gradient(closest-side, rgba(0,0,0,.6), transparent); }
+.bf-foe.full .bf-shadow { left: 24%; right: 24%; bottom: 2%; height: 6%; opacity: .85; }
+.bf-foe.portrait .bf-shadow { opacity: .35; }
 .bf-tag { position: absolute; left: 50%; top: 3%; width: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 4px; }
 .bf-tag > i { flex: none; width: 10px; height: 10px; border-radius: 50%; box-shadow: 0 0 0 1.5px #fff; }
 .bf-tag em { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font: 800 10px var(--sans); font-style: normal; color: #ffe27a; background: rgba(0,0,0,.6); border-radius: 6px; padding: 0 5px; white-space: nowrap; }
@@ -747,7 +762,7 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .lb { position: relative; height: var(--view-h); overflow: hidden; isolation: isolate; background: #e9e0d6; }
 .lb-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; filter: saturate(.75) brightness(1.03) blur(1.5px); transform: scale(1.04); }
 .lb::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(180deg, rgba(255,250,244,.25), rgba(255,250,244,0) 30%, rgba(40,24,30,0) 70%, rgba(40,24,30,.35)); }
-.lb-hero { position: absolute; left: 50%; bottom: -1%; height: 92%; aspect-ratio: 2 / 3; transform: translateX(-40%); padding: 0; }
+.lb-hero { position: absolute; left: 50%; bottom: -1%; width: 100%; height: 92%; transform: translateX(-50%); padding: 0; }
 .lb-hero img { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 10px 20px rgba(60,30,30,.25)); transform-origin: 50% 100%; animation: lb-breathe 4.5s ease-in-out infinite; }
 @keyframes lb-breathe { 50% { transform: scaleY(1.008) translateY(-.4%); } }
 .lb-hero:active img { animation: lb-poke .3s ease; }

@@ -29,7 +29,7 @@
   "intro": "흑운채의 군율을 버리고 자기 맹세를 택한 무관. 지킬 사람은 스스로 정한다.",
   "personality": "독자적인 군대를 꿈꾸지만 명령을 의심하는 데 서툴다. 흑운채 무기 반출을 묵인한 전력이 있다.",
   "voice": "짧고 단단한 하오체를 쓰며 상대를 임자라 부른다.",
-  "art": "Adult woman aged 34, dark cropped hair, bronze eyes, small goblin horns, elaborate navy fusion hanbok over full coverage armor and trousers, iron mace, stern expression."
+  "art": "Adult woman aged 34, preserve her established face, adult proportions, dark hair, bronze eyes and goblin horns. Navy silk and dark iron armor with restrained gold trim, strong shoulder silhouette, iron mace resting across one shoulder, armored boots and a firmly planted stance. Closed mouth, stern decisive eyes, no default coy smile. Keep the existing soft semi-realistic rendering and elegant adult fashion."
  },
  {
   "id": "sodam",
@@ -77,7 +77,7 @@
   "intro": "세 길의 소식을 한 장부에 모으는 행수. 누구의 깃발에도 매이지 않는 교역로를 찾는다.",
   "personality": "자유 교역을 원하며 손해를 인정하지 못한다. 이웃 나라에 숨겨 둔 지분이 있다.",
   "voice": "매끈한 존댓말로 거래 조건을 먼저 밝힌다.",
-  "art": "Adult woman aged 36, raven black hair, copper eyes, three legged raven shadow and feather accents, abacus and fan, calculating smile."
+  "art": "Adult woman aged 36, preserve her established face, adult proportions, raven-black hair and copper eyes. Black and copper tailored merchant coat with a fitted waist, narrow sleeves, a copper clasp and one raven feather, three-legged raven motif. Abacus and account ledger held clearly, calculating half-smile and composed bargaining posture. Keep the existing soft semi-realistic rendering and elegant adult fashion; use the structured coat silhouette rather than flowing green and crimson ceremonial robes."
  },
  {
   "id": "yeonhwa",
@@ -125,7 +125,7 @@
   "intro": "하늘의 명령을 고쳐 쓰려 내려온 서기관. 돌아갈 길보다 남을 이유를 찾는다.",
   "personality": "하늘 법의 개정을 원하지만 결정을 미룬다. 천문을 여는 문서를 훔쳐 왔다.",
   "voice": "고른 존댓말로 조심스럽게 묻다가 결론에서는 단호해진다.",
-  "art": "Adult woman aged 32, pale lavender hair, silver eyes, floating cloud ribbons, elaborate sky blue fusion hanbok, scroll tube, thoughtful expression."
+  "art": "Adult woman aged 32, preserve her established face, adult proportions, pale lavender hair and silver eyes. Airy sky-blue and ivory fantasy hanbok with broad light sleeves and clear negative space, a few cloud ribbons, restrained silver trim and a small scroll tube. Calm thoughtful expression, upright posture and an open hand presenting a document. Keep the existing soft semi-realistic rendering, graceful body line and fabric sheen; distinguish her from the weaver and officer through the wide floating sleeve silhouette."
  },
  {
   "id": "seorin",
@@ -173,7 +173,7 @@
   "intro": "보이지 않는 물건에도 영수증을 써 주는 상인. 언젠가 제 이름으로 큰 가게를 열겠다고 말한다.",
   "personality": "정식 상점을 원하지만 허풍이 앞선다. 파는 감투 하나에 옛 주인의 기억이 남아 있다.",
   "voice": "친근한 존댓말로 값을 흥정하며 자기 실수도 농담으로 받는다.",
-  "art": "Adult woman aged 35, curly brown hair, hazel eyes, small goblin horns, colorful, magical cap and merchant pouch, mischievous smile."
+  "art": "Adult woman aged 35, preserve her established face, adult proportions, curly brown hair, hazel eyes and small goblin horns. Plum and jade short layered ritual-inspired fantasy outfit with a defined waist, restrained copper details, a magical cap presented in one hand and a round merchant pouch. Mischievous brows, playful uneven smile and an easy asymmetrical stance. She remains a goblin magical-cap merchant, not a shaman. Keep the existing soft semi-realistic rendering, feminine body line and adult fashion; distinguish her compact cap-and-layer silhouette from the raven merchant coat."
  },
  {
   "id": "haejin",
@@ -205,7 +205,7 @@
   "intro": "잘못 적힌 죽음의 기한을 조사하는 차사. 산 자의 관청에도 해명을 요구한다.",
   "personality": "명부의 진실을 원하지만 규정에 집착한다. 자신의 기한이 지워져 있다.",
   "voice": "낮고 정중한 존댓말로 기한과 책임을 정확히 고지한다.",
-  "art": "Adult woman aged 40, long black hair, pale gray eyes, spectral mist at feet, registry and dark staff, impassive expression."
+  "art": "Adult woman aged 40, preserve her established face, adult proportions, long black hair and pale gray eyes. Ink-black and dark teal reaper robes with restrained silver trim, a straight vertical silhouette, registry and dark staff, faint mist at the feet. Upright still posture, impassive closed mouth and calm watchful eyes, no default welcoming smile. Keep the existing soft semi-realistic rendering and elegant adult fashion."
  },
  {
   "id": "bari",
@@ -237,7 +237,7 @@
   "intro": "은하수 베틀에서 하늘의 계약을 짜는 직녀. 실 한 올만 만져 봐도 약속이 참인지 거짓인지 안다.",
   "personality": "남이 짜 준 이야기대로 살아왔고, 이제는 제 손으로 제 이야기를 짜고 싶어 한다. 일 년에 하루를 빌린 빚으로 베틀에 매여 있다.",
   "voice": "느릿한 존댓말에 씨줄·날줄·매듭의 비유를 섞는다.",
-  "art": "Adult woman aged 30, long silver-blue hair in a loose side braid with tiny star beads, dark night-sky eyes, elegant layered indigo and silver hanbok woven with faint star patterns, sheer shawl, wooden weaving shuttle with a fine silver thread, serene melancholic gentle smile."
+  "art": "Adult woman aged 30, preserve her established face, adult proportions, silver-blue hair and dark night-sky eyes. Hair tied low or in a thick side braid, a fitted indigo and ivory woven work apron over a fitted fantasy hanbok, sleeves gathered clear of the hands, restrained silver thread details. Wooden weaving shuttle, thread spool and one taut silver thread held between two hands. Focused practical expression and stable working posture. Keep the existing soft semi-realistic rendering, graceful body line and fabric sheen; reduce floating veils to give her a clear weaver silhouette."
  },
  {
   "id": "beori",
@@ -253,6 +253,6 @@
   "intro": "하늘 장부에 적힌 빚을 받아 내는 집달관 대장. 장부대로 집행하는 것이 곧 정의라고 배웠다.",
   "personality": "아버지 뇌공에게 인정받고 싶어 하지만 명령과 양심 사이에서 흔들린다. 가난한 집의 집행을 하루 늦추고 기록을 고쳐 쓴 적이 있다.",
   "voice": "짧고 딱딱한 하오체로 말하다가 당황하면 말끝을 흐린다.",
-  "art": "Adult woman aged 27, storm-grey high ponytail with one thin braid, sharp golden eyes, small gold lightning hair ornament, fitted white and gold heavenly officer uniform in hanbok style with light lamellar armor, long spear, stern proud expression with a hint of shyness."
+  "art": "Adult woman aged 27, preserve her established face, adult proportions, storm-gray hair and sharp golden eyes. High firmly tied ponytail with one thin braid, ivory battle tunic with dark slate-violet panels, short ink-black structured jacket, light shoulder armor, fitted waist and tall boots, a small gold lightning ornament and a straight long spear. Firmly planted upright officer stance, closed mouth and stern proud eyes; shyness belongs to later intimate expressions. Keep the existing soft semi-realistic rendering and elegant adult fashion; no white flowing gown or trailing veil."
  }
 ]

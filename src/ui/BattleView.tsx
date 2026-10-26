@@ -1,7 +1,7 @@
 // 턴제 전투 화면. 위쪽 전장에 적이 전신으로 서고, 아래에 내 편 다섯이 패널로 선다.
 // combat.ts의 Combat을 한 차례씩 진행하며, 차례마다 돌진·도약·베기·피격·입자·숫자·흔들림으로 연출한다.
 // 고유 기술은 화면을 어둡게 하고 전신 컷인을 띄운 뒤 기술마다 다른 효과를 낸다. 자동·수동, 1~3배속, 건너뛰기.
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COMBAT, Combat, type CombatEvent, type CombatResult, type CombatSetup, type SkillKind, type Unit } from '../core/combat';
 import { fmt } from '../core/format';
 import type { StageReward } from '../core/campaign';
@@ -72,6 +72,50 @@ function arrange(foes: Unit[]): Spot[] {
   }
   const layouts: Spot[][] = [[], [F(50)], [F(29), F(71)], [B(50), F(23), F(77)], [B(30), B(70), F(18), F(82)], [B(15), B(50), B(85), F(31), F(69)]];
   return layouts[Math.min(5, foes.length)];
+}
+
+// 전장용 전신은 별도 원화다. 아직 준비되지 않은 적은 기존 초상을 계속 쓴다.
+const missingEnemyFigures = new Set<string>();
+
+function EnemyFigure({ unit, spot, down, acting, bodyRef, children }: {
+  unit: Unit;
+  spot: Spot;
+  down: boolean;
+  acting: boolean;
+  bodyRef: (el: HTMLDivElement | null) => void;
+  children: ReactNode;
+}) {
+  // 전투의 '대장' 여부와 원화 종류는 다를 수 있다(수련장·이야기 재사용).
+  const source = /^art\/(boss|grunt)\/([a-z0-9-]+)\.webp$/.exec(unit.art);
+  const figure = source ? ART.enemy(source[1] as 'boss' | 'grunt', source[2]) : null;
+  const [failedFigure, setFailedFigure] = useState<string | null>(null);
+  const full = !!figure && !missingEnemyFigures.has(figure) && failedFigure !== figure;
+
+  return (
+    <div
+      className={`bf-foe ${full ? 'full' : 'portrait'} ${down ? 'dead' : ''} ${acting ? 'acting' : ''} ${unit.boss ? 'boss' : ''}`}
+      style={{ left: `${spot.x}%`, bottom: `${spot.feet}%`, height: `${spot.h * (full ? 1.16 : 1)}%`, zIndex: spot.z }}
+    >
+      <div className="bf-shadow" />
+      <div className="bf-body" ref={bodyRef}>
+        {full ? (
+          <img
+            className="bf-sprite"
+            src={figure}
+            alt={unit.name}
+            draggable={false}
+            onError={() => {
+              missingEnemyFigures.add(figure);
+              setFailedFigure(figure);
+            }}
+          />
+        ) : (
+          <Art className="bf-sprite" src={unit.art} alt={unit.name} fallback={<div className="bf-sprite-fb">{unit.name}</div>} />
+        )}
+      </div>
+      {children}
+    </div>
+  );
 }
 
 const SKILL_TINT: Record<SkillKind, string> = { strike: '#e0603c', stun: '#9a6ad0', weaken: '#5b4a8a', rally: '#d9a72a', guard: '#3f87c9', heal: '#3fb86a' };
@@ -497,25 +541,25 @@ export function BattleView({
   const waveNo = Math.max(1, combat.wave + 1);
 
   return (
-    <div className={`bf ${ending ? `end-${ending}` : ''}`} role="dialog" aria-label={`${title} 전투`} ref={rootRef} style={{ ['--spd' as string]: speed }}>
+    <div className={`bf ${ending ? `end-${ending}` : ''}`} data-region={bg} role="dialog" aria-label={`${title} 전투`} ref={rootRef} style={{ ['--spd' as string]: speed }}>
       <div className="bf-scene" ref={sceneRef}>
         <div className="bf-field" ref={fieldRef}>
           <Art className="bf-bg" src={ART.battle(bg)} fallback={<div className="bf-bg" />} />
+          <div className="bf-atmosphere" />
           <div className="bf-fog" />
           {foes.map((u, i) => {
             const s = spots[i] ?? { x: 50, feet: 30, h: 30, z: 1 };
             const d = disp.current[K(1, u.slot)];
             const live = unitOf(1, u.slot);
             return (
-              <div
+              <EnemyFigure
                 key={u.id}
-                className={`bf-foe ${d?.down ? 'dead' : ''} ${acting === K(1, u.slot) ? 'acting' : ''} ${u.boss ? 'boss' : ''}`}
-                style={{ left: `${s.x}%`, bottom: `${s.feet}%`, height: `${s.h}%`, zIndex: s.z }}
+                unit={u}
+                spot={s}
+                down={!!d?.down}
+                acting={acting === K(1, u.slot)}
+                bodyRef={reg(K(1, u.slot))}
               >
-                <div className="bf-shadow" />
-                <div className="bf-body" ref={reg(K(1, u.slot))}>
-                  <Art className="bf-sprite" src={u.art} alt={u.name} fallback={<div className="bf-sprite-fb">{u.name}</div>} />
-                </div>
                 {!u.boss && d && !d.down && (
                   <div className="bf-tag">
                     <i style={{ background: ELEMENT_COLOR[u.element] }} />
@@ -527,7 +571,7 @@ export function BattleView({
                     {!!live?.atkDown && <em className="down">공↓</em>}
                   </div>
                 )}
-              </div>
+              </EnemyFigure>
             );
           })}
         </div>

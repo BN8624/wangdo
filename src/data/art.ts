@@ -1,27 +1,34 @@
 import { CHAPTERS } from './stages';
 import { YOKAI } from './yokai';
+import { BATTLE_SUBJECTS, ENEMY_SUBJECTS, ITEM_SUBJECTS, STORY_ART_BRIEFS, bondArtSubject } from './art-direction';
 
 // 게임에 쓰는 모든 그림의 목록과 프롬프트. `npm run art:generate`가 이 목록을 보고 없는 그림을 그린다.
 // 화풍이 흔들리지 않도록 STYLE은 고정하고 종류별 틀 + 대상 묘사만 바꾼다.
 
 const STYLE =
-  'Beautiful Korean mobile game illustration in a polished modern webtoon style: clean elegant lineart, soft painterly cel shading, refined harmonious palette. ' +
-  'Simple readable designs with minimal ornament (no gold filigree, no layered jewelry, no busy embroidery, no floating petals, no sparkles). Joseon-inspired fantasy. No text, no letters, no watermark, no frame.';
+  'Polished Korean mobile fantasy game illustration, matching the references: softly painted semi-realistic rendering, elegant edges, luminous skin, tactile hair and fabric, refined harmonious palette. ' +
+  'Simple readable shapes and restrained ornament: preserve signature details but avoid covering every surface with gold filigree, layered jewelry or busy embroidery. No floating petals or decorative sparkles. Joseon-inspired fantasy. No text, no letters, no watermark, no frame.';
 
 // 디자인 기준은 docs/CHARACTER_GUIDE.md. 체형은 공통, 옷과 자세는 식객마다 다르게(subject에 적는다).
 const HEROINE =
   'Polished Korean gacha-game character art: soft airbrushed shading, glossy luminous skin with a warm blush, detailed glossy eyes. ' +
-  'The character is clearly an adult woman in her late twenties, very beautiful and glamorous, with a slender, fit model-like figure: tall and long-legged (about eight heads tall), slim shoulders and arms, a very slim waist, long slender legs with shapely slim thighs, a large but natural bust (not oversized); never chubby, plump or stocky. ' +
-  'Bold, daring outfit that shows skin (bare back, bare shoulders, deep neckline, high slit, short skirt); legwear differs per character (bare legs are fine, not everyone wears stockings) and her curves; her outfit, pose and expression follow the subject description and express her personality. ' +
+  'The character is clearly an adult woman of the age specified in her subject, beautiful and glamorous. Preserve her established face, hair color and tall graceful adult proportions from the identity references. ' +
+  'Preserve the established fashion appeal. Her outfit silhouette, legwear, pose and expression follow her specific profession and personality in the subject; do not give every character the same dress, draped sleeves or smile. ' +
   'Alluring but tasteful and non-explicit: no nudity, no underwear visible, no low camera angle looking up the skirt.';
 
 const FRAME = {
-  full: `${HEROINE} Full body from head to feet at eye level, her signature pose, feet firmly on the ground (or seated if stated). Modern fashionable outfit mixed with Korean Joseon accents (jeogori collars, ribbon ties, norigae tassels), not a traditional robe. Isolated on a fully transparent background (PNG with alpha), no scenery, no floor, no shadow.`,
-  card: `${HEROINE} Three-quarter body shot, dynamic pose, with a scenic background that suits her story.`,
-  cg: `${HEROINE} Wide romantic story illustration (event CG) of her alone, seen from the point of view of the viewer who is with her (the viewer is not drawn). Warm emotional lighting and a detailed background.`,
+  full: `${HEROINE} Full body from head to feet at eye level, her signature pose, feet firmly on the same baseline (or seated if stated), with 5% safety padding for head, shoes and props. Use her established role-specific fantasy costume with Korean Joseon collars, knots and accessories. Isolated on a fully transparent background (PNG with alpha), no scenery, no floor, no shadow.`,
+  card: `${HEROINE} Vertical portrait from head to mid-thigh at eye level. She looks toward the viewer with her characteristic expression. A quiet, softly blurred background belonging to her story; no lantern bokeh, petals or decorative sparkles.`,
+  cg: `${HEROINE} Tall vertical 2:3 romantic story illustration (event CG) of her alone, seen from the point of view of the viewer who is with her (the viewer is not drawn). Express the specific emotional moment, with quiet warm lighting and a subdued background. Keep her face and hands clear of the bottom quarter reserved for dialogue.`,
   bg: 'Background art with no people. Tall vertical composition for a phone screen, the lower third fairly open.',
   banner: 'Wide background art with no people, the main subject in the middle horizontal band so it can be cropped into a wide banner.',
   foe: 'A group of adversaries for a battle screen, centered, plain dark background. Menacing but stylish, no gore.',
+  battle: 'Tall vertical 2:3 battle background, no people. Keep the central and lower fighting area open, with a clear ground plane; architecture and props stay at the sides and far background. Calm values behind the enemy silhouettes. No foreground obstruction.',
+  boss: 'One adult Korean Joseon-fantasy boss, head to mid-thigh portrait facing the viewer at eye level. Preserve the identity reference face, hair, outfit and signature prop. Transparent background, no scenery, floor or shadow. Readable large shapes, restrained ornament, no gore.',
+  grunt: 'One adult Korean Joseon-fantasy adversary, head to mid-thigh portrait facing the viewer at eye level. Preserve the identity reference face, hair, outfit and signature prop. Transparent background, no scenery, floor or shadow. Readable large shapes, restrained ornament, no gore.',
+  enemy: 'One adult Korean Joseon-fantasy opponent for the battle field, COMPLETE FULL BODY from the top of the head to both feet with 5% transparent safety padding. Both feet visibly grounded on the same baseline, balanced combat-ready pose, eye-level camera. Preserve the identity reference face, hair, outfit, palette and signature weapon; extend the existing portrait into a coherent full body. Transparent background, no scenery, no floor, no painted shadow, no frame, no other characters. Keep weapons inside the canvas. No anatomy or clothing cropped by the image edges.',
+  item: 'One clearly readable Korean Joseon-fantasy story prop, centered square composition with 8% safety padding, fully transparent background and no scenery, frame or text. Use a simple three-quarter view and restrained materials.',
+  scene: 'Tall vertical 2:3 first-person story event illustration. The protagonist is outside the image; at most their hand or sleeve may appear at an edge. Preserve referenced character identities. Depict the specific narrative action and emotional expression, with a quiet background. Keep faces and important gestures in the upper three quarters for the dialogue overlay. No collage, no text, no explicit nudity or sexual activity.',
 } as const;
 
 export type ArtKind = keyof typeof FRAME;
@@ -32,25 +39,43 @@ export interface ArtAsset {
   kind: ArtKind;
   out: string;
   subject: string;
+  /** ROOT 기준 경로. 화풍 참조와 별도로 얼굴·의상·물건의 동일성을 보존한다. */
+  identity?: string[];
+  /** 원본 설정/대사의 위치. 제작 이력을 따라갈 수 있게 한다. */
+  source?: string;
 }
 
-export const ASPECT: Record<ArtKind, 'portrait' | 'landscape' | 'square'> = {
-  full: 'portrait',
-  card: 'portrait',
-  cg: 'portrait',
-  bg: 'portrait',
-  banner: 'landscape',
-  foe: 'square',
+/** 생성 구도와 납품 해상도를 함께 관리한다. resize가 세로 CG를 작은 가로 상자에 넣지 않게 한다. */
+export const ART_SPECS: Record<ArtKind, { aspect: 'portrait' | 'landscape' | 'square'; width: number; height: number; transparent: boolean }> = {
+  full: { aspect: 'portrait', width: 800, height: 1200, transparent: true },
+  card: { aspect: 'portrait', width: 768, height: 1152, transparent: false },
+  cg: { aspect: 'portrait', width: 900, height: 1350, transparent: false },
+  bg: { aspect: 'portrait', width: 900, height: 1350, transparent: false },
+  banner: { aspect: 'landscape', width: 1200, height: 800, transparent: false },
+  foe: { aspect: 'square', width: 640, height: 640, transparent: false },
+  battle: { aspect: 'portrait', width: 900, height: 1350, transparent: false },
+  boss: { aspect: 'portrait', width: 800, height: 1200, transparent: true },
+  grunt: { aspect: 'portrait', width: 800, height: 1200, transparent: true },
+  enemy: { aspect: 'portrait', width: 800, height: 1200, transparent: true },
+  item: { aspect: 'square', width: 640, height: 640, transparent: true },
+  scene: { aspect: 'portrait', width: 900, height: 1350, transparent: false },
 };
+export const ASPECT = Object.fromEntries(Object.entries(ART_SPECS).map(([kind, spec]) => [kind, spec.aspect])) as Record<ArtKind, 'portrait' | 'landscape' | 'square'>;
 
 /** 화풍 기준 그림: 인물은 구미호 시안, 배경은 궁궐 시안 */
 export const ANCHOR: Record<ArtKind, string> = {
-  full: 'art/style-heroine.png',
-  card: 'art/style-heroine.png',
-  cg: 'art/style-heroine.png',
+  full: 'public/art/card/baekseol.webp',
+  card: 'public/art/card/baekseol.webp',
+  cg: 'public/art/card/baekseol.webp',
   bg: 'art/style-scene.png',
   banner: 'art/style-scene.png',
   foe: 'art/style-scene.png',
+  battle: 'art/style-scene.png',
+  boss: 'public/art/boss/ferry.webp',
+  grunt: 'public/art/boss/ferry.webp',
+  enemy: 'public/art/boss/ferry.webp',
+  item: 'public/art/item/ledger.webp',
+  scene: 'public/art/scene/e1-tree.webp',
 };
 
 export const artPrompt = (a: ArtAsset) => `${STYLE} ${FRAME[a.kind]}\nSubject: ${a.subject}.`;
@@ -66,6 +91,8 @@ export const ART = {
   battle: (id: string) => `art/battle/${id}.webp`,
   boss: (id: string) => `art/boss/${id}.webp`,
   grunt: (id: string, v = 1) => (v > 1 ? `art/grunt/${id}-${v}.webp` : `art/grunt/${id}.webp`),
+  /** 전장 전용 전신. 기존 boss/grunt 초상은 아이콘·목록에 계속 쓴다. */
+  enemy: (kind: 'boss' | 'grunt', id: string) => `art/enemy/${kind}/${id}.webp`,
   item: (key: string) => `art/item/${key}.webp`,
   scene: (key: string) => `art/scene/${key}.webp`,
 };
@@ -75,12 +102,12 @@ export const ART = {
 export const portraitPath = ART.card;
 
 const BG: Record<string, string> = {
-  palace: 'the grand courtyard of a fantasy Korean palace at dusk, dancheong-painted halls with sweeping tiled roofs, rows of glowing red lanterns, a purple-gold sunset sky, floating blue spirit lights, drifting petals',
+  palace: 'the grand courtyard of a fantasy Korean palace at dusk, dancheong-painted halls with sweeping tiled roofs and restrained warm windows, soft purple evening sky, a quiet central character area without floating particles',
   village: 'Dalgol, a cozy mountain village with thatched and tiled roofs, persimmon trees and a big zelkova tree at the crossroads, warm afternoon light',
-  market: 'a lively market street in the capital with colorful stall awnings, hanging goods and lanterns, late afternoon',
+  market: 'a Korean capital market with indigo and ochre cloth awnings, simple goods at the edges and a broad matte stone walking lane; warm neutral late-afternoon daylight and distant green mountains, unlit corner lanterns, no festival lights or petals',
   tavern: 'the inside of an elegant tavern (jumak) at night, wooden beams, low tables, warm lamplight and paper screens',
   field: 'terraced rice paddies and a granary under a wide blue sky, a stream and a footbridge',
-  night: 'a moonlit palace garden at night with a lotus pond, a stone bridge and fireflies',
+  night: 'a serene moon-blue Korean palace garden, low stone arched bridge, sparse lotus leaves, pine silhouettes and quiet pond; slate-blue and teal with only two dim warm windows at the edges, no fireflies or golden reflection streaks',
   forest: 'a deep misty pine forest with shafts of light and an old shrine',
   hall: 'the interior of a county magistrate office (gwana) with a raised dais, folding screen and petition desk',
   hut: 'the inside of a modest thatched-roof cottage room at night, warm low oil-lamp light, paper sliding doors, a folded blanket on the heated floor',
@@ -104,6 +131,7 @@ const BG: Record<string, string> = {
   archive: 'a quiet heavenly archive room, tall shelves of scrolls, a reading desk with a lamp',
   jadecourt: 'the Jade Emperor throne hall of white jade and gold, a tall silk curtain hiding the throne',
   shrine: 'a heavenly thunder shrine on a floating cliff, a huge war drum on a stone altar, storm clouds',
+  map: 'a readable painted fantasy map of the Korean kingdom Haerang, mountain paths, villages, river crossings and the distant royal capital; no labels or readable writing',
 };
 
 const BANNER: Record<string, string> = {
@@ -124,14 +152,21 @@ const FOES: Record<string, string> = {
 
 export const ART_ASSETS: ArtAsset[] = [
   ...YOKAI.flatMap((y): ArtAsset[] => [
-    { id: `full-${y.id}`, kind: 'full', out: ART.full(y.id), subject: `${y.kind}. ${y.artSubject}` },
-    { id: `card-${y.id}`, kind: 'card', out: ART.card(y.id), subject: `${y.kind}. ${y.artSubject}` },
+    { id: `full-${y.id}`, kind: 'full', out: ART.full(y.id), subject: `${y.kind}. ${y.artSubject}`, identity: [`public/${ART.card(y.id)}`], source: 'content/heroines.json' },
+    { id: `card-${y.id}`, kind: 'card', out: ART.card(y.id), subject: `${y.kind}. ${y.artSubject}`, identity: [`public/${ART.full(y.id)}`], source: 'content/heroines.json' },
   ]),
   ...Object.entries(BG).map(([key, subject]): ArtAsset => ({ id: `bg-${key}`, kind: 'bg', out: ART.bg(key), subject })),
   ...CHAPTERS.map((c): ArtAsset => ({ id: `banner-${c.id}`, kind: 'banner', out: ART.chapter(c.id), subject: BANNER[c.id] })),
   ...CHAPTERS.map((c): ArtAsset => ({ id: `foe-${c.id}`, kind: 'foe', out: ART.foe(c.id), subject: FOES[c.id] })),
   ...YOKAI.flatMap((y): ArtAsset[] => [
-    { id: `cg-${y.id}-3`, kind: 'cg', out: ART.cg(y.id, 3), subject: `${y.kind}. ${y.artSubject}; first-person view on a riverside outing, she confides a secret to the viewer with a shy, honest look` },
-    { id: `cg-${y.id}-5`, kind: 'cg', out: ART.cg(y.id, 5), subject: `${y.kind}. ${y.artSubject}; first-person view in a quiet room at night after a festival, low lamplight, her outfit loosened at the collar, she leans close to the viewer with an intimate tender smile` },
+    { id: `cg-${y.id}-3`, kind: 'cg', out: ART.cg(y.id, 3), subject: `${y.name}, ${y.kind}. ${y.artSubject}; ${bondArtSubject(y.id, 3)}`, identity: [`public/${ART.card(y.id)}`], source: `content/bonds/${y.id}.json, scene level 3` },
+    { id: `cg-${y.id}-5`, kind: 'cg', out: ART.cg(y.id, 5), subject: `${y.name}, ${y.kind}. ${y.artSubject}; ${bondArtSubject(y.id, 5)}`, identity: [`public/${ART.card(y.id)}`], source: `content/bonds/${y.id}.json, scene level 5` },
   ]),
+  ...Object.entries(BATTLE_SUBJECTS).map(([key, subject]): ArtAsset => ({ id: `battle-${key}`, kind: 'battle', out: ART.battle(key), subject, source: 'src/data/art-direction.ts; src/data/world.ts' })),
+  ...ENEMY_SUBJECTS.flatMap(({ group, key, subject, source }): ArtAsset[] => [
+    { id: `${group}-${key}`, kind: group, out: group === 'boss' ? ART.boss(key) : ART.grunt(key), subject, identity: [`public/art/${group}/${key}.webp`], source },
+    { id: `enemy-${group}-${key}`, kind: 'enemy', out: ART.enemy(group, key), subject, identity: [`public/art/${group}/${key}.webp`], source },
+  ]),
+  ...Object.entries(ITEM_SUBJECTS).map(([key, subject]): ArtAsset => ({ id: `item-${key}`, kind: 'item', out: ART.item(key), subject, identity: [`public/${ART.item(key)}`], source: 'src/core/story.ts; src/data/art-direction.ts' })),
+  ...STORY_ART_BRIEFS.map(({ key, cast, source, subject }): ArtAsset => ({ id: `scene-${key}`, kind: 'scene', out: ART.scene(key), subject, identity: cast.map((id) => `public/${ART.card(id)}`), source })),
 ];
