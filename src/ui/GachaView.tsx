@@ -1,5 +1,6 @@
 // 모집 탭: 옥으로 한 번·열 번 모집. 결과는 카드가 차례로 뒤집히고, 새 SSR은 크게 보여 준다.
 import { useEffect, useMemo, useState } from 'react';
+import { tradeMemory } from '../core/engine';
 import { pull, pullCost, type PullResult } from '../core/gacha';
 import { fmt } from '../core/format';
 import type { GameState } from '../core/types';
@@ -34,6 +35,13 @@ export function GachaView({ view }: { view: GameState }) {
     track(`gacha/${count}`);
     buzz(30);
     setResults(r.results);
+  };
+
+  const doTrade = (times: number) => {
+    const r = act((s) => tradeMemory(s, times));
+    if (!r.ok) return pushToast({ text: '옥이 모자라요', warn: true });
+    track(`trade/${times}`);
+    pushToast({ text: `기억 조각 +${r.memory} · 식객 창에서 원하는 식객의 별을 올려요` });
   };
 
   const left = B.pity - view.gacha.pity;
@@ -75,6 +83,19 @@ export function GachaView({ view }: { view: GameState }) {
             </span>
           </button>
         </div>
+        <div className="gc-trade">
+          <p>
+            <b>기억 조각으로 바꾸기</b>
+            <small>운에 맡기지 않고 원하는 식객의 별을 올려요 · 가진 조각 {fmt(view.inventory.memory ?? 0)}</small>
+          </p>
+          <button className="btn small" disabled={view.res.jade < B.memoryTrade.jade} onClick={() => doTrade(1)}>
+            <ResIcon kind="jade" size={13} />
+            {B.memoryTrade.jade} → {B.memoryTrade.memory}
+          </button>
+          <button className="btn small" disabled={view.res.jade < B.memoryTrade.jade * 10} onClick={() => doTrade(10)}>
+            ×10
+          </button>
+        </div>
       </div>
 
       {info && (
@@ -90,7 +111,9 @@ export function GachaView({ view }: { view: GameState }) {
             <p className="gc-rates">
               SSR {Math.round(B.rates.ssr * 100)}% · SR {Math.round(B.rates.sr * 100)}% · R {Math.round((1 - B.rates.ssr - B.rates.sr) * 100)}%
               <br />
-              {B.pity}번째 안에 SSR 확정 · 열 번 모집은 SR 이상 하나 확정 · 이미 있는 식객은 조각이 되어 별을 올려요. 이야기 식객은 그 장을 끝까지 깨면 확정으로 합류해요.
+              {B.pity}번째 안에 SSR 확정 · 열 번 모집은 SR 이상 하나 확정 · 이미 있는 식객은 조각이 되어 별을 올려요.
+              <br />
+              현금 결제는 없어요. 열여섯 식객 모두 이야기와 만남으로 확정 합류하고, 옥은 기억 조각(아무 식객에게나 쓰는 별 재료)으로도 바꿀 수 있어요. 모집은 더 빨리, 더 여러 식객을 만나는 덤이에요.
             </p>
             {([3, 2, 1] as const).map((g) => (
               <div key={g} className="gc-pool">

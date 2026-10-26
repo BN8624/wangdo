@@ -21,8 +21,9 @@ import {
   markSceneSeen,
   unseenScene,
   bondLevel,
+  tradeMemory,
 } from '../src/core/engine';
-import { STAGES, STAGE_BY_ID, battleSeed, nextStage, stageOpen, stageSetup } from '../src/core/campaign';
+import { STAGES, STAGE_BY_ID, applyStage, battleSeed, nextStage, stageOpen, stageSetup } from '../src/core/campaign';
 import { runCombat } from '../src/core/combat';
 import { pull } from '../src/core/gacha';
 import { afkPending, claimAfk, trainOpen } from '../src/core/idle';
@@ -338,3 +339,44 @@ describe('식객 명부', () => {
     for (const y of YOKAI) expect(newGame(T0).yokai[y.id]?.stars ?? y.grade).toBe(y.grade);
   });
 });
+
+describe('운에 기대지 않는 진행', () => {
+  it('옥을 기억 조각으로 바꾸고, 옥이 모자라면 바꾸지 않는다', () => {
+    const s = newGame(0);
+    s.res.jade = BALANCE.memoryTrade.jade * 3;
+    const [a, r] = tradeMemory(s, 2);
+    expect(r).toEqual({ ok: true, memory: BALANCE.memoryTrade.memory * 2 });
+    expect(a.res.jade).toBe(BALANCE.memoryTrade.jade);
+    expect(a.inventory.memory).toBe(BALANCE.memoryTrade.memory * 2);
+    const [b, r2] = tradeMemory(a, 2);
+    expect(r2.ok).toBe(false);
+    expect(b).toBe(a);
+  });
+
+  it('뽑기로만 얻던 식객도 만남 스테이지를 처음 깨면 합류하고, 이미 있으면 조각을 받는다', () => {
+    const meets = STAGES.filter((st) => st.meet).map((st) => st.meet!.heroine);
+    expect(meets.sort()).toEqual(['bulsae', 'danhui', 'seorin']);
+    const st = STAGES.find((x) => x.meet?.heroine === 'seorin')!;
+    const s = newGame(0);
+    const win = { won: true, rounds: 3, deaths: 0, stars: 3 };
+    const { reward } = applyStage(s, st, s.team, win);
+    expect(reward.recruits).toEqual(['seorin']);
+    expect(s.yokai.seorin).toBeDefined();
+    const s2 = newGame(0);
+    s2.yokai.seorin = { ...s.yokai.seorin, shards: 0 };
+    const r2 = applyStage(s2, st, s2.team, win).reward;
+    expect(r2.recruits).toEqual([]);
+    expect(s2.yokai.seorin.shards).toBe(BALANCE.storyDupeShards);
+  });
+
+  it('만남이 생기기 전에 그 스테이지를 지나간 저장은 불러올 때 그 식객이 합류해 있다', () => {
+    const s = newGame(0);
+    const st = STAGES.find((x) => x.meet?.heroine === 'danhui')!;
+    s.camp.stars[st.id] = 2;
+    delete s.yokai.danhui;
+    const loaded = deserialize(serialize(s), 0)!;
+    expect(loaded.yokai.danhui).toBeDefined();
+    expect(loaded.camp.stars[st.id]).toBe(2);
+  });
+});
+

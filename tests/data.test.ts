@@ -87,7 +87,7 @@ describe('데이터 무결성', () => {
 
 });
 
-describe('진행 속도', { timeout: 120_000 }, () => {
+describe('진행 속도', { timeout: 240_000 }, () => {
   it('쉬지 않고 하면 모든 장을 막힘 없이 몇 시간에 걸쳐 깨고, 막힐 때 수련장에서 키운다', () => {
     const r = simulateRun();
     expect(r.stuck).toBeNull();
@@ -96,5 +96,14 @@ describe('진행 속도', { timeout: 120_000 }, () => {
     expect(r.minutes).toBeLessThan(16 * 60);
     expect(r.battles.train).toBeGreaterThan(0);
     expect(r.pulls).toBeGreaterThan(50);
+  });
+
+  it('모집을 한 번도 하지 않아도(옥은 기억 조각으로) 모든 장을 깨고, 열여섯 식객을 모두 만난다', () => {
+    const r = simulateRun(40 * 60, 7, { gacha: false });
+    expect(r.stuck).toBeNull();
+    expect(r.pulls).toBe(0);
+    for (const ep of EPISODES) expect(r.chapterAt[ep.id], ep.id).toBeDefined();
+    expect(r.minutes).toBeLessThan(16 * 60);
+    expect(Object.keys(r.final.yokai).sort()).toEqual(YOKAI.map((y) => y.id).sort());
   });
 });

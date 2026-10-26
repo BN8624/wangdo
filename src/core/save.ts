@@ -2,7 +2,7 @@
 // v2(모험 지도·일터 시절) → v3(수집형): 식객·인연·장비는 그대로, 별은 등급만큼, 본 화는 그 장을 별 하나로 깬 것으로, 옥 3,000 선물.
 
 import { YOKAI_BY_ID } from '../data/yokai';
-import { STAGES } from './campaign';
+import { STAGES, catchUpMeets } from './campaign';
 import { newGame } from './engine';
 import { levelCap, startStars } from './units';
 import type { GameState, YokaiState } from './types';
@@ -56,7 +56,7 @@ export function deserialize(text: string, now: number): GameState | null {
   if (!team.some(Boolean)) team = Object.keys(yokai).slice(0, 5);
   while (team.length < 5) team.push('');
   const res = data.res ?? {};
-  return {
+  const state: GameState = {
     ...base,
     version: 3,
     createdAt: num(data.createdAt, base.createdAt),
@@ -83,6 +83,8 @@ export function deserialize(text: string, now: number): GameState | null {
     inventory: Object.fromEntries(Object.entries(data.inventory ?? {}).filter(([, n]) => typeof n === 'number' && n > 0)) as Record<string, number>,
     favorite: data.favorite && yokai[data.favorite] ? data.favorite : Object.keys(yokai)[0],
   };
+  catchUpMeets(state);
+  return state;
 }
 
 /** 공유·백업용 텍스트 코드(base64) */

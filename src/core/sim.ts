@@ -10,7 +10,7 @@ import { ITEM_BY_ID, type Slot } from '../data/items';
 import { EPISODES } from '../data/story';
 import { STAGES, battleSeed, nextStage, stageSetup, stagePower, type StageDef } from './campaign';
 import { runCombat } from './combat';
-import { autoTeam, chooseWish, finishStage, finishTrain, equip, levelUp, newGame, rankUp, setTeam, starUp, useWish } from './engine';
+import { autoTeam, chooseWish, finishStage, finishTrain, equip, levelUp, newGame, rankUp, setTeam, starUp, tradeMemory, useWish } from './engine';
 import { pull } from './gacha';
 import { claimAfk, trainOpen, trainSetup, TRAIN_LEVELS } from './idle';
 import type { GameState } from './types';
@@ -76,7 +76,8 @@ function gearTeam(s: GameState): GameState {
   return s;
 }
 
-export function simulateRun(maxMinutes = 40 * 60, seed = 7): RunReport {
+/** gacha: false면 모집을 한 번도 하지 않고 옥을 모두 기억 조각으로 바꾼다(운에 기대지 않는 길도 끝까지 가는지) */
+export function simulateRun(maxMinutes = 40 * 60, seed = 7, opts: { gacha?: boolean } = {}): RunReport {
   const start = Date.UTC(2026, 0, 1, 9, 0, 0);
   let t = 0;
   const at = () => start + Math.round(t * MINUTE);
@@ -103,7 +104,11 @@ export function simulateRun(maxMinutes = 40 * 60, seed = 7): RunReport {
       s = useWish(s)[0];
       continue;
     }
-    while (s.res.jade >= B.pullCost * 10) {
+    if (opts.gacha === false) {
+      const n = Math.floor(s.res.jade / B.memoryTrade.jade);
+      if (n > 0) s = tradeMemory(s, n)[0];
+    }
+    while (opts.gacha !== false && s.res.jade >= B.pullCost * 10) {
       const [next, r] = pull(s, 10);
       if (!r.ok) break;
       s = next;

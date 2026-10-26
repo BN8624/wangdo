@@ -155,6 +155,20 @@ export function starUp(s: GameState, id: string): [GameState, StarResult] {
   return [next, { ok: true, stars: ny.stars, used: own, memory: mem }];
 }
 
+export type TradeResult = { ok: true; memory: number } | Fail<'no-jade'>;
+
+/** 옥을 기억 조각(아무 식객에게나 쓰는 별 재료)으로 바꾼다. 뽑기 운에 기대지 않고 좋아하는 식객을 키우는 길 */
+export function tradeMemory(s: GameState, times = 1): [GameState, TradeResult] {
+  const n = Math.floor(times);
+  const cost = B.memoryTrade.jade * n;
+  if (n < 1 || s.res.jade < cost) return [s, { ok: false, reason: 'no-jade' }];
+  const next = clone(s);
+  next.res.jade -= cost;
+  const memory = B.memoryTrade.memory * n;
+  next.inventory.memory = (next.inventory.memory ?? 0) + memory;
+  return [next, { ok: true, memory }];
+}
+
 // ───────────────────────── 편성 ─────────────────────────
 
 export function setTeam(s: GameState, team: string[]): GameState {

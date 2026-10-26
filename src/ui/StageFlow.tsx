@@ -35,6 +35,7 @@ const wantPre = (s: GameState, st: StageDef) => hasCut(st.pre) && !stageCleared(
 
 /** 목록에 보일 스테이지 이름 */
 export function stageName(st: StageDef): string {
+  if (st.meet) return st.meet.name;
   if (st.battle) return st.battle.foe;
   const first = stageWaves(st)[0]?.[0];
   return first ? `${first.name} 무리` : '졸개 무리';
@@ -144,7 +145,7 @@ export function StageFlow({ id, open, onClose }: { id: string; open: (m: ModalRe
             <em>승리 · 아무도 안 쓰러짐 · 15라운드 안</em>
           </div>
         ) : (
-          <RewardChips label="첫 클리어" items={[['jade', reward.jade], ['coin', reward.coin], ['exp', reward.exp], ['fame', reward.fame]]} extra={st.boss && st.ep.reward?.recruit ? '새 식객 합류' : undefined} />
+          <RewardChips label="첫 클리어" items={[['jade', reward.jade], ['coin', reward.coin], ['exp', reward.exp], ['fame', reward.fame]]} extra={st.meet ? `${YOKAI_BY_ID[st.meet.heroine]?.name} 합류` : st.boss && st.ep.reward?.recruit ? '새 식객 합류' : undefined} />
         )
       }
       onGo={(team) => {
