@@ -1,6 +1,6 @@
 import { readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ART, ART_ASSETS, ART_SPECS, artPrompt } from '../src/data/art';
+import { ART, ART_ASSETS, ART_SPECS, ENEMY_FIGURES, artPrompt } from '../src/data/art';
 import { artInstructions, artReferences, main, parseArtOptions, planArtAsset, validateArtManifest } from '../scripts/gen-art';
 
 const asset = (id: string) => {
@@ -44,6 +44,14 @@ describe('아트 제작 명세', () => {
     expect(full.identity).toContain(`public/${ART.boss('ferry')}`);
     expect(artPrompt(full)).toContain('both feet');
     expect(ART_SPECS.enemy.transparent).toBe(true);
+  });
+
+  it('전장 전신 목록은 public/art/enemy의 실제 파일과 같다', () => {
+    const files = readdirSync('public/art/enemy', { recursive: true })
+      .map(String)
+      .filter((p) => p.endsWith('.webp'))
+      .map((p) => p.replace(/\\/g, '/').replace(/\.webp$/, ''));
+    expect([...ENEMY_FIGURES].sort()).toEqual(files.sort());
   });
 
   it('부분 편집에서는 기존 그림을 첫 참조로 주고 전체 재설계 프롬프트를 주지 않는다', () => {

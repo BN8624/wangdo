@@ -101,6 +101,21 @@ export const ART = {
 /** 카드·목록에 쓰는 초상(카드 그림) */
 export const portraitPath = ART.card;
 
+/** 전장용 전신이 실제로 있는 적(`kind/id`). 없는 적은 초상을 쓴다. 없는 파일을 불러 보고 실패를 기다리면
+ *  웨이브 시작에 빈칸이 비치고 칸 크기가 바뀌므로 목록으로 정한다(테스트가 public/art/enemy와 맞춰 본다). */
+export const ENEMY_FIGURES = new Set([
+  'boss/alley',
+  'boss/backhill',
+  'boss/dobak',
+  'boss/ferry',
+  'boss/noegong',
+  'grunt/alley',
+  'grunt/backhill',
+  'grunt/backhill-2',
+  'grunt/ferry',
+  'grunt/underworld',
+]);
+
 const BG: Record<string, string> = {
   palace: 'the grand courtyard of a fantasy Korean palace at dusk, dancheong-painted halls with sweeping tiled roofs and restrained warm windows, soft purple evening sky, a quiet central character area without floating particles',
   village: 'Dalgol, a cozy mountain village with thatched and tiled roofs, persimmon trees and a big zelkova tree at the crossroads, warm afternoon light',

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COMBAT, Combat, type CombatEvent, type CombatResult, type CombatSetup, type SkillKind, type Unit } from '../core/combat';
 import { fmt } from '../core/format';
 import type { StageReward } from '../core/campaign';
-import { ART } from '../data/art';
+import { ART, ENEMY_FIGURES } from '../data/art';
 import { ALLY_LINES } from '../data/battle-lines';
 import { ITEM_BY_ID } from '../data/items';
 import { ELEMENT_COLOR, ELEMENT_LABEL, type Element as Elem } from '../data/roster';
@@ -75,7 +75,10 @@ function arrange(foes: Unit[]): Spot[] {
 }
 
 // 전장용 전신은 별도 원화다. 아직 준비되지 않은 적은 기존 초상을 계속 쓴다.
-const missingEnemyFigures = new Set<string>();
+// 전신은 머리부터 발까지라 같은 칸에 넣으면 허벅지까지 그린 초상보다 머리·몸이 1.45배쯤 작다.
+// 그래서 칸을 그만큼 키우고 발을 조금 내려, 한 웨이브에 섞여도 크기가 맞고 맞는 순간도 크게 보이게 한다.
+const FULL_SCALE = 1.45;
+const FULL_DROP = 0.3;
 
 function EnemyFigure({ unit, spot, down, acting, bodyRef, children }: {
   unit: Unit;
@@ -87,36 +90,22 @@ function EnemyFigure({ unit, spot, down, acting, bodyRef, children }: {
 }) {
   // 전투의 '대장' 여부와 원화 종류는 다를 수 있다(수련장·이야기 재사용).
   const source = /^art\/(boss|grunt)\/([a-z0-9-]+)\.webp$/.exec(unit.art);
-  const figure = source ? ART.enemy(source[1] as 'boss' | 'grunt', source[2]) : null;
-  const [failedFigure, setFailedFigure] = useState<string | null>(null);
-  const full = !!figure && !missingEnemyFigures.has(figure) && failedFigure !== figure;
-  const height = spot.h;
-  const displayedArt = full ? figure : unit.art;
+  const full = !!source && ENEMY_FIGURES.has(`${source[1]}/${source[2]}`);
+  const art = full ? ART.enemy(source[1] as 'boss' | 'grunt', source[2]) : unit.art;
+  const height = full ? spot.h * FULL_SCALE : spot.h;
+  const bottom = full ? spot.feet - spot.h * FULL_DROP : spot.feet;
 
   return (
     <div
       className={`bf-foe ${full ? 'full' : 'portrait'} ${down ? 'dead' : ''} ${acting ? 'acting' : ''} ${unit.boss ? 'boss' : ''}`}
-      style={{ left: `${spot.x}%`, bottom: `${spot.feet}%`, height: `${height}%`, zIndex: spot.z }}
+      style={{ left: `${spot.x}%`, bottom: `${bottom}%`, height: `${height}%`, zIndex: spot.z }}
       data-cx={spot.x}
-      data-cy={100 - spot.feet - height * 0.55}
+      data-cy={100 - bottom - height * (full ? 0.62 : 0.55)}
     >
       <div className="bf-shadow" />
       <div className="bf-body" ref={bodyRef}>
-        {full ? (
-          <img
-            className="bf-sprite"
-            src={figure}
-            alt={unit.name}
-            draggable={false}
-            onError={() => {
-              missingEnemyFigures.add(figure);
-              setFailedFigure(figure);
-            }}
-          />
-        ) : (
-          <Art className="bf-sprite" src={unit.art} alt={unit.name} fallback={<div className="bf-sprite-fb">{unit.name}</div>} />
-        )}
-        <i className="bf-sil" style={{ WebkitMaskImage: `url(${displayedArt})`, maskImage: `url(${displayedArt})` }} />
+        <Art className="bf-sprite" src={art} alt={unit.name} fallback={<div className="bf-sprite-fb">{unit.name}</div>} />
+        <i className="bf-sil" style={{ WebkitMaskImage: `url(${art})`, maskImage: `url(${art})` }} />
       </div>
       {children}
     </div>
@@ -243,7 +232,9 @@ export function BattleView({
     const r = el.getBoundingClientRect();
     const R = root.getBoundingClientRect();
     const foe = key.startsWith('1:');
-    const fy = part === 'head' ? (foe ? 0.2 : 0.12) : part === 'feet' ? 0.92 : foe ? 0.42 : 0.42;
+    // 전신 적은 발까지 담겨 머리·몸통이 칸의 더 위쪽에 있다
+    const full = foe && !!el.parentElement?.classList.contains('full');
+    const fy = part === 'head' ? (full ? 0.13 : foe ? 0.2 : 0.12) : part === 'feet' ? 0.92 : full ? 0.36 : 0.42;
     return { x: r.left - R.left + r.width / 2, y: r.top - R.top + r.height * fy };
   };
   /** 실제 시간(ms)으로 거는 애니메이션 */
