@@ -1,76 +1,70 @@
-import { StoryView } from './StoryView';
-import { BattleView } from './BattleView';
-import { useNewVersion } from './update';
 import { useEffect, useMemo, useState } from 'react';
-import { RESOURCE_KEYS, hasNewTalk, power, promoteCheck, settle, unseenScene, type Won } from '../core/engine';
-import { nextAdventure } from '../core/adventure';
+import { STAGES } from '../core/campaign';
+import { RESOURCE_KEYS, settle, unseenScene } from '../core/engine';
 import { fmt } from '../core/format';
+import { advanceGuide, guideStep } from '../core/guide';
 import type { HintTarget } from '../core/hints';
-import type { ComboDef } from '../core/types';
-import { HomeView, RankSheet } from './HomeView';
+import { afkPending } from '../core/idle';
+import { starCost, teamPower } from '../core/units';
+import { BALANCE as B } from '../data/balance';
 import { rankDef } from '../data/ranks';
-import { IconSymbols, LineIcon, NavIcon, ResIcon } from './icons';
-import {
-  BondUpModal,
-  ComboModal,
-  OfflineModal,
-  PromoteModal,
-  ReactModal,
-  SceneViewer,
-  TalkModal,
-  WishModal,
-} from './modals';
+import { useNewVersion } from './update';
+import { HomeView, RankSheet } from './HomeView';
+import { YokaiSheet, YokaiView } from './YokaiView';
+import { CampaignView } from './CampaignView';
+import { GachaView } from './GachaView';
 import { RecordView } from './RecordView';
-import { AdventureView } from './AdventureView';
-import { act, takeOfflineSummary, useGame, type OfflineSummary } from './store';
+import { StageFlow, TrainFlow } from './StageFlow';
+import { StoryList } from './StoryView';
+import { IconSymbols, LineIcon, NavIcon, RES_LABEL, ResIcon } from './icons';
+import { AfkModal, BondUpModal, RankModal, ReactModal, SceneViewer, TalkModal, WishModal } from './modals';
+import { act, useGame } from './store';
 import { pushToast, useToasts } from './toast';
 import { GuideBar, rewardText } from './Guide';
-import { advanceGuide, guideStep } from '../core/guide';
-import { YokaiSheet, YokaiView } from './YokaiView';
 import { AdultGate, adultConfirmed } from './Backup';
 import { warmArt } from './warm';
 import { setMood } from './sound';
-import { EPISODES } from '../data/story';
-import { lockReason, nextEpisode } from '../core/story';
 
 export type ModalRequest =
   | { kind: 'wish' }
-  | { kind: 'promote'; rank: number; recruit: string | null }
-  | { kind: 'fight'; result: Won }
-  | { kind: 'offline'; summary: OfflineSummary }
-  | { kind: 'story'; episode?: string }
+  | { kind: 'afk' }
+  | { kind: 'rank'; ranks: number[] }
+  | { kind: 'rankinfo' }
+  | { kind: 'stage'; id: string }
+  | { kind: 'train'; tier: number }
+  | { kind: 'story' }
   | { kind: 'talk'; id: string }
   | { kind: 'react'; id: string; text: string; gained: number; levelUp: number; outing?: boolean }
   | { kind: 'bondup'; id: string; level: number }
-  | { kind: 'scene'; id: string; level: number }
-  | { kind: 'combo'; combo: ComboDef };
+  | { kind: 'scene'; id: string; level: number };
 
-type Tab = 'home' | 'yokai' | 'adv' | 'record';
+type Tab = 'home' | 'yokai' | 'camp' | 'gacha' | 'record';
 
-const TABS: { id: Tab; label: string; icon: 'home' | 'yokai' | 'stage' | 'record' }[] = [
-  { id: 'home', label: '궁궐', icon: 'home' },
-  { id: 'yokai', label: '식객', icon: 'yokai' },
-  { id: 'adv', label: '모험', icon: 'stage' },
-  { id: 'record', label: '기록', icon: 'record' },
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'home', label: '로비' },
+  { id: 'yokai', label: '식객' },
+  { id: 'camp', label: '출정' },
+  { id: 'gacha', label: '모집' },
+  { id: 'record', label: '기록' },
 ];
 
 export function App() {
   const { state, now } = useGame();
   const newVersion = useNewVersion();
-  // 화면에는 지금 시각까지 정산한 상태를 보여 준다(저장된 상태는 행동할 때만 바뀐다).
   const view = useMemo(() => settle(state, now), [state, now]);
   const [tab, setTab] = useState<Tab>('home');
   const [queue, setQueue] = useState<ModalRequest[]>([]);
   const [sheet, setSheet] = useState<string | null>(null);
-  const [rankOpen, setRankOpen] = useState(false);
   const [adult, setAdult] = useState(adultConfirmed);
   const toasts = useToasts();
 
   useEffect(() => {
     const first: ModalRequest[] = [];
-    if (!state.introSeen) first.push({ kind: 'story', episode: 's1e01' });
-    const offline = takeOfflineSummary();
-    if (offline) first.push({ kind: 'offline', summary: offline });
+    if (!state.introSeen) {
+      // 처음이면 1-1의 이야기와 첫 전투부터
+      act((s) => [{ ...s, introSeen: true }, null]);
+      first.push({ kind: 'stage', id: STAGES[0].id });
+    } else if (afkPending(state, Date.now()).minutes >= 30) first.push({ kind: 'afk' });
     if (state.wish.pending) first.push({ kind: 'wish' });
     if (first.length) setQueue(first);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -80,24 +74,20 @@ export function App() {
     window.scrollTo(0, 0);
   }, [tab]);
 
-  // 곧 쓸 그림(식객 전신, 다음 모험 상대)을 한가할 때 미리 받아 둔다.
+  // 곧 쓸 그림(식객 카드·전신, 다음 스테이지 상대)을 한가할 때 미리 받아 둔다.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => warmArt(state), [state.adv.cleared.length, state.story.done.length, Object.keys(state.yokai).length]);
+  useEffect(() => warmArt(state), [Object.keys(state.camp.stars).length, Object.keys(state.yokai).length]);
 
   const open = (m: ModalRequest) => setQueue((q) => [...q, m]);
   const closeTop = () => setQueue((q) => q.slice(1));
-  const go = (t: HintTarget) => {
-    if (t !== 'story') return setTab(t);
-    // 이야기: 다음 화(보다 멈춘 화)를 바로 연다
-    const ep = nextEpisode(state, EPISODES);
-    open({ kind: 'story', episode: ep && !lockReason(state, ep) ? ep.id : undefined });
-  };
+  const go = (t: HintTarget) => setTab(t);
   const top = queue[0];
   const step = guideStep(state);
 
-  // 배경음 분위기: 전투는 북 장단, 이야기·인연 장면은 잔잔하게, 나머지는 궁궐 가락
+  // 배경음: 출정·수련은 StageFlow가 직접 고른다. 이야기·인연 장면은 잔잔하게, 나머지는 궁궐 가락
   useEffect(() => {
-    setMood(!adult ? 'off' : top?.kind === 'fight' ? 'battle' : top?.kind === 'story' || top?.kind === 'scene' ? 'story' : 'home');
+    if (top?.kind === 'stage' || top?.kind === 'train') return;
+    setMood(!adult ? 'off' : top?.kind === 'story' || top?.kind === 'scene' ? 'story' : 'home');
   }, [adult, top?.kind]);
 
   // 안내 단계의 할 일을 해냈으면 다음 단계로 넘긴다.
@@ -107,17 +97,19 @@ export function App() {
     if (done) pushToast({ text: `안내 완료! ${rewardText(done)}` });
   }, [state, step]);
 
+  const minute = Math.floor(now / 60_000);
   const badges = useMemo(() => {
     const ids = Object.keys(view.yokai);
     return {
-      home: promoteCheck(view).ok || view.wish.charges > 0,
-      yokai: ids.some((id) => unseenScene(view, id) > 0 || hasNewTalk(view, id)),
-      adv: nextAdventure(view) !== null,
+      home: view.wish.charges > 0 || !!view.wish.pending || afkPending(view, now).minutes >= 60,
+      yokai: ids.some((id) => unseenScene(view, id) > 0 || (view.yokai[id].shards >= (starCost(view.yokai[id].stars) ?? Infinity))),
+      camp: false,
+      gacha: view.res.jade >= B.pullCost * 10,
       record: false,
     } satisfies Record<Tab, boolean>;
     // 1초마다 다시 계산하지 않도록 분 단위로만 갱신한다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state, Math.floor(now / 60_000)]);
+  }, [state, minute]);
 
   if (!adult) return <AdultGate onPass={() => setAdult(true)} />;
 
@@ -130,13 +122,18 @@ export function App() {
         </button>
       )}
       <header className="topbar" data-guide="res">
-        <button className="rank-btn" data-guide="promote" onClick={() => setRankOpen(true)}>
-          <span className="emb"><LineIcon name="crown" size={22} />{promoteCheck(view).ok && <i className="badge">↑</i>}</span>
-          <span className="rk"><small>{rankDef(view.rank).title}</small><b>권세 {fmt(power(view))}</b></span>
+        <button className="rank-btn" onClick={() => open({ kind: 'rankinfo' })}>
+          <span className="emb">
+            <LineIcon name="crown" size={22} />
+          </span>
+          <span className="rk">
+            <small>{rankDef(view.rank).title}</small>
+            <b>전투력 {fmt(teamPower(view))}</b>
+          </span>
         </button>
         <div className="pills">
           {RESOURCE_KEYS.map((k) => (
-            <span className="pill" key={k} aria-label={{ coin: '엽전', grain: '곡식', fame: '명성' }[k]}>
+            <span className="pill" key={k} aria-label={RES_LABEL[k]}>
               <ResIcon kind={k} size={16} />
               {fmt(view.res[k])}
             </span>
@@ -146,32 +143,33 @@ export function App() {
 
       {tab === 'home' && <HomeView view={view} now={now} open={open} go={go} onHeroine={setSheet} />}
       {tab === 'yokai' && <YokaiView view={view} onOpen={setSheet} />}
-      {tab === 'adv' && <AdventureView view={view} open={open} />}
+      {tab === 'camp' && <CampaignView view={view} open={open} />}
+      {tab === 'gacha' && <GachaView view={view} />}
       {tab === 'record' && <RecordView view={view} now={now} />}
 
       <nav className="nav">
         {TABS.map((t) => (
           <button key={t.id} className={tab === t.id ? 'on' : ''} data-guide={`tab-${t.id}`} onClick={() => setTab(t.id)}>
-            <NavIcon name={t.icon} />
+            <NavIcon name={t.id} />
             {t.label}
             {badges[t.id] && tab !== t.id && <span className="badge" />}
           </button>
         ))}
       </nav>
 
-      {rankOpen && !top && <RankSheet view={view} open={open} onClose={() => setRankOpen(false)} />}
       {sheet && !top && <YokaiSheet view={view} id={sheet} open={open} onClose={() => setSheet(null)} />}
 
-      {top?.kind === 'story' && <StoryView view={view} episode={top.episode} onClose={closeTop} open={open} />}
-      {top?.kind === 'offline' && <OfflineModal summary={top.summary} onClose={closeTop} />}
+      {top?.kind === 'stage' && <StageFlow key={top.id} id={top.id} open={open} onClose={closeTop} />}
+      {top?.kind === 'train' && <TrainFlow tier={top.tier} open={open} onClose={closeTop} />}
+      {top?.kind === 'story' && <StoryList view={view} onClose={closeTop} />}
+      {top?.kind === 'afk' && <AfkModal view={view} now={now} onClose={closeTop} />}
+      {top?.kind === 'rank' && <RankModal ranks={top.ranks} onClose={closeTop} />}
+      {top?.kind === 'rankinfo' && <RankSheet view={view} onClose={closeTop} />}
       {top?.kind === 'wish' && <WishModal view={view} onClose={closeTop} />}
-      {top?.kind === 'promote' && <PromoteModal rank={top.rank} recruit={top.recruit} onClose={closeTop} />}
-      {top?.kind === 'fight' && <BattleView result={top.result} onClose={closeTop} />}
       {top?.kind === 'talk' && <TalkModal view={view} id={top.id} open={open} onClose={closeTop} />}
       {top?.kind === 'react' && <ReactModal {...top} open={open} onClose={closeTop} />}
       {top?.kind === 'bondup' && <BondUpModal id={top.id} level={top.level} open={open} onClose={closeTop} />}
       {top?.kind === 'scene' && <SceneViewer key={`${top.id}-${top.level}`} id={top.id} level={top.level} onClose={closeTop} />}
-      {top?.kind === 'combo' && <ComboModal combo={top.combo} onClose={closeTop} />}
 
       {step && !top && <GuideBar step={step} index={state.guide} tab={tab} />}
 

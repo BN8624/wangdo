@@ -1,4 +1,6 @@
 import type { StatKey, Stats } from '../core/types';
+import { BALANCE as B } from './balance';
+import { YOKAI_BY_ID } from './yokai';
 
 // 장비. 식객마다 무기·장신구 한 칸씩, 누구나 아무거나 낄 수 있다.
 // 무기는 능력치를 더하고(주 능력치 크게, 보조 작게), 장신구는 특수 효과를 준다.
@@ -144,11 +146,17 @@ export const ITEMS: ItemDef[] = [
 
 export const ITEM_BY_ID: Record<string, ItemDef> = Object.fromEntries(ITEMS.map((i) => [i.id, i]));
 
-/** 효과를 한 줄로(목록·상점에 쓴다) */
+/** 효과를 한 줄로(목록·장비 고르기에 쓴다). 수치는 src/core/units.ts heroStats와 같다 */
 export function itemEffect(item: ItemDef): string {
-  if (item.slot === 'trinket') return item.desc;
-  const LABEL: Record<StatKey, string> = { might: '무력', wit: '지략', politics: '정치', charm: '매력' };
-  return Object.entries(item.stats ?? {})
-    .map(([k, v]) => `${LABEL[k as StatKey]} +${v}`)
-    .join(' · ');
+  if (item.slot === 'weapon') return `공격력 +${Math.round(B.weaponAtk * item.tier * 100)}%`;
+  const pct = (x: number) => `${Math.round(x * 100)}%`;
+  const parts: string[] = [];
+  if (item.pct) parts.push(`모든 능력치 +${pct(item.pct)}`);
+  if (item.hp) parts.push(`체력 +${pct(item.hp)}`);
+  if (item.crit) parts.push(`치명타 +${pct(item.crit)}`);
+  if (item.skill) parts.push(`기술 피해 +${pct(item.skill)}`);
+  if (item.weak) parts.push(`유리한 속성 피해 +${pct(item.weak)}`);
+  if (item.exp) parts.push(`속도 +${Math.round(item.exp * 40)}`);
+  const own = item.owner ? ` · ${YOKAI_BY_ID[item.owner]?.name ?? ''}이(가) 끼면 1.5배` : '';
+  return parts.join(', ') + own;
 }

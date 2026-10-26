@@ -1,5 +1,7 @@
 # 작업: 왕도 v2 화면을 새로 만들기 (src/ui, src/styles.css)
 
+> 지난 작업 지시(v2 화면)다. 지금 구조는 `docs/COLLECTION_DESIGN.md`를 본다.
+
 먼저 읽을 것: `docs/DESIGN.md`(톤·시스템), `docs/mockup-v2.1.jpg`와 `docs/mockup-v2.1.html`(확정된 시안. 색·패널·글씨·아이콘을 이걸 그대로 따른다), `src/core/*.ts`(게임 규칙, 이미 완성됨), `src/data/*.ts`.
 
 ## 지킬 것

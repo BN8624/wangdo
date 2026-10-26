@@ -1,11 +1,14 @@
 // 데이터끼리 맞물리는 규칙. 수치를 바꾸다 게임이 막히는 일을 막는다.
 import { describe, expect, it } from 'vitest';
 import { simulateRun } from '../src/core/sim';
+import { rankFame } from '../src/core/engine';
 import { NODES, NODE_BY_ID, REGIONS } from '../src/data/world';
 import { ITEM_BY_ID } from '../src/data/items';
 import { ART_ASSETS } from '../src/data/art';
-import { RANKS } from '../src/data/ranks';
 import { CHAPTERS, STAGES_PER_CHAPTER } from '../src/data/stages';
+import { STAGES, stageWaves } from '../src/core/campaign';
+import { ELEMENT, roleOf } from '../src/data/roster';
+import { SKILLS } from '../src/data/skills';
 import { WISHES } from '../src/data/wishes';
 import { EPISODES, EPISODE_BY_ID } from '../src/data/story';
 import { episodeRecruits, validateEpisode } from '../src/core/story';
@@ -17,14 +20,29 @@ describe('데이터 무결성', () => {
     expect(new Set(WISHES.map((w) => w.id)).size).toBe(WISHES.length);
   });
 
-  it('이야기·만남·관직으로 합류하는 식객이 모두 있고, 겹쳐서 합류하지 않으며, 모두 합류할 길이 있다', () => {
-    const byRank = RANKS.flatMap((r) => (r.recruit ? [r.recruit] : []));
+  it('이야기로 합류하는 식객이 모두 있고 겹치지 않으며, 모든 식객이 뽑기·이야기로 얻을 수 있다', () => {
     const byStory = EPISODES.flatMap(episodeRecruits);
-    const byMeet = NODES.flatMap((n) => (n.kind === 'quest' && n.recruit ? [n.heroine] : []));
-    const all = [...byRank, ...byStory, ...byMeet];
-    for (const id of all) expect(YOKAI_BY_ID[id], id).toBeDefined();
-    expect(new Set(all).size).toBe(all.length);
-    for (const y of YOKAI) expect(STARTERS.includes(y.id) || all.includes(y.id), y.id).toBe(true);
+    for (const id of byStory) expect(YOKAI_BY_ID[id], id).toBeDefined();
+    expect(new Set(byStory).size).toBe(byStory.length);
+    for (const g of [1, 2, 3]) expect(YOKAI.some((y) => y.grade === g), `등급 ${g}`).toBe(true);
+    expect(STARTERS.length).toBeGreaterThan(0);
+  });
+
+  it('식객마다 속성·역할·고유 기술이 있다', () => {
+    for (const y of YOKAI) {
+      expect(ELEMENT[y.id], y.id).toBeDefined();
+      expect(SKILLS[y.id], y.id).toBeDefined();
+      expect(roleOf(y.id), y.id).toBeTruthy();
+    }
+  });
+
+  it('스테이지마다 적 웨이브가 있고, 장마다 마지막은 대장이다', () => {
+    for (const st of STAGES) {
+      const waves = stageWaves(st);
+      expect(waves.length, st.label).toBeGreaterThan(0);
+      for (const w of waves) expect(w.length, st.label).toBeGreaterThan(0);
+      if (st.boss && st.chapter > 0) expect(waves[waves.length - 1].some((u) => u.boss), st.label).toBe(true);
+    }
   });
 
   it('지도: 길의 모든 칸이 있고, 조건이 가리키는 화·노드·식객·장비가 모두 있다', () => {
@@ -63,26 +81,20 @@ describe('데이터 무결성', () => {
     for (const c of CHAPTERS) expect(c.foes.length).toBe(STAGES_PER_CHAPTER - 1);
   });
 
-  it('칭호 조건은 점점 커진다', () => {
-    for (let r = 2; r < RANKS.length; r++) {
-      expect(RANKS[r].powerReq).toBeGreaterThan(RANKS[r - 1].powerReq);
-      expect(RANKS[r].fameCost).toBeGreaterThan(RANKS[r - 1].fameCost);
-    }
+  it('관직에 필요한 명성은 점점 커진다', () => {
+    for (let r = 1; r < 20; r++) expect(rankFame(r + 1)).toBeGreaterThan(rankFame(r));
   });
 
 });
 
 describe('진행 속도', { timeout: 120_000 }, () => {
-  it('쉬지 않고 하면 1·2부의 모든 이야기·던전·사연을 막힘 없이 몇 시간에 걸쳐 끝낸다', () => {
+  it('쉬지 않고 하면 모든 장을 막힘 없이 몇 시간에 걸쳐 깨고, 막힐 때 수련장에서 키운다', () => {
     const r = simulateRun();
     expect(r.stuck).toBeNull();
-    for (const ep of EPISODES) expect(r.episodeAt[ep.id], ep.id).toBeDefined();
+    for (const ep of EPISODES) expect(r.chapterAt[ep.id], ep.id).toBeDefined();
     expect(r.minutes).toBeGreaterThan(4 * 60);
-    expect(r.minutes).toBeLessThan(12 * 60);
-    // 전투는 대체로 이길 만하지만 쉽지만은 않다
-    const fixed = r.fights.filter((f) => f.kind !== 'field');
-    const winRate = fixed.filter((f) => f.won).length / fixed.length;
-    expect(winRate).toBeGreaterThan(0.6);
-    expect(winRate).toBeLessThan(0.95);
+    expect(r.minutes).toBeLessThan(16 * 60);
+    expect(r.battles.train).toBeGreaterThan(0);
+    expect(r.pulls).toBeGreaterThan(50);
   });
 });

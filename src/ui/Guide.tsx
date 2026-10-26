@@ -4,12 +4,15 @@ import { YOKAI_BY_ID } from '../data/yokai';
 import { Portrait } from './Portrait';
 import { act } from './store';
 
+const TAB_LABEL = { home: '로비', yokai: '식객', camp: '출정', gacha: '모집' } as const;
+
 export function rewardText(step: GuideStep): string {
   const r = step.reward;
   if (!r) return '';
   const parts: string[] = [];
+  if (r.jade) parts.push(`옥 +${r.jade}`);
   if (r.coin) parts.push(`엽전 +${r.coin}`);
-  if (r.grain) parts.push(`곡식 +${r.grain}`);
+  if (r.exp) parts.push(`수련치 +${r.exp}`);
   if (r.fame) parts.push(`명성 +${r.fame}`);
   if (r.gift) parts.push(`선물 〈${GIFT_BY_ID[r.gift].name}〉`);
   return parts.join(' · ');
@@ -19,7 +22,7 @@ export function rewardText(step: GuideStep): string {
 export function GuideBar({ step, index, tab }: { step: GuideStep; index: number; tab: string }) {
   const def = YOKAI_BY_ID[step.who];
   const keys = step.tab && step.tab !== tab ? [`tab-${step.tab}`] : (step.target ?? '').split(' ').filter(Boolean);
-  const selector = keys.map((k) => `[data-guide="${k}"]`).join(', ');
+  const selector = keys.map((k) => `[data-guide~="${k}"]`).join(', ');
   return (
     <>
       {selector && <style>{`${selector} { animation: guidePulse 1.2s ease-in-out infinite; z-index: 11; }`}</style>}
@@ -35,7 +38,7 @@ export function GuideBar({ step, index, tab }: { step: GuideStep; index: number;
             </small>
           </div>
           <div className="guide-text">
-            {step.tab && step.tab !== tab ? `아래 〈${{ home: '궁궐', yokai: '식객', adv: '모험' }[step.tab]}〉 탭으로 가 볼까요? ` : ''}
+            {step.tab && step.tab !== tab ? `아래 〈${TAB_LABEL[step.tab]}〉 탭으로 가 볼까요? ` : ''}
             {step.text}
           </div>
           {!step.done && (

@@ -1,11 +1,11 @@
 // 게임이 가리키는 그림 파일이 모두 있는지: 출시 전에 빠진 그림을 잡는다.
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { ART, foeArtPath } from '../src/data/art';
+import { ART } from '../src/data/art';
 import { BGS, ITEMS, SCENES } from '../src/core/story';
 import { EPISODES } from '../src/data/story';
-import { CHAPTERS, STAGES_PER_CHAPTER } from '../src/data/stages';
-import { stageInfo } from '../src/core/engine';
+import { STAGES, stageWaves } from '../src/core/campaign';
+import { trainWaves, TRAIN_LEVELS } from '../src/core/idle';
 import { YOKAI } from '../src/data/yokai';
 import { NODES } from '../src/data/world';
 
@@ -31,13 +31,13 @@ describe('그림 파일', () => {
     expect([...new Set([...used, ...listed])].filter((p) => !has(p))).toEqual([]);
   });
 
-  it('토벌의 배경·상대 그림이 있다', () => {
+  it('캠페인·수련장의 전투 배경과 적 그림이 있다', () => {
     const missing: string[] = [];
-    for (const c of CHAPTERS) if (!has(ART.battle(c.id))) missing.push(ART.battle(c.id));
-    for (let i = 0; i < CHAPTERS.length * STAGES_PER_CHAPTER; i++) {
-      const p = foeArtPath(stageInfo(i)!);
-      if (!has(p)) missing.push(p);
+    for (const st of STAGES) {
+      if (!has(ART.battle(st.bg))) missing.push(ART.battle(st.bg));
+      for (const u of stageWaves(st).flat()) if (!has(u.art)) missing.push(u.art);
     }
+    for (let t = 0; t < TRAIN_LEVELS.length; t++) for (const u of trainWaves(t).flat()) if (!has(u.art)) missing.push(u.art);
     expect([...new Set(missing)]).toEqual([]);
   });
 

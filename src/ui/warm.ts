@@ -1,7 +1,7 @@
 // 곧 쓸 그림을 한가할 때 미리 받아 둔다. 처음 보는 전투나 이야기에서 그림이 늦게 뜨지 않게 한다.
-import { bestField, dungeonEncounter, fieldEncounter, nextAdventure, questEncounter } from '../core/adventure';
+import { nextStage, stageWaves } from '../core/campaign';
 import type { GameState } from '../core/types';
-import { ART, foeArtPath } from '../data/art';
+import { ART } from '../data/art';
 
 const done = new Set<string>();
 
@@ -18,16 +18,11 @@ function idle(fn: () => void): () => void {
   return () => clearTimeout(t);
 }
 
-/** 미리 받을 그림 목록: 데리고 있는 식객의 전신, 다음 모험과 수련 필드의 배경·상대 */
+/** 미리 받을 그림 목록: 데리고 있는 식객의 카드·전신, 다음 스테이지의 배경·상대 */
 export function warmList(s: GameState): string[] {
-  const list = Object.keys(s.yokai).map((id) => ART.full(id));
-  const node = nextAdventure(s);
-  const field = bestField(s);
-  const infos = [
-    node?.kind === 'dungeon' ? dungeonEncounter(s, node) : node?.kind === 'quest' ? questEncounter(s, node) : null,
-    field ? fieldEncounter(s, field) : null,
-  ];
-  for (const info of infos) if (info) list.push(ART.battle(info.bg ?? info.chapter.id), foeArtPath(info));
+  const list = Object.keys(s.yokai).flatMap((id) => [ART.card(id), ART.full(id)]);
+  const st = nextStage(s);
+  if (st) list.push(ART.battle(st.bg), ...stageWaves(st).flat().map((u) => u.art));
   return [...new Set(list)].filter((u) => !done.has(u));
 }
 

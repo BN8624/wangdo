@@ -1,96 +1,310 @@
-// 이야기 속 전투. 화마다 장면 사이에 전투가 끼어 '대화 → 전투 → 대화'로 이어진다.
-// 상대는 지쳐 주지 않는다. 버거우면 모험에서 키운 뒤 다시 온다(첫 전투만은 반드시 이기게 약하게 둔다).
+// 캠페인: 장(= 이야기 화)마다 스테이지 여섯. 화의 전투가 주요 스테이지가 되고(마지막 전투 = 대장),
+// 나머지는 그 장의 무대에 맞는 졸개 웨이브로 채운다. 화의 장면은 스테이지 사이 컷신으로 나눠 넣는다.
+import { BALANCE as B } from '../data/balance';
 import { EPISODES } from '../data/story';
-import { CHAPTERS } from '../data/stages';
-import type { SkillKind } from './battle';
-import { avgLevel, battleCoin, battleFame, foeValue, freshYokai, playBattle, roundStats, settle, type FightResult } from './engine';
+import { CHAPTERS as SETS } from '../data/stages';
+import { NODE_BY_ID, REGIONS, type FoeDef } from '../data/world';
+import type { Element, Role } from '../data/roster';
+import { YOKAI_BY_ID } from '../data/yokai';
+import type { CombatResult, CombatSetup, UnitInit } from './combat';
 import { nextRandom } from './rng';
-import type { Episode, GameState, StageInfo, StatKey } from './types';
+import type { Episode, GameState, StoryBattle, StoryLine } from './types';
+import { foeUnit, heroUnit, levelCap, startStars, wavePower } from './units';
 
-export const battleKey = (ep: Episode, n: number) => `${ep.id}#${n}`;
+export interface Cut {
+  /** 이 범위의 장면(포함)을 보여 준다 */
+  scenes?: [number, number];
+  /** 이야기 전투 앞뒤 대화 */
+  lines?: StoryLine[];
+}
 
-/** 이야기 전투 전체의 순번(난이도와 보상이 이 순번을 따라 오른다) */
-const ORDER = new Map<string, number>();
-EPISODES.forEach((ep) => (ep.battles ?? []).forEach((_, n) => ORDER.set(battleKey(ep, n), ORDER.size)));
-export const storyBattleCount = () => ORDER.size;
-export const storyBattleOrder = (ep: Episode, n: number) => ORDER.get(battleKey(ep, n)) ?? 0;
+export interface StageDef {
+  id: string;
+  /** 0부터 센 장 순번 */
+  chapter: number;
+  /** 장 안의 번호(1~6) */
+  k: number;
+  ep: Episode;
+  /** "3-4" */
+  label: string;
+  level: number;
+  boss: boolean;
+  /** 이 스테이지가 맡은 이야기 전투 */
+  battle?: StoryBattle;
+  pre: Cut;
+  post: Cut;
+  bg: string;
+}
 
-const WEAK_KINDS: SkillKind[] = ['strike', 'stun', 'guard', 'weaken', 'rally'];
+const N = B.stagesPerChapter;
+const OLD_MAX = Math.max(...EPISODES.flatMap((e) => (e.battles ?? []).map((b) => b.level ?? 1)));
+/** 화의 전투 레벨을 마지막 장 대장 레벨에 맞춰 줄인다 */
+const scaleLevel = (lv: number) => Math.max(1, Math.round((lv * B.finalLevel) / OLD_MAX));
 
-/** 이야기 전투 하나의 상대 정보. 토벌과 같은 모양이라 전투 화면·편성 계산을 그대로 쓴다 */
-export function storyBattleInfo(s: GameState, ep: Episode, n: number): StageInfo {
-  const b = ep.battles![n];
-  const k = storyBattleOrder(ep, n);
-  const chapterIndex = Math.max(0, CHAPTERS.findIndex((c) => c.id === b.set));
-  const chapter = CHAPTERS[chapterIndex];
-  const size = Math.min(3, Math.max(1, b.size ?? 3));
+function hash(text: string): number {
+  let h = 2166136261;
+  for (const c of text) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
 
-  let seed = k * 104729 + 7;
+/** 화의 전투를 맡을 스테이지 번호 */
+function battleStages(count: number): number[] {
+  if (count <= 0) return [];
+  if (count === 1) return [N];
+  return Array.from({ length: count }, (_, i) => Math.max(1, Math.round((N * (i + 1)) / count)));
+}
+
+function buildChapter(ep: Episode, chapter: number, startLevel: number): StageDef[] {
+  const battles = ep.battles ?? [];
+  const at = battleStages(battles.length);
+  const endLevel = Math.max(startLevel, ...battles.map((b) => scaleLevel(b.level ?? 1)));
+  const lastScene = ep.scenes.length - 1;
+  const set = battles[0]?.set ?? 'backhill';
+  const stages: StageDef[] = [];
+  let shown = -1;
+  for (let k = 1; k <= N; k++) {
+    const bi = at.indexOf(k);
+    const battle = bi >= 0 ? battles[bi] : undefined;
+    const pre: Cut = {};
+    if (battle) {
+      const upto = Math.min(lastScene, battle.after);
+      // 첫 스테이지가 이 전투가 아니면 첫 장면만 1스테이지 앞에 두었다
+      if (upto > shown) pre.scenes = [shown + 1, upto];
+      shown = Math.max(shown, upto);
+      if (battle.intro?.length) pre.lines = battle.intro;
+    } else if (k === 1 && lastScene >= 0) {
+      const firstBattle = battles[0]?.after ?? lastScene;
+      const upto = Math.min(firstBattle, 0);
+      pre.scenes = [0, upto];
+      shown = upto;
+    }
+    const post: Cut = {};
+    if (battle?.outro?.length) post.lines = battle.outro;
+    if (k === N && shown < lastScene) post.scenes = [shown + 1, lastScene];
+    const level = Math.round(startLevel + ((endLevel - startLevel) * k) / N);
+    stages.push({
+      id: `${ep.id}-${k}`,
+      chapter,
+      k,
+      ep,
+      label: `${chapter + 1}-${k}`,
+      level: battle ? Math.max(level, scaleLevel(battle.level ?? 1)) : level,
+      boss: k === N,
+      battle,
+      pre,
+      post,
+      bg: battle?.bg ?? (battle?.set ?? set),
+    });
+  }
+  return stages;
+}
+
+function buildAll(): StageDef[] {
+  const out: StageDef[] = [];
+  let level = 1;
+  EPISODES.forEach((ep, i) => {
+    const chapter = buildChapter(ep, i, level);
+    out.push(...chapter);
+    level = chapter[chapter.length - 1].level;
+  });
+  return out;
+}
+
+export const STAGES: StageDef[] = buildAll();
+export const STAGE_BY_ID: Record<string, StageDef> = Object.fromEntries(STAGES.map((st) => [st.id, st]));
+export const CHAPTER_COUNT = EPISODES.length;
+export const chapterStages = (chapter: number) => STAGES.filter((st) => st.chapter === chapter);
+
+// ───────────────────────── 진행 ─────────────────────────
+
+export const stageStars = (s: GameState, id: string) => s.camp.stars[id] ?? 0;
+export const stageCleared = (s: GameState, id: string) => stageStars(s, id) > 0;
+
+/** 앞 스테이지를 깼으면 열린다 */
+export function stageOpen(s: GameState, st: StageDef): boolean {
+  const i = STAGES.indexOf(st);
+  return i <= 0 || stageCleared(s, STAGES[i - 1].id);
+}
+
+/** 다음에 깰 스테이지(다 깼으면 null) */
+export function nextStage(s: GameState): StageDef | null {
+  return STAGES.find((st) => !stageCleared(s, st.id)) ?? null;
+}
+
+/** 가장 멀리 깬 스테이지 */
+export function furthestStage(s: GameState): StageDef | null {
+  let last: StageDef | null = null;
+  for (const st of STAGES) if (stageCleared(s, st.id)) last = st;
+  return last;
+}
+
+export const chapterStars = (s: GameState, chapter: number) => chapterStages(chapter).reduce((a, st) => a + stageStars(s, st.id), 0);
+export const chapterOpen = (s: GameState, chapter: number) => stageOpen(s, chapterStages(chapter)[0]);
+
+// ───────────────────────── 적 ─────────────────────────
+
+const ELEMENTS: Element[] = ['fire', 'water', 'wood', 'light', 'dark'];
+const ROLES: Role[] = ['attack', 'attack', 'attack', 'defense', 'defense', 'support', 'support', 'heal'];
+
+/** 그 장의 졸개들: 이야기 화가 있는 지역의 필드·던전 무리, 없으면 화 전투의 무대 */
+function gruntPool(ep: Episode): FoeDef[] {
+  const region = REGIONS.find((r) => r.path.includes(`ep:${ep.id}`));
+  const pool: FoeDef[] = [];
+  for (const p of region?.path ?? []) {
+    const n = NODE_BY_ID[p];
+    if (n?.kind === 'field') pool.push(...n.foes);
+    if (n?.kind === 'dungeon') pool.push(...n.pool);
+  }
+  if (pool.length) return pool;
+  const set = SETS.find((c) => c.id === (ep.battles?.[0]?.set ?? 'backhill')) ?? SETS[0];
+  return set.foes.map((name, i) => ({ name, art: `grunt/${set.id}${set.grunts[i] > 1 ? `-${set.grunts[i]}` : ''}` }));
+}
+
+function storyFoeArt(b: StoryBattle): string {
+  if (b.rival) return `art/full/${b.rival}.webp`;
+  if (b.art) return `art/${b.art}.webp`;
+  if (b.boss) return `art/boss/${b.set}.webp`;
+  return `art/grunt/${b.set}${b.grunt && b.grunt > 1 ? `-${b.grunt}` : ''}.webp`;
+}
+
+/** 스테이지의 적 웨이브. 정해진 규칙으로 만들어 늘 같다 */
+export function stageWaves(st: StageDef): UnitInit[][] {
+  const pool = gruntPool(st.ep);
+  let seed = hash(st.id);
   const pick = () => {
     const [r, next] = nextRandom(seed);
     seed = next;
     return r;
   };
-  const stats: StatKey[] = b.stats?.length ? b.stats.slice(0, size) : roundStats(withGuests(s, ep, n), size, pick);
-  const factors = { 1: [1], 2: [0.95, 1.05], 3: [0.9, 1, 1.1] }[size]!;
-  const level = b.level ?? 1;
-  const base = foeValue(level, b.boss ? 'boss' : 'story') * (b.power ?? 1);
-  return {
-    index: 100_000 + k * 100,
-    chapter,
-    chapterIndex,
-    number: b.grunt ?? 1,
-    isBoss: !!b.boss,
-    foe: b.foe,
-    rounds: stats.map((stat, i) => ({ stat, value: Math.max(1, Math.round(base * factors[i])) })),
-    weak: b.weak ?? WEAK_KINDS[k % WEAK_KINDS.length],
-    fame: battleFame(level) * (b.boss ? 3 : 1),
-    coin: battleCoin(level) * (b.boss ? 3 : 1),
-    level,
-    grunt: b.grunt,
-    rival: b.rival,
-    art: b.art,
-    bg: b.bg,
-    story: { ep: ep.id, n },
-    line: b.line,
+  const tutorial = st.chapter === 0 && st.k === 1;
+  const power = (1 + B.foeChapterGrowth * st.chapter) * (st.battle?.power ?? 1) * (tutorial ? 0.5 : 1);
+  const grunt = (i: number, w: number) => {
+    const f = pool[Math.floor(pick() * pool.length)];
+    return foeUnit({
+      id: `${st.id}:${w}:${i}`,
+      name: f.name,
+      art: `art/${f.art}.webp`,
+      level: st.level,
+      role: ROLES[Math.floor(pick() * ROLES.length)],
+      element: ELEMENTS[hash(f.name) % ELEMENTS.length],
+      kind: 'grunt',
+      power,
+      skill: pick() < 0.35,
+    });
   };
-}
-
-/** 이 전투에 나설 수 있는 식객이 있는 상태: 아직 합류하지 않은 손님 식객은 지금 식객들의 평균 레벨로 잠시 끼워 준다 */
-export function withGuests(s: GameState, ep: Episode, n: number): GameState {
-  const guests = (ep.battles![n].guests ?? []).filter((id) => !s.yokai[id]);
-  if (!guests.length) return s;
-  const level = avgLevel(s);
-  const next: GameState = { ...s, yokai: { ...s.yokai } };
-  for (const id of guests) next.yokai[id] = { ...freshYokai(), level };
-  return next;
-}
-
-/** 지금 이 화에서 아직 이기지 않은 첫 전투(없으면 null) */
-export function nextStoryBattle(s: GameState, ep: Episode): number | null {
-  if (s.story.done.includes(ep.id)) return null;
-  const i = (ep.battles ?? []).findIndex((_, n) => !s.story.won.includes(battleKey(ep, n)));
-  return i < 0 ? null : i;
-}
-
-/** 이야기 전투를 치른다. 이기면 경험치·엽전·선물, 지면 아무것도 얻지 못한다 */
-export function storyFight(s: GameState, now: number, ep: Episode, n: number, party: string[]): [GameState, FightResult] {
-  const b = ep.battles?.[n];
-  if (!b) return [s, { ok: false, reason: 'bad-party' }];
-  const next = settle(s, now);
-  const arena = withGuests(next, ep, n);
-  const info = storyBattleInfo(next, ep, n);
-  if (party.length !== info.rounds.length || new Set(party).size !== party.length || party.some((id) => !arena.yokai[id])) {
-    return [s, { ok: false, reason: 'bad-party' }];
+  const waveCount = tutorial ? 1 : st.k <= 2 ? 2 : 3;
+  const size = tutorial ? 2 : Math.min(5, 2 + Math.floor(st.chapter / 5) + (st.k >= 4 ? 1 : 0));
+  const waves: UnitInit[][] = [];
+  for (let w = 0; w < waveCount; w++) waves.push(Array.from({ length: size }, (_, i) => grunt(i, w)));
+  if (st.battle && !tutorial) {
+    const b = st.battle;
+    const kind = st.boss ? 'boss' : 'elite';
+    const lead = foeUnit({
+      id: `${st.id}:lead`,
+      name: b.foe,
+      art: storyFoeArt(b),
+      level: st.level,
+      role: st.boss ? 'attack' : ROLES[hash(b.foe) % ROLES.length],
+      element: b.rival && YOKAI_BY_ID[b.rival] ? (ELEMENTS[hash(b.rival) % ELEMENTS.length]) : ELEMENTS[hash(b.foe) % ELEMENTS.length],
+      kind,
+      power,
+      skill: true,
+    });
+    const last = waves[waves.length - 1];
+    last.splice(Math.max(1, last.length - 2), last.length, lead);
   }
-  const r = playBattle(next, arena, info, party, { boss: b.boss, giftChance: 1 });
-  const key = battleKey(ep, n);
-  if (r.won) next.story = { ...next.story, won: [...next.story.won, key] };
-  else next.story = { ...next.story, losses: { ...next.story.losses, [key]: (next.story.losses[key] ?? 0) + 1 } };
-  return [next, r];
+  return waves;
 }
 
-/** 보다가 멈춘 곳을 저장한다(전투를 앞두고 나가면 다음에 그 전투부터) */
-export function saveStoryPlace(s: GameState, at: NonNullable<GameState['story']['at']>): GameState {
-  return { ...s, story: { ...s.story, at } };
+/** 권장 전투력 */
+export const stagePower = (st: StageDef) => wavePower(stageWaves(st));
+
+/** 같은 스테이지·같은 편성·같은 식객 상태면 같은 씨앗(다시 눌러 운으로 이기지 않게) */
+export function battleSeed(s: GameState, key: string, team: string[]): number {
+  let text = key;
+  for (const id of team) {
+    const y = s.yokai[id];
+    if (y) text += `|${id}:${y.level}:${y.stars}:${y.gear.weapon ?? ''}:${y.gear.trinket ?? ''}:${Math.floor(y.bond / 50)}`;
+  }
+  return hash(text);
+}
+
+export function stageSetup(s: GameState, st: StageDef, team: string[]): CombatSetup {
+  const ids = team.slice(0, 5);
+  return { allies: ids.map((id) => (id && s.yokai[id] ? heroUnit(s, id, ids) : null)), waves: stageWaves(st) };
+}
+
+// ───────────────────────── 보상 ─────────────────────────
+
+export interface StageReward {
+  jade: number;
+  coin: number;
+  exp: number;
+  fame: number;
+  memory: number;
+  items: string[];
+  recruits: string[];
+  shards: Record<string, number>;
+}
+
+export const emptyReward = (): StageReward => ({ jade: 0, coin: 0, exp: 0, fame: 0, memory: 0, items: [], recruits: [], shards: {} });
+
+/** 첫 클리어 보상 미리보기 */
+export function firstClearReward(st: StageDef): StageReward {
+  const r = emptyReward();
+  r.jade = st.boss ? B.bossClearJade : B.firstClearJade;
+  r.coin = Math.round(B.stageCoin.base + B.stageCoin.perLevel * st.level);
+  r.exp = Math.round(B.stageExp.base + B.stageExp.perLevel * st.level);
+  r.fame = Math.round(B.stageFame.base + B.stageFame.perLevel * st.level);
+  if (st.boss) {
+    r.memory = B.chapterMemory;
+    r.coin += st.ep.reward?.coin ?? 0;
+    r.fame += st.ep.reward?.fame ?? 0;
+  }
+  return r;
+}
+
+export function episodeRecruits(ep: Episode): string[] {
+  const r = ep.reward?.recruit;
+  return (Array.isArray(r) ? r : r ? [r] : []).filter((id) => YOKAI_BY_ID[id]);
+}
+
+/** 스테이지 결과를 반영한다(제자리에서 고친다). 지면 아무것도 주지 않는다 */
+export function applyStage(s: GameState, st: StageDef, team: string[], result: CombatResult): { first: boolean; stars: number; reward: StageReward } {
+  const reward = emptyReward();
+  if (!result.won) {
+    s.totals.losses += 1;
+    return { first: false, stars: 0, reward };
+  }
+  s.totals.wins += 1;
+  s.totals.stages += 1;
+  const prev = stageStars(s, st.id);
+  const stars = Math.max(prev, result.stars);
+  s.camp = { stars: { ...s.camp.stars, [st.id]: stars } };
+  const first = prev === 0;
+  if (first) Object.assign(reward, firstClearReward(st));
+  reward.jade += (stars - prev) * B.starJade;
+  for (const id of team) if (id && s.yokai[id]) s.yokai[id].bond += B.battleBond;
+  if (first && st.boss) {
+    if (!s.story.done.includes(st.ep.id)) s.story = { ...s.story, done: [...s.story.done, st.ep.id] };
+    const top = Object.values(s.yokai).map((y) => y.level).sort((a, b) => b - a).slice(0, 5);
+    const level = Math.max(1, Math.round(top.reduce((a, x) => a + x, 0) / Math.max(1, top.length)));
+    for (const id of episodeRecruits(st.ep)) {
+      if (s.yokai[id]) {
+        s.yokai[id].shards += B.storyDupeShards;
+        reward.shards[id] = B.storyDupeShards;
+      } else {
+        const stars = startStars(id);
+        s.yokai[id] = { level: Math.min(level, levelCap(stars)), stars, shards: 0, bond: 0, talkAt: 0, outingAt: 0, seen: 0, talks: 0, gear: {} };
+        reward.recruits.push(id);
+      }
+    }
+  }
+  s.res.jade += reward.jade;
+  s.res.coin += reward.coin;
+  s.res.exp += reward.exp;
+  s.res.fame += reward.fame;
+  if (reward.memory) s.inventory = { ...s.inventory, memory: (s.inventory.memory ?? 0) + reward.memory };
+  if (s.totals.wins % B.winsPerPetition === 0) s.wish = { ...s.wish, charges: s.wish.charges + 1 };
+  return { first, stars, reward };
 }

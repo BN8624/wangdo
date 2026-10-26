@@ -1,6 +1,6 @@
-import { BATTLE, SKILL_DAMAGE, type BattleSkill, type SkillKind } from '../core/battle';
+import { COMBAT, type BattleSkill, type SkillKind } from '../core/combat';
 
-// 식객 고유 기술. 토벌에서 세 번에 한 번 쓴다(첫 기술은 편성 순서대로 한 차례씩 늦게). 종류는 설화 속 정체와 하는 일에서 골랐다.
+// 식객 고유 기술(쿨타임 3차례). 종류는 설화 속 정체와 하는 일에서 골랐고, 종류가 곧 역할을 정한다(src/data/roster.ts).
 export const SKILLS: Record<string, BattleSkill> = {
   baekseol: { name: '여우불 홀림', kind: 'stun' },
   muyeong: { name: '쇠방망이 내려치기', kind: 'strike' },
@@ -28,16 +28,16 @@ const pct = (x: number) => `${Math.round(x * 100)}%`;
 export function skillText(kind: SkillKind): string {
   switch (kind) {
     case 'strike':
-      return `맡은 능력치의 ${SKILL_DAMAGE.strike}배로 크게 친다.`;
+      return `적 하나에게 공격력의 ${COMBAT.mult.strike}배 피해.`;
     case 'stun':
-      return '치면서 상대를 기절시켜 다음 반격을 한 번 막는다.';
+      return `적 하나에게 ${COMBAT.mult.stun}배 피해를 주고 한 차례 기절시킨다.`;
     case 'guard':
-      return `치면서 식객 모두에게 방어를 걸어 다음 피해를 ${pct(1 - BATTLE.guardCut)} 줄인다.`;
+      return `아군 모두에게 자기 최대 체력 ${pct(COMBAT.shieldRatio)}만큼 보호막(${COMBAT.buffTurns}차례)을 씌운다.`;
     case 'heal':
-      return `가볍게 치고 가장 다친 식객의 체력을 ${pct(BATTLE.healRatio)} 채운다.`;
+      return `가장 다친 아군을 공격력의 ${COMBAT.heal}배, 나머지를 ${COMBAT.healRest}배 회복한다.`;
     case 'weaken':
-      return `치면서 상대를 약화시켜 ${BATTLE.weakTurns}차례 동안 반격이 ${pct(1 - BATTLE.weakCut)} 약해진다.`;
+      return `적 모두에게 ${COMBAT.mult.weaken}배 피해를 주고 공격력을 ${pct(COMBAT.atkDown)} 깎는다(${COMBAT.buffTurns}차례).`;
     case 'rally':
-      return `치면서 식객 모두를 격려해 이어지는 공격 ${BATTLE.rallyHits}번이 ${BATTLE.rallyBoost}배가 된다.`;
+      return `아군 모두의 공격력을 ${pct(COMBAT.atkUp)} 올리고(${COMBAT.buffTurns}차례) 적 하나를 친다.`;
   }
 }

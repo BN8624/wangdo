@@ -1,151 +1,119 @@
-// 토벌 자동 전투: 같은 씨앗이면 같은 전투, 기록이 규칙에 맞는지, 강할수록 잘 이기는지, 고유 기술이 제대로 걸리는지
+// 턴제 자동 전투: 같은 씨앗이면 같은 전투, 속도 순서, 상성, 기술 쿨타임·효과, 웨이브와 별, 수동 모드
 import { describe, expect, it } from 'vitest';
-import { BATTLE, battleOdds, isSkillTurn, runBattle, type BattleSetup, type SkillKind } from '../src/core/battle';
+import { COMBAT, Combat, runCombat, type CombatSetup, type SkillKind, type UnitInit } from '../src/core/combat';
+import { ALLY_LINES } from '../src/data/battle-lines';
+import { ELEMENT, advantage } from '../src/data/roster';
 import { SKILLS } from '../src/data/skills';
-import { ALLY_LINES, FOE_LINE_CHAPTERS, foeLines } from '../src/data/battle-lines';
-import { CHAPTERS } from '../src/data/stages';
 import { YOKAI } from '../src/data/yokai';
-import { battleChance, bestParty, freshYokai, newGame, stageInfo, statsOf } from '../src/core/engine';
 
-const setup = (ratio: number, kinds: SkillKind[] = ['strike', 'heal', 'stun']): BattleSetup => ({
-  allies: [85, 100, 115].map((v, i) => ({ id: `a${i}`, stat: 'might' as const, power: v * ratio, skill: { name: `기술${i}`, kind: kinds[i] } })),
-  foe: { name: '산적', values: [85, 100, 115] },
+const unit = (over: Partial<UnitInit> = {}): UnitInit => ({
+  id: over.id ?? 'u',
+  name: over.name ?? '시험',
+  art: '',
+  element: 'fire',
+  role: 'attack',
+  hp: 1000,
+  atk: 100,
+  def: 50,
+  spd: 100,
+  crit: 0,
+  ...over,
 });
-const ALL_KINDS: SkillKind[][] = [
-  ['strike', 'heal', 'stun'],
-  ['guard', 'weaken', 'rally'],
-  ['heal', 'heal', 'rally'],
-  ['stun', 'guard', 'strike'],
-];
+const team = (n: number, over: Partial<UnitInit> = {}) => Array.from({ length: n }, (_, i) => unit({ id: `a${i}`, spd: 120 - i, ...over }));
 
-describe('토벌 자동 전투', () => {
-  it('같은 씨앗이면 늘 같은 전투가 나온다', () => {
-    expect(runBattle(setup(1), 42)).toEqual(runBattle(setup(1), 42));
+describe('턴제 자동 전투', () => {
+  it('같은 편성·같은 씨앗이면 늘 같은 전투가 나온다', () => {
+    const setup: CombatSetup = { allies: team(5, { skill: { name: '강타', kind: 'strike' } }), waves: [team(3), team(4)] };
+    expect(runCombat(setup, 42)).toEqual(runCombat(setup, 42));
   });
 
-  it('기록이 규칙에 맞는다: 체력은 0~최대 사이, 이기면 상대 체력이 0, 쓰러진 식객은 움직이지 않는다', () => {
-    for (const kinds of ALL_KINDS) {
-      for (let seed = 1; seed < 40; seed++) {
-        const log = runBattle(setup(0.7 + (seed % 7) * 0.12, kinds), seed);
-        expect(log.rounds).toBeLessThanOrEqual(BATTLE.maxRounds);
-        for (const e of log.events) {
-          if (e.t === 'hit') expect(e.hp).toBeGreaterThanOrEqual(0);
-          if (e.t === 'heal') expect(e.hp).toBeLessThanOrEqual(log.allies[e.target].maxHp);
-        }
-        const lastFoeHit = [...log.events].reverse().find((e) => e.t === 'hit' && e.target < 0);
-        if (log.won) expect(lastFoeHit && lastFoeHit.t === 'hit' ? lastFoeHit.hp : -1).toBe(0);
-        const down = new Set<number>();
-        for (const e of log.events) {
-          if (e.t === 'down') down.add(e.target);
-          if ((e.t === 'hit' || e.t === 'miss' || e.t === 'skill') && e.by >= 0) expect(down.has(e.by)).toBe(false);
-          if (e.t === 'heal') expect(down.has(e.target)).toBe(false);
-        }
-      }
+  it('라운드마다 속도가 빠른 순서로 움직인다', () => {
+    const setup: CombatSetup = { allies: [unit({ id: 'slow', spd: 80 }), unit({ id: 'fast', spd: 140 })], waves: [[unit({ id: 'mid', spd: 110, hp: 99999 })]] };
+    const { events } = runCombat(setup, 1);
+    const acts = events.filter((e) => e.t === 'act').slice(0, 3).map((e) => (e.t === 'act' ? `${e.side}:${e.slot}` : ''));
+    expect(acts).toEqual(['0:1', '1:0', '0:0']);
+  });
+
+  it('상성: 물은 불에, 불은 나무에, 나무는 물에 세고, 빛과 어둠은 서로 세다', () => {
+    expect(advantage('water', 'fire')).toBe(1);
+    expect(advantage('fire', 'wood')).toBe(1);
+    expect(advantage('wood', 'water')).toBe(1);
+    expect(advantage('fire', 'water')).toBe(-1);
+    expect(advantage('light', 'dark')).toBe(1);
+    expect(advantage('dark', 'light')).toBe(1);
+    expect(advantage('fire', 'light')).toBe(0);
+    const hitOf = (element: 'water' | 'wood') => {
+      const { events } = runCombat({ allies: [unit({ element })], waves: [[unit({ hp: 99999, spd: 1 })]] }, 3);
+      const hit = events.find((e) => e.t === 'hit');
+      return hit && hit.t === 'hit' ? hit : null;
+    };
+    expect(hitOf('water')!.adv).toBe(1);
+    expect(hitOf('wood')!.adv).toBe(-1);
+    expect(hitOf('water')!.dmg).toBeGreaterThan(hitOf('wood')!.dmg * 1.4);
+  });
+
+  it('고유 기술은 두 번째 차례에 처음 쓰고, 그 뒤로 세 차례마다 쓴다', () => {
+    const { events } = runCombat({ allies: [unit({ skill: { name: '강타', kind: 'strike' } })], waves: [[unit({ hp: 9e6, atk: 1, spd: 1 })]] }, 5);
+    const myTurns = events.filter((e) => (e.t === 'act' && e.side === 0) || (e.t === 'skill' && e.side === 0));
+    const skillTurns: number[] = [];
+    let turn = 0;
+    for (const e of myTurns) {
+      if (e.t === 'act') turn++;
+      else skillTurns.push(turn);
     }
+    expect(skillTurns.slice(0, 3)).toEqual([COMBAT.firstSkillTurn, COMBAT.firstSkillTurn + COMBAT.skillCd, COMBAT.firstSkillTurn + COMBAT.skillCd * 2]);
   });
 
-  it('식객은 세 번에 한 번 기술을 쓰고, 한 라운드에 기술은 하나뿐이다', () => {
-    const turnsOf = (slot: number) => [1, 2, 3, 4, 5, 6, 7, 8, 9].filter((n) => isSkillTurn(n, slot));
-    expect(turnsOf(0)).toEqual([2, 5, 8]);
-    expect(turnsOf(1)).toEqual([3, 6, 9]);
-    expect(turnsOf(2)).toEqual([4, 7]);
-    for (let seed = 1; seed < 20; seed++) {
-      const log = runBattle(setup(0.9), seed);
-      const turns = [0, 0, 0];
-      for (const e of log.events) {
-        // 차례 하나 = 기술 외침 또는 기술이 아닌 평범한 공격·빗나감
-        const normal = (e.t === 'hit' || e.t === 'miss') && e.by >= 0 && !(e.t === 'hit' && e.skill);
-        if (e.t === 'skill' || normal) expect(isSkillTurn(++turns[e.by], e.by)).toBe(e.t === 'skill');
-      }
-      let skillsThisRound = 0;
-      for (const e of log.events) {
-        if (e.t === 'round') skillsThisRound = 0;
-        if (e.t === 'skill') expect(++skillsThisRound).toBe(1);
-      }
-    }
+  it('기절한 상대는 다음 차례를 쉬고, 보호막은 피해를 먼저 막는다', () => {
+    const stun = runCombat({ allies: [unit({ skill: { name: '홀림', kind: 'stun' }, spd: 200 })], waves: [[unit({ hp: 9e6, spd: 100 })]] }, 2).events;
+    expect(stun.some((e) => e.t === 'stunned' && e.side === 1)).toBe(true);
+    const guard = runCombat({ allies: [unit({ role: 'defense', skill: { name: '방패', kind: 'guard' }, spd: 200, hp: 5000 })], waves: [[unit({ hp: 9e6, spd: 100 })]] }, 2).events;
+    const shield = guard.find((e) => e.t === 'shield');
+    expect(shield).toBeDefined();
+    const after = guard.slice(guard.indexOf(shield!)).find((e) => e.t === 'hit' && e.side === 1);
+    expect(after && after.t === 'hit' && after.shield).toBeGreaterThanOrEqual(0);
   });
 
-  it('기절한 상대는 다음 차례를 쉬고, 걸린 효과는 켜진 만큼 꺼진다', () => {
-    for (let seed = 1; seed < 40; seed++) {
-      const log = runBattle(setup(1, ['stun', 'guard', 'weaken']), seed);
-      let stunned = false;
-      const on: Record<string, boolean> = {};
-      for (const e of log.events) {
-        if (e.t === 'status') {
-          expect(on[`${e.side}-${e.status}`] ?? false).toBe(!e.on);
-          on[`${e.side}-${e.status}`] = e.on;
-          if (e.status === 'stun' && e.on) stunned = true;
-        }
-        if (e.t === 'skip') {
-          expect(stunned).toBe(true);
-          stunned = false;
-        }
-        // 기절한 상대는 공격하지 않는다
-        if ((e.t === 'hit' || e.t === 'miss') && e.by < 0) expect(stunned).toBe(false);
-      }
-    }
+  it('치유는 가장 다친 아군부터 채우고 최대 체력을 넘지 않는다', () => {
+    const setup: CombatSetup = { allies: [unit({ id: 'h', role: 'heal', skill: { name: '밥상', kind: 'heal' }, spd: 50 }), unit({ id: 't', hp: 3000 })], waves: [[unit({ hp: 9e6, atk: 300, spd: 100 })]] };
+    const { events } = runCombat(setup, 9);
+    for (const e of events) if (e.t === 'heal') expect(e.hp).toBeLessThanOrEqual(3000);
   });
 
-  it('강할수록 잘 이긴다', () => {
-    const weak = battleOdds(setup(0.8));
-    const even = battleOdds(setup(1));
-    const strong = battleOdds(setup(1.3));
-    expect(weak).toBeLessThan(even);
-    expect(even).toBeLessThan(strong);
-    expect(even).toBeGreaterThan(0.3);
-    expect(even).toBeLessThan(0.75);
-    expect(strong).toBeGreaterThan(0.85);
+  it('웨이브를 다 넘기면 이기고, 별은 승리·무사·빠른 승리로 매긴다', () => {
+    const strong = runCombat({ allies: team(5, { atk: 2000, hp: 9e5 }), waves: [team(3), team(3)] }, 4);
+    expect(strong.result).toMatchObject({ won: true, deaths: 0, stars: 3 });
+    expect(strong.events.filter((e) => e.t === 'wave')).toHaveLength(2);
+    const weak = runCombat({ allies: [unit({ atk: 5, hp: 100 })], waves: [team(3, { atk: 500 })] }, 4);
+    expect(weak.result).toMatchObject({ won: false, stars: 0 });
   });
 
-  it('식객 모두 고유 기술이 있다', () => {
-    for (const y of YOKAI) expect(SKILLS[y.id], y.id).toBeDefined();
+  it('라운드 제한을 넘기면 진다', () => {
+    const { result } = runCombat({ allies: [unit({ atk: 1, hp: 9e9 })], waves: [[unit({ atk: 1, hp: 9e9 })]] }, 1);
+    expect(result.won).toBe(false);
+    expect(result.rounds).toBe(COMBAT.maxRounds);
   });
 
-  it('식객 모두 토벌 대사가 있고, 장마다 상대 대사가 있다', () => {
+  it('수동이면 누른 식객만 기술을 쓴다', () => {
+    const c = new Combat({ allies: [unit({ skill: { name: '강타', kind: 'strike' } })], waves: [[unit({ hp: 9e6, atk: 1, spd: 1 })]] }, 1, false);
+    const ev: string[] = [];
+    for (let i = 0; i < 30; i++) ev.push(...c.step().map((e) => e.t));
+    expect(ev).not.toContain('skill');
+    expect(c.skillReady(0)).toBe(true);
+    c.queueSkill(0);
+    const later: string[] = [];
+    for (let i = 0; i < 6; i++) later.push(...c.step().map((e) => e.t));
+    expect(later).toContain('skill');
+  });
+
+  it('식객마다 고유 기술·속성·전투 대사가 있다', () => {
+    const kinds = new Set<SkillKind>();
     for (const y of YOKAI) {
+      expect(SKILLS[y.id], y.id).toBeDefined();
+      expect(ELEMENT[y.id], y.id).toBeDefined();
       expect(ALLY_LINES[y.id]?.attack.length, y.id).toBeGreaterThan(0);
-      expect(ALLY_LINES[y.id]?.skill, y.id).toBeTruthy();
+      kinds.add(SKILLS[y.id].kind);
     }
-    expect([...FOE_LINE_CHAPTERS].sort()).toEqual(CHAPTERS.map((c) => c.id).sort());
-    for (const c of CHAPTERS) {
-      expect(foeLines(c.id, false).length).toBeGreaterThan(0);
-      expect(foeLines(c.id, true)[0]).toBe(c.boss.line);
-    }
-  });
-
-  it('추천 편성은 칸마다 능력치만 가장 높은 식객을 고른 편성보다 못하지 않다', () => {
-    const s = newGame(0, 3);
-    for (const y of YOKAI) {
-      s.yokai[y.id] = freshYokai();
-      s.yokai[y.id].level = 20 + ((y.id.length * 3) % 15);
-    }
-    for (const idx of [10, 20, 30]) {
-      const info = stageInfo(idx)!;
-      const greedy: string[] = [];
-      for (const r of info.rounds) {
-        const pick = Object.keys(s.yokai)
-          .filter((id) => !greedy.includes(id))
-          .sort((a, b) => statsOf(s, b)[r.stat] - statsOf(s, a)[r.stat])[0];
-        greedy.push(pick);
-      }
-      const best = bestParty(s, info);
-      expect(new Set(best).size).toBe(3);
-      expect(battleChance(s, info, best)).toBeGreaterThanOrEqual(battleChance(s, info, greedy) - 0.05);
-    }
-  });
-});
-
-describe('약점 기술', () => {
-  it('상대가 약한 종류의 기술이면 그 기술 타격이 세지고 약점 표시가 붙는다', () => {
-    const base = setup(1, ['strike', 'heal', 'stun']);
-    const weak: BattleSetup = { ...base, foe: { ...base.foe, weak: 'strike' } };
-    for (let seed = 1; seed < 10; seed++) {
-      const plain = runBattle(base, seed).events.find((e) => e.t === 'hit' && e.skill && e.by === 0);
-      const hit = runBattle(weak, seed).events.find((e) => e.t === 'hit' && e.skill && e.by === 0);
-      if (plain?.t !== 'hit' || hit?.t !== 'hit') continue;
-      expect(hit.weak).toBe(true);
-      expect(hit.dmg).toBeGreaterThan(plain.dmg);
-    }
-    expect(battleOdds(weak)).toBeGreaterThan(battleOdds(base));
+    expect(kinds.size).toBe(6);
   });
 });

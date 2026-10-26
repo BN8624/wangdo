@@ -1,279 +1,172 @@
-// 모의 플레이. 쉬지 않고 계속 하는 사람이 이야기를 따라 모험을 넘는다고 보고 걸린 시간을 잰다.
-// 밸런스(상대 세기·경험치·상점 값)를 바꾸면 `npm run simulate`로 이 결과를 확인한다.
+// 모의 플레이(수집형). 쉬지 않고 하는 사람이 캠페인을 밀어 나가며 모집·성장·수련을 하는 데 걸리는 시간을 잰다.
+// 밸런스(적 세기·보상·비용)를 바꾸면 `npm run simulate`로 이 결과를 확인한다.
 //
-// 사람의 시간: 전투 한 판을 보는 데 1분, 연속 수련은 한 판에 0.3분, 이야기 한 화 5분, 사연 장면 2분,
-// 대화 0.5분, 상소·승급·연회·장보기는 잠깐. 그동안 일터는 계속 돌아간다.
-// 사람처럼: 이길 만해 보이면 싸우고, 지면 같은 조건으로는 다시 붙지 않고 필드에서 키운 뒤(레벨·장비가 바뀐 뒤) 다시 온다.
+// 사람의 시간: 전투 한 판 = 0.4분 + 라운드당 0.06분(2배속으로 본다고 친다), 장 하나의 컷신 4분, 모집 0.3분.
+// 사람처럼: 다음 스테이지를 자동 편성으로 붙어 보고, 지면 같은 조건으로 다시 붙지 않고 수련장에서 키운 뒤 다시 온다.
+// 옥이 1,000 모이면 열 번 모집, 조각이 차면 별 올리기, 수련치·엽전은 편성의 가장 낮은 레벨부터.
 
-import {
-  MINUTE,
-  STAT_KEYS,
-  battleSeed,
-  buyItem,
-  chooseWish,
-  equip,
-  feast,
-  feastCost,
-  hasAptitude,
-  hasNewTalk,
-  newGame,
-  partyPlan,
-  promote,
-  settle,
-  slotsPerWorkplace,
-  statsOf,
-  talk,
-  useWish,
-} from './engine';
 import { BALANCE as B } from '../data/balance';
-import { ITEM_BY_ID, type ItemDef, type Slot } from '../data/items';
+import { ITEM_BY_ID, type Slot } from '../data/items';
 import { EPISODES } from '../data/story';
-import { NODES, REGIONS, type NodeDef } from '../data/world';
-import { WORKPLACES } from '../data/village';
-import { WISH_BY_ID } from '../data/wishes';
-import { YOKAI_BY_ID } from '../data/yokai';
-import { advFight, bestField, dungeonEncounter, fieldEncounter, nodeDone, nodeOpen, pathSteps, questEncounter } from './adventure';
-import { nextStoryBattle, storyBattleInfo, storyFight, withGuests } from './campaign';
-import { completeEpisode, isUnlocked, nextEpisode } from './story';
-import type { GameState, StageInfo, WorkplaceId } from './types';
+import { STAGES, battleSeed, nextStage, stageSetup, stagePower, type StageDef } from './campaign';
+import { runCombat } from './combat';
+import { autoTeam, chooseWish, finishStage, finishTrain, equip, levelUp, newGame, rankUp, setTeam, starUp, useWish } from './engine';
+import { pull } from './gacha';
+import { claimAfk, trainOpen, trainSetup, TRAIN_LEVELS } from './idle';
+import type { GameState } from './types';
+import { levelCap, teamPower } from './units';
 
-/** 사람이 쓰는 시간(분) */
-export const TIME = { battle: 1, train: 0.3, episode: 5, scene: 2, talk: 0.5, quick: 0.2 };
+const MINUTE = 60_000;
 
 export interface RunReport {
-  /** 화를 마친 때(분) */
-  episodeAt: Record<string, number>;
-  /** 던전·사연·만남을 끝낸 때(분) */
-  nodeAt: Record<string, number>;
-  /** 화를 마칠 때 평균 레벨 */
+  /** 장을 다 깬 때(분) */
+  chapterAt: Record<string, number>;
+  /** 장을 깰 때 편성 전투력·평균 레벨 */
+  powerAt: Record<string, number>;
   levelAt: Record<string, number>;
-  battles: { story: number; dungeon: number; quest: number; field: number; losses: number };
+  battles: { stage: number; train: number; losses: number };
+  pulls: number;
+  ssr: number;
   minutes: number;
-  /** 끝까지 못 갔으면 막힌 곳 */
   stuck: string | null;
-  /** 싸운 판마다: 상대 레벨, 우리 평균 레벨, 이길 확률, 종류 */
-  fights: { level: number; avg: number; chance: number; kind: string; won: boolean; t: number }[];
-  /** 화를 마칠 때 엽전 */
-  coinAt: Record<string, number>;
-  /** 화를 마칠 때의 상태(밸런스 맞추기용) */
-  snapshots: Record<string, GameState>;
   final: GameState;
 }
 
-/** 일터 배치: 칸마다 그 일터 능력치(적성 포함)가 가장 높은 식객을 넣는다. 엽전 일터를 먼저 채운다. */
-function arrange(s: GameState, now: number): GameState {
-  const next = settle(s, now);
-  const order: WorkplaceId[] = ['market', 'woodyard', 'tavern', 'field'];
-  const work: Record<WorkplaceId, string[]> = { market: [], woodyard: [], field: [], tavern: [] };
-  const free = new Set(Object.keys(next.yokai));
-  const stats = Object.fromEntries([...free].map((id) => [id, statsOf(next, id)]));
-  for (let slot = 0; slot < slotsPerWorkplace(next.rank); slot++) {
-    for (const wpId of order) {
-      const wp = WORKPLACES.find((w) => w.id === wpId)!;
-      let best: string | null = null;
-      let bestV = -1;
-      for (const id of free) {
-        const v = stats[id][wp.stat] * (hasAptitude(YOKAI_BY_ID[id], wp) ? 1.5 : 1);
-        if (v > bestV) [best, bestV] = [id, v];
-      }
-      if (best) {
-        work[wpId].push(best);
-        free.delete(best);
-      }
-    }
+const battleMinutes = (rounds: number) => 0.4 + rounds * 0.06;
+
+/** 편성 다섯을 고르게 키운다: 가장 낮은 레벨부터 한 레벨씩 */
+function levelTeam(s: GameState): GameState {
+  for (let guard = 0; guard < 2000; guard++) {
+    const ids = s.team.filter(Boolean).filter((id) => s.yokai[id].level < levelCap(s.yokai[id].stars));
+    if (!ids.length) return s;
+    const id = ids.sort((a, b) => s.yokai[a].level - s.yokai[b].level)[0];
+    const [next, r] = levelUp(s, id, 1);
+    if (!r.ok || r.levels === 0) return s;
+    s = next;
   }
-  next.work = work;
-  return next;
+  return s;
 }
 
-const avg = (s: GameState) => {
-  const ys = Object.values(s.yokai);
-  return ys.reduce((a, y) => a + y.level, 0) / Math.max(1, ys.length);
-};
-
-/** 장비 점수: 단계가 높을수록, 무기는 특기 능력치가 맞으면, 장신구는 주인이 끼면 더 좋다 */
-function gearScore(item: ItemDef | undefined, id: string): number {
-  if (!item) return 0;
-  if (item.slot === 'trinket') return item.tier + (item.owner === id ? 1.5 : 0);
-  const main = Object.entries(item.stats ?? {}).sort((a, b) => (b[1] ?? 0) - (a[1] ?? 0))[0]?.[0];
-  return item.tier + (main === YOKAI_BY_ID[id].specialty ? 0.5 : 0);
-}
-
-/** 레벨 높은 식객부터 더 좋은 장비를 끼운다. 가진 게 없으면 열린 마을에서 산다(엽전이 남는 만큼만) */
-function gearUp(s: GameState, now: number): GameState {
-  const sold = NODES.filter((n) => n.kind === 'town' && nodeOpen(s, n)).flatMap((n) => (n.kind === 'town' ? n.shop : []));
-  const ids = Object.keys(s.yokai).sort((a, b) => s.yokai[b].level - s.yokai[a].level);
-  for (const id of ids.slice(0, 6)) {
-    for (const slot of ['weapon', 'trinket'] as Slot[]) {
-      const cur = gearScore(ITEM_BY_ID[s.yokai[id].gear[slot] ?? ''], id);
-      const have = Object.keys(s.inventory)
-        .filter((k) => s.inventory[k] > 0 && ITEM_BY_ID[k]?.slot === slot)
-        .sort((a, b) => gearScore(ITEM_BY_ID[b], id) - gearScore(ITEM_BY_ID[a], id))[0];
-      if (have && gearScore(ITEM_BY_ID[have], id) > cur) {
-        s = equip(s, now, id, slot, have)[0];
-        continue;
-      }
-      const buy = sold
-        .map((k) => ITEM_BY_ID[k])
-        .filter((it) => it.slot === slot && it.price !== undefined && it.price <= s.res.coin && gearScore(it, id) > cur)
-        .sort((a, b) => gearScore(b, id) - gearScore(a, id))[0];
-      if (buy) {
-        const [after, r] = buyItem(s, now, buy.id);
-        if (r.ok) s = equip(after, now, id, slot, buy.id)[0];
-      }
+function starTeam(s: GameState): GameState {
+  for (const id of Object.keys(s.yokai)) {
+    for (let guard = 0; guard < 6; guard++) {
+      const useMemory = s.team.includes(id);
+      const y = s.yokai[id];
+      const cost = B.starCost[y.stars];
+      if (y.stars >= 6 || (!useMemory && y.shards < cost)) break;
+      const [next, r] = starUp(s, id);
+      if (!r.ok) break;
+      s = next;
     }
   }
   return s;
 }
 
-type Target = { kind: 'story' | 'node'; info: StageInfo; arena: GameState; node?: NodeDef };
+const gearScore = (id: string | undefined) => (id ? ITEM_BY_ID[id]?.tier ?? 0 : 0);
 
-/** 지금 싸울 수 있는 것들을 지도의 길 순서대로: 열린 이야기 전투, 열렸지만 안 끝낸 던전·사연·만남 */
-function targets(s: GameState): Target[] {
-  const out: Target[] = [];
-  const ep = nextEpisode(s, EPISODES);
-  for (const region of REGIONS)
-    for (const st of pathSteps(region.id)) {
-      if (st.kind === 'ep') {
-        if (!ep || st.id !== ep.id || !isUnlocked(s, ep)) continue;
-        const n = nextStoryBattle(s, ep);
-        if (n === null) continue;
-        out.push({ kind: 'story', info: storyBattleInfo(s, ep, n), arena: withGuests(s, ep, n) });
-        continue;
-      }
-      const node = st.node;
-      if ((node.kind !== 'dungeon' && node.kind !== 'quest') || !nodeOpen(s, node) || nodeDone(s, node)) continue;
-      const info = node.kind === 'dungeon' ? dungeonEncounter(s, node) : questEncounter(s, node);
-      if (!info) continue;
-      out.push({ kind: 'node', node, info, arena: s });
+function gearTeam(s: GameState): GameState {
+  for (const id of s.team.filter(Boolean)) {
+    for (const slot of ['weapon', 'trinket'] as Slot[]) {
+      const best = Object.keys(s.inventory)
+        .filter((k) => s.inventory[k] > 0 && ITEM_BY_ID[k]?.slot === slot)
+        .sort((a, b) => gearScore(b) - gearScore(a))[0];
+      if (best && gearScore(best) > gearScore(s.yokai[id].gear[slot])) s = equip(s, id, slot, best)[0];
     }
-  return out;
+  }
+  return s;
 }
 
-const allDone = (s: GameState) =>
-  EPISODES.every((e) => s.story.done.includes(e.id)) && NODES.every((n) => (n.kind !== 'dungeon' && n.kind !== 'quest') || nodeDone(s, n));
-
-export function simulateRun(maxMinutes = 30 * 60, seed = 7): RunReport {
+export function simulateRun(maxMinutes = 40 * 60, seed = 7): RunReport {
   const start = Date.UTC(2026, 0, 1, 9, 0, 0);
   let t = 0;
   const at = () => start + Math.round(t * MINUTE);
-  let s = arrange(newGame(start, seed), start);
-  const report: RunReport = { episodeAt: {}, nodeAt: {}, levelAt: {}, battles: { story: 0, dungeon: 0, quest: 0, field: 0, losses: 0 }, minutes: 0, stuck: null, final: s, fights: [], coinAt: {}, snapshots: {} };
-  const seenScene = new Set<string>();
+  let s = newGame(start, seed);
+  const report: RunReport = { chapterAt: {}, powerAt: {}, levelAt: {}, battles: { stage: 0, train: 0, losses: 0 }, pulls: 0, ssr: 0, minutes: 0, stuck: null, final: s };
   const lost = new Set<number>();
+  let lastAfk = 0;
   let trainStreak = 0;
+  let tier = 0;
 
-  while (t < maxMinutes && !allDone(s)) {
-    // 정무·승급·연회·대화는 생기는 대로 처리한다
+  while (t < maxMinutes) {
+    const st = nextStage(s);
+    if (!st) break;
+    if (t - lastAfk >= 30) {
+      s = claimAfk(s, at())[0];
+      rankUp(s);
+      lastAfk = t;
+    }
     if (s.wish.pending) {
-      const wish = WISH_BY_ID[s.wish.pending.id];
-      const pick = Math.max(0, wish.choices.findIndex((c) => c.reward.kind === 'exp' || c.reward.kind === 'coin')) as 0 | 1;
-      s = chooseWish(s, at(), pick)[0];
-      t += TIME.quick;
+      s = chooseWish(s, 0)[0];
       continue;
     }
     if (s.wish.charges > 0) {
-      s = useWish(s, at())[0];
+      s = useWish(s)[0];
       continue;
     }
-    const [promoted, pr] = promote(s, at());
-    if (pr.ok) {
-      s = arrange(promoted, at());
-      t += TIME.quick;
-      continue;
+    while (s.res.jade >= B.pullCost * 10) {
+      const [next, r] = pull(s, 10);
+      if (!r.ok) break;
+      s = next;
+      report.pulls += 10;
+      report.ssr += r.results.filter((x) => x.rarity === 3).length;
+      t += 0.3;
     }
-    if (s.res.grain >= feastCost(s.rank)) {
-      s = feast(s, at())[0];
-      t += TIME.quick;
-      continue;
-    }
-    const talker = Object.keys(s.yokai).find((id) => hasNewTalk(s, id));
-    if (talker) {
-      s = talk(s, at(), talker, 8)[0];
-      t += TIME.talk;
-      continue;
-    }
-    s = gearUp(s, at());
+    s = setTeam(s, autoTeam(s));
+    s = starTeam(s);
+    s = levelTeam(s);
+    s = gearTeam(s);
 
-    // 이야기 화: 전투가 안 남았으면 마친다
-    const ep = nextEpisode(s, EPISODES);
-    if (ep && isUnlocked(s, ep) && nextStoryBattle(s, ep) === null) {
-      s = arrange(completeEpisode(s, ep, ep.scenes.map((sc) => (sc.choice ? 0 : null)))[0], at());
-      t += TIME.episode;
-      report.episodeAt[ep.id] = t;
-      report.levelAt[ep.id] = Math.round(avg(s) * 10) / 10;
-      report.coinAt[ep.id] = Math.round(s.res.coin);
-      report.snapshots[ep.id] = s;
-      continue;
+    if (st.k === 1 && !s.story.watched.includes(st.ep.id)) {
+      s = { ...s, story: { ...s.story, watched: [...s.story.watched, st.ep.id] } };
+      t += 4;
     }
-
-    // 이길 만해 보이는 것부터. 같은 조건으로 이미 진 상대는 결과가 같으니 건너뛴다
-    let fought = false;
-    for (const tg of targets(s)) {
-      const { party, chance } = partyPlan(tg.arena, tg.info);
-      const seed = battleSeed(tg.arena, tg.info, party);
-      if (chance < B.simTryChance || lost.has(seed)) continue;
-      const log = { level: tg.info.level ?? 0, avg: avg(s), chance, kind: tg.kind === 'story' ? 'story' : tg.node!.kind === 'dungeon' ? (tg.info.isBoss ? 'boss' : 'dungeon') : 'quest', t };
-      if (tg.kind === 'story') {
-        const e = nextEpisode(s, EPISODES)!;
-        const [after, r] = storyFight(s, at(), e, nextStoryBattle(s, e)!, party);
-        if (!r.ok) continue;
-        s = after;
-        report.battles.story++;
-        if (!r.won) {
-          report.battles.losses++;
-          lost.add(seed);
+    const team = s.team;
+    const seedKey = battleSeed(s, st.id, team);
+    if (!lost.has(seedKey)) {
+      const { result } = runCombat(stageSetup(s, st, team), seedKey);
+      const [next] = finishStage(s, st, team, result);
+      s = next;
+      t += battleMinutes(result.rounds);
+      report.battles.stage++;
+      if (result.won) {
+        trainStreak = 0;
+        if (st.boss) {
+          report.chapterAt[st.ep.id] = t;
+          report.powerAt[st.ep.id] = teamPower(s);
+          const lv = s.team.filter(Boolean).map((id) => s.yokai[id].level);
+          report.levelAt[st.ep.id] = Math.round((lv.reduce((a, x) => a + x, 0) / Math.max(1, lv.length)) * 10) / 10;
         }
-        report.fights.push({ ...log, won: r.won });
-      } else {
-        const node = tg.node!;
-        if (node.kind === 'quest' && !seenScene.has(node.id)) {
-          seenScene.add(node.id);
-          t += TIME.scene;
-        }
-        const [after, r] = advFight(s, at(), node.id, party);
-        if (!r.ok) continue;
-        s = after;
-        report.battles[node.kind === 'dungeon' ? 'dungeon' : 'quest']++;
-        if (!r.won) {
-          report.battles.losses++;
-          lost.add(seed);
-        }
-        report.fights.push({ ...log, won: r.won });
-        if (r.recruit) s = arrange(s, at());
-        if (r.cleared) report.nodeAt[r.cleared] = t + TIME.battle;
+        continue;
       }
-      t += TIME.battle;
-      fought = true;
-      break;
-    }
-    if (fought) {
-      trainStreak = 0;
-      continue;
+      report.battles.losses++;
+      lost.add(seedKey);
     }
 
-    // 버거우면 필드에서 수련(연속 수련으로 빠르게)
-    const field = bestField(s);
-    if (!field) break;
-    const info = fieldEncounter(s, field);
-    const plan = partyPlan(s, info);
-    const [after, r] = advFight(s, at(), field.id, plan.party);
-    if (!r.ok) break;
-    report.fights.push({ level: info.level ?? 0, avg: avg(s), chance: plan.chance, kind: 'field', won: r.won, t });
-    s = after;
-    report.battles.field++;
-    if (!r.won) report.battles.losses++;
-    t += TIME.train;
-    if (++trainStreak > 400) {
-      report.stuck = targets(s)[0]?.info.foe ?? '알 수 없음';
+    // 막히면 수련장: 이길 수 있는 가장 높은 난이도
+    while (tier + 1 < TRAIN_LEVELS.length && trainOpen(s, tier + 1)) tier++;
+    let won = false;
+    for (let tt = tier; tt >= 0 && !won; tt--) {
+      const { result } = runCombat(trainSetup(s, tt, team), battleSeed(s, `train${tt}#${report.battles.train}`, team));
+      const [next] = finishTrain(s, tt, team, result);
+      s = next;
+      t += battleMinutes(result.rounds);
+      report.battles.train++;
+      won = result.won;
+      if (!won) report.battles.losses++;
+    }
+    if (++trainStreak > 600) {
+      report.stuck = `${st.label} ${st.ep.title} (권장 ${stagePower(st)}, 편성 ${teamPower(s)})`;
       break;
     }
   }
-  if (!allDone(s) && !report.stuck) report.stuck = `${Math.round(t)}분에 시간 초과`;
+  if (!report.stuck && nextStage(s)) report.stuck = `${Math.round(t)}분에 시간 초과 · ${nextStage(s)!.label}`;
   report.minutes = t;
   report.final = s;
   return report;
 }
 
-/** 보고용: 능력치 합 */
-export const statSum = (s: GameState, id: string) => STAT_KEYS.reduce((a, k) => a + statsOf(s, id)[k], 0);
+export const chapterTitle = (epId: string) => {
+  const i = EPISODES.findIndex((e) => e.id === epId);
+  const st = STAGES.find((x: StageDef) => x.ep.id === epId);
+  return `${i + 1}장 ${st?.ep.title ?? epId}`;
+};

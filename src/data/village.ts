@@ -1,16 +1,6 @@
-import type { ComboDef, GiftDef, WorkplaceDef } from '../core/types';
+import type { ComboDef, GiftDef } from '../core/types';
 
-// 고을의 일터. 식객을 배치하면 그 식객의 능력치만큼 자원이 저절로 들어온다.
-export const WORKPLACES: WorkplaceDef[] = [
-  { id: 'market', name: '저잣거리', stat: 'wit', produces: 'coin', perStat: 0.05, flavor: '지략이 뛰어난 식객이 상단을 굴린다' },
-  { id: 'woodyard', name: '훈련장', stat: 'might', produces: 'coin', perStat: 0.04, flavor: '무력이 높은 식객이 호위 일을 맡아 벌어 온다' },
-  { id: 'field', name: '논밭', stat: 'politics', produces: 'grain', perStat: 0.08, flavor: '정치에 밝은 식객이 소작과 세곡을 다스린다' },
-  { id: 'tavern', name: '주막', stat: 'charm', produces: 'fame', perStat: 0.0003, flavor: '매력 있는 식객이 손님과 소문을 끈다' },
-];
-
-export const WORKPLACE_BY_ID = Object.fromEntries(WORKPLACES.map((w) => [w.id, w])) as Record<WorkplaceDef['id'], WorkplaceDef>;
-
-/** 같은 일터에 함께 두면 생산량이 오르는 짝꿍 */
+/** 짝꿍: 같은 편성에 함께 있으면 둘 다 공격력이 오른다 */
 export const COMBOS: ComboDef[] = [
   { id: 'blades', pair: ['muyeong', 'seorin'], title: '새벽 대련', text: '무영과 서린이 새벽마다 칼을 맞댄다. 구경꾼이 몰리니 호위 의뢰도 따라 늘었다.' },
   { id: 'fox-trade', pair: ['baekseol', 'danhui'], title: '여우와 장사꾼', text: '백설과 단희가 손님의 속마음을 두고 내기를 건다. 이긴 쪽은 없고 주막 돈궤만 무거워진다.' },

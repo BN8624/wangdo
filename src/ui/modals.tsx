@@ -1,17 +1,22 @@
 import { NovelFrame } from './StoryView';
 import { useEffect, useState } from 'react';
-import { chooseWish, markSceneSeen, rankMultiplier, slotsPerWorkplace, talk, wishRewardAmount } from '../core/engine';
+import { chooseWish, markSceneSeen, talk, wishRewardAmount } from '../core/engine';
 import { fmt, fmtDuration } from '../core/format';
+import { afkPending, claimAfk, type AfkPending } from '../core/idle';
+import { BALANCE as B } from '../data/balance';
 import { ART } from '../data/art';
 import { bondContent } from '../data/bond-content';
+import { ITEM_BY_ID } from '../data/items';
 import { rankDef } from '../data/ranks';
+import { ELEMENT_COLOR, ELEMENT_LABEL, RARITY_LABEL, ROLE_LABEL, elementOf, roleOf } from '../data/roster';
+import { SKILLS, skillText } from '../data/skills';
 import { BOND_LEVELS, GIFT_BY_ID } from '../data/village';
 import { WISH_BY_ID } from '../data/wishes';
 import { YOKAI_BY_ID } from '../data/yokai';
-import type { ComboDef, GameState, ResourceKey } from '../core/types';
+import type { GameState } from '../core/types';
 import { Burst, LineIcon, RES_LABEL, ResIcon, VillageScene } from './icons';
-import { Portrait } from './Portrait';
-import { act, type OfflineSummary } from './store';
+import { Art, Portrait } from './Portrait';
+import { act } from './store';
 import { buzz, pushToast } from './toast';
 import { play } from './sound';
 import type { ModalRequest } from './App';
@@ -40,7 +45,7 @@ export function WishModal({ view, onClose }: { view: GameState; onClose: () => v
   if (!pending) return null;
   const wish = WISH_BY_ID[pending.id];
   const pick = (i: 0 | 1) => {
-    const r = act((s, now) => chooseWish(s, now, i));
+    const r = act((s) => chooseWish(s, i));
     if (r.ok) {
       buzz(20);
       if (r.kind === 'gift') pushToast({ text: `선물 〈${GIFT_BY_ID[r.gift!].name}〉을(를) 얻었어요` });
@@ -66,7 +71,7 @@ export function WishModal({ view, onClose }: { view: GameState; onClose: () => v
                 '선물 하나'
               ) : (
                 <>
-                  <ResIcon kind={c.reward.kind} size={16} />+{fmt(wishRewardAmount(view, c.reward))}
+                  <ResIcon kind={c.reward.kind === 'grain' ? 'exp' : c.reward.kind} size={16} />+{fmt(wishRewardAmount(view, c.reward))}
                 </>
               )}
             </span>
@@ -77,35 +82,86 @@ export function WishModal({ view, onClose }: { view: GameState; onClose: () => v
   );
 }
 
-export function PromoteModal({ rank, recruit, onClose }: { rank: number; recruit: string | null; onClose: () => void }) {
-  const r = rankDef(rank);
+/** 방치 보상 상자: 쌓인 보상을 보여 주고 받는다 */
+export function AfkModal({ view, now, onClose }: { view: GameState; now: number; onClose: () => void }) {
+  const [claimed, setClaimed] = useState<(AfkPending & { items: string[] }) | null>(null);
+  const p = claimed ?? afkPending(view, now);
+  const full = p.minutes >= B.afkCapMinutes;
+  const take = () => {
+    const r = act((s, t) => claimAfk(s, t));
+    play('coin');
+    buzz(25);
+    setClaimed(r);
+  };
+  const rows = [
+    ['coin', p.coin],
+    ['exp', p.exp],
+    ['jade', p.jade],
+    ['fame', p.fame],
+  ] as const;
+  return (
+    <Shell onClose={claimed ? onClose : undefined}>
+      <div className="head jade">
+        <Burst />
+        <span className="ttuk-word">{claimed ? '받았어요!' : '방치 보상'}</span>
+        <div className="who-pic afk-chest">
+          <LineIcon name="chest" size={96} />
+        </div>
+      </div>
+      <div className="title">{fmtDuration(p.minutes * 60_000)} 동안 쌓였어요</div>
+      <div className="sub">{full ? '상자가 가득 찼어요(최대 12시간). 자주 받아 가세요.' : '가장 멀리 깬 스테이지가 높을수록 많이 쌓여요.'}</div>
+      <div className="reward-list">
+        {rows
+          .filter(([, n]) => n > 0)
+          .map(([k, n]) => (
+            <span key={k}>
+              <ResIcon kind={k} />+{fmt(n)}
+            </span>
+          ))}
+        {p.gear > 0 && <span>장비 {p.gear}개</span>}
+      </div>
+      {claimed?.items.length ? <div className="soft afk-items">{claimed.items.map((id) => `〈${ITEM_BY_ID[id]?.name}〉`).join(' ')}</div> : null}
+      <div className="actions">
+        {claimed ? (
+          <button className="btn hong wide" onClick={onClose}>
+            확인
+          </button>
+        ) : (
+          <>
+            <button className="btn hong wide" disabled={p.minutes < 1} onClick={take}>
+              받기
+            </button>
+            <button className="btn wide" onClick={onClose}>
+              나중에
+            </button>
+          </>
+        )}
+      </div>
+    </Shell>
+  );
+}
+
+/** 관직이 올랐다 */
+export function RankModal({ ranks, onClose }: { ranks: number[]; onClose: () => void }) {
+  const top = ranks[ranks.length - 1];
+  const r = rankDef(top);
+  const jade = ranks.reduce((a, n) => a + B.rankJade + 20 * n, 0);
   useEffect(() => play('promote'), []);
-  const def = recruit ? YOKAI_BY_ID[recruit] : null;
   return (
     <Shell onClose={onClose}>
       <div className="head">
         <Burst />
         <span className="ttuk-word">승급!</span>
-        {def ? (
-          <Frame id={def.id} />
-        ) : (
-          <div className="who-pic" style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
-            <LineIcon name="crown" size={90} />
-          </div>
-        )}
+        <div className="who-pic" style={{ display: 'flex', justifyContent: 'center', alignItems: 'flex-end' }}>
+          <LineIcon name="crown" size={90} />
+        </div>
       </div>
       <div className="title">〈{r.title}〉</div>
       <div className="sub">{r.flavor}</div>
-      {def && (
-        <div className="bubble">
-          <b>{def.name}</b>({def.kind})이(가) 식객으로 합류했어요!
-          <br />
-          <span className="soft">{def.intro}</span>
-        </div>
-      )}
-      <div className="reward-list" style={{ fontSize: 14 }}>
-        <span style={{ fontSize: 14 }}>생산량 ×{rankMultiplier(rank).toFixed(1)}</span>
-        <span style={{ fontSize: 14 }}>일터마다 {slotsPerWorkplace(rank)}칸</span>
+      <div className="reward-list">
+        <span>
+          <ResIcon kind="jade" />+{fmt(jade)}
+        </span>
       </div>
       <div className="actions">
         <button className="btn hong wide" onClick={onClose}>
@@ -116,35 +172,33 @@ export function PromoteModal({ rank, recruit, onClose }: { rank: number; recruit
   );
 }
 
-/** 겨루기 결과. 세 판을 하나씩 보여 준다. */
-export function OfflineModal({ summary, onClose }: { summary: OfflineSummary; onClose: () => void }) {
-  const keys = (Object.keys(summary.gained) as ResourceKey[]).filter((k) => summary.gained[k] > 0);
+/** 새 식객 합류: 카드 그림을 크게 */
+export function RecruitCard({ id, onClose, note }: { id: string; onClose: () => void; note?: string }) {
+  const def = YOKAI_BY_ID[id];
+  const el = elementOf(id);
+  useEffect(() => play('promote'), []);
+  if (!def) return null;
   return (
-    <Shell onClose={onClose}>
-      <div className="head jade">
-        <Burst />
-        <span className="ttuk-word">어서 와요!</span>
-        <Frame id="baekseol" />
-      </div>
-      <div className="title">자리를 비운 {fmtDuration(summary.minutes * 60_000)} 동안</div>
-      <div className="sub">식객들이 일터에서 부지런히 벌어 왔어요</div>
-      <div className="reward-list">
-        {keys.length === 0 ? (
-          <span style={{ fontSize: 14 }}>일터에 아무도 없었어요</span>
-        ) : (
-          keys.map((k) => (
-            <span key={k}>
-              <ResIcon kind={k} />+{fmt(summary.gained[k])}
-            </span>
-          ))
+    <div className={`recruit r${def.grade}`} role="dialog" aria-label={`${def.name} 합류`} onClick={onClose}>
+      <Art className="recruit-art" src={ART.card(id)} alt={def.name} fallback={<div className="portrait-fallback">{def.name}</div>} />
+      <div className="recruit-info">
+        <span className="recruit-seal">{note ?? '합류'}</span>
+        <div className="recruit-tags">
+          <em className={`rar r${def.grade}`}>{RARITY_LABEL[def.grade]}</em>
+          <span style={{ background: ELEMENT_COLOR[el] }}>{ELEMENT_LABEL[el]}</span>
+          <span>{ROLE_LABEL[roleOf(id)]}</span>
+        </div>
+        <b>{def.name}</b>
+        <small>{def.kind}</small>
+        <p>{def.intro}</p>
+        {SKILLS[id] && (
+          <p className="recruit-skill">
+            <b>{SKILLS[id].name}</b> · {skillText(SKILLS[id].kind)}
+          </p>
         )}
+        <div className="vn-more">화면을 눌러 계속 ▾</div>
       </div>
-      <div className="actions">
-        <button className="btn cheong wide" onClick={onClose}>
-          궁궐로 가기
-        </button>
-      </div>
-    </Shell>
+    </div>
   );
 }
 
@@ -248,7 +302,7 @@ export function BondUpModal({ id, level, open, onClose }: { id: string; level: n
       <div className="title">
         {YOKAI_BY_ID[id].name}와(과) 〈{BOND_LEVELS[level].name}〉 사이가 되었어요
       </div>
-      <div className="sub">능력치 +{level * 8}% · 새 이야기가 열렸어요</div>
+      <div className="sub">능력치 +{Math.round(level * B.bondBonus * 100)}% · 새 이야기가 열렸어요</div>
       <div className="actions">
         <button
           className="btn hong wide"
@@ -283,30 +337,3 @@ export function SceneViewer({ id, level, onClose }: { id: string; level: number;
   };
   return <NovelFrame title={`${name} · ${level}. ${scene.title}`} bg={level===3||level===5?ART.cg(id,level):ART.bg(level===4?'hut':'night')} cast={level===3||level===5?[]:[id]} line={{who:line.who==='her'?id:line.who,text:line.text}} onNext={next} onClose={onClose} />;
 }
-
-export function ComboModal({ combo, onClose }: { combo: ComboDef; onClose: () => void }) {
-  return (
-    <Shell onClose={onClose}>
-      <div className="head">
-        <Burst />
-        <span className="ttuk-word">짝꿍!</span>
-        <div className="trio">
-          {combo.pair.map((id) => (
-            <div key={id} className="portrait-frame">
-              <Portrait def={YOKAI_BY_ID[id]} />
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="title">{combo.title}</div>
-      <div className="bubble">{combo.text}</div>
-      <div className="actions">
-        <div className="sub">같은 일터에 있으면 생산량 +20%</div>
-        <button className="btn hong wide" onClick={onClose}>
-          좋아요!
-        </button>
-      </div>
-    </Shell>
-  );
-}
-

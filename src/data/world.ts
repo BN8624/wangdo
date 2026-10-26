@@ -1,4 +1,4 @@
-import type { SkillKind } from '../core/battle';
+import type { SkillKind } from '../core/combat';
 import quests from '../../content/quests.json';
 import meets from '../../content/meets.json';
 

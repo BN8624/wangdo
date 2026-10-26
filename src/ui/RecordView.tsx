@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ownedYokai, power } from '../core/engine';
+import { teamPower } from '../core/units';
+import { STAGES } from '../core/campaign';
 import { fmt } from '../core/format';
 import { rankDef } from '../data/ranks';
 import { YOKAI } from '../data/yokai';
@@ -27,14 +28,24 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
           </b>
         </div>
         <div>
-          <span>권세</span>
-          <b>{fmt(power(view))}</b>
+          <span>편성 전투력</span>
+          <b>{fmt(teamPower(view))}</b>
         </div>
         <div>
           <span>식객</span>
           <b>
-            {ownedYokai(view).length} / {YOKAI.length}
+            {Object.keys(view.yokai).length} / {YOKAI.length}
           </b>
+        </div>
+        <div>
+          <span>깬 스테이지 · 별</span>
+          <b>
+            {STAGES.filter((st) => (view.camp.stars[st.id] ?? 0) > 0).length} / {STAGES.length} · ★{Object.values(view.camp.stars).reduce((a, n) => a + n, 0)}
+          </b>
+        </div>
+        <div>
+          <span>모집</span>
+          <b>{fmt(view.gacha.pulls)}번</b>
         </div>
         <div>
           <span>전투</span>
@@ -51,14 +62,6 @@ export function RecordView({ view, now }: { view: GameState; now: number }) {
         <div>
           <span>처리한 정무</span>
           <b>{fmt(view.totals.wishes)}</b>
-        </div>
-        <div>
-          <span>개최한 연회</span>
-          <b>{fmt(view.totals.feasts)}</b>
-        </div>
-        <div>
-          <span>벌어들인 엽전·곡식</span>
-          <b>{fmt(view.totals.earned)}</b>
         </div>
       </div>
 

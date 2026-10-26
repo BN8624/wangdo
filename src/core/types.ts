@@ -1,10 +1,11 @@
 // 게임 전체에서 쓰는 타입. 상태는 JSON으로 그대로 저장할 수 있어야 한다.
-import type { SkillKind } from './battle';
+import type { SkillKind } from './combat';
 
 export type StatKey = 'might' | 'wit' | 'politics' | 'charm';
 export type Stats = Record<StatKey, number>;
 
-export type ResourceKey = 'coin' | 'grain' | 'fame';
+/** coin 엽전 · jade 옥(모집) · exp 수련치(레벨업) · fame 명성(관직이 저절로 오른다) */
+export type ResourceKey = 'coin' | 'jade' | 'exp' | 'fame';
 export type Resources = Record<ResourceKey, number>;
 
 export type Grade = 1 | 2 | 3;
@@ -31,18 +32,6 @@ export interface YokaiDef {
   voice: string;
 }
 
-export type WorkplaceId = 'market' | 'woodyard' | 'field' | 'tavern';
-
-export interface WorkplaceDef {
-  id: WorkplaceId;
-  name: string;
-  stat: StatKey;
-  produces: ResourceKey;
-  /** 능력치 1당 분당 생산량 */
-  perStat: number;
-  flavor: string;
-}
-
 export interface ComboDef {
   id: string;
   pair: [string, string];
@@ -59,20 +48,15 @@ export interface GiftDef {
 
 export interface RankDef {
   title: string;
-  /** 승급에 필요한 위세(전체 능력치 합) */
-  powerReq: number;
-  /** 승급할 때 소모하는 명성 */
-  fameCost: number;
-  /** 이 칭호에 오르면 합류하는 식객 */
-  recruit?: string;
   flavor: string;
 }
 
 export type WishReward =
+  /** 방치 보상 몇 분어치 엽전·수련치(grain은 수련치로 준다) */
   | { kind: 'coin' | 'grain'; minutes: number }
-  /** 다음 승급 명성의 일정 비율(%) */
+  /** 다음 관직까지 명성의 일정 비율(%) */
   | { kind: 'fame'; pct: number }
-  /** 모든 식객에게 전투 몇 판어치 경험치 */
+  /** 수련장 몇 판어치 수련치 */
   | { kind: 'exp'; amount: number }
   | { kind: 'gift' };
 
@@ -96,54 +80,26 @@ export interface ChapterDef {
   foes: string[];
   /** foes마다 쓸 졸개 그림 번호(1~3) */
   grunts: number[];
-  /** weak: 대장이 약한 기술 종류 */
   boss: { name: string; stat: StatKey; line: string; weak: SkillKind };
 }
 
-export interface StageInfo {
-  index: number;
-  chapter: ChapterDef;
-  chapterIndex: number;
-  /** 장 안에서의 번호(1부터) */
-  number: number;
-  isBoss: boolean;
-  foe: string;
-  /** 겨루기 세 판: 어떤 능력치로, 상대 수치는 얼마인지 */
-  rounds: { stat: StatKey; value: number }[];
-  /** 이 종류의 고유 기술에 약하다 */
-  weak: SkillKind;
-  fame: number;
-  coin: number;
-  /** 졸개 그림 번호를 따로 정할 때(이야기 전투) */
-  grunt?: number;
-  /** 상대 그림으로 식객 전신을 쓸 때(식객과 겨루는 이야기 전투) */
-  rival?: string;
-  /** 이야기 속 전투면 어느 화의 몇 번째 전투인지 */
-  story?: { ep: string; n: number };
-  /** 상대가 처음 외치는 말 */
-  line?: string;
-  /** 상대 레벨(경험치·표시용) */
-  level?: number;
-  /** 전투 배경 그림 키(art/battle/<키>.webp). 없으면 장 id */
-  bg?: string;
-  /** 상대 그림 경로(art/<경로>.webp). 있으면 이걸 쓴다 */
-  art?: string;
-}
 
 export interface YokaiState {
   level: number;
+  /** 별(1~6). 처음에는 등급만큼 */
+  stars: number;
+  /** 이 식객의 조각(별 올리기에 쓴다) */
+  shards: number;
   /** 호감도 점수 */
   bond: number;
   /** 마지막으로 대화한 시각 */
   talkAt: number;
   /** 마지막 나들이 시각 */
   outingAt: number;
-  /** 지금까지 본 이야기 장면 단계 */
+  /** 지금까지 본 인연 장면 단계 */
   seen: number;
   /** 지금까지 나눈 대화 수(다음 대화 주제를 고르는 데 쓴다) */
   talks: number;
-  /** 지금 레벨에서 모은 경험치 */
-  exp: number;
   /** 낀 장비(아이템 id) */
   gear: { weapon?: string; trinket?: string };
 }
@@ -153,40 +109,34 @@ export interface PendingWish {
 }
 
 export interface GameState {
-  version: 2;
+  version: 3;
   createdAt: number;
-  /** 생산이 마지막으로 정산된 시각 */
+  /** 마지막으로 정산한 시각 */
   lastSettled: number;
+  /** 관직(계정 레벨). 명성이 쌓이면 저절로 오른다 */
   rank: number;
   res: Resources;
   yokai: Record<string, YokaiState>;
-  work: Record<WorkplaceId, string[]>;
+  /** 출정 편성 다섯 칸(빈칸은 '') */
+  team: string[];
   gifts: Record<string, number>;
   wish: { charges: number; lastRegen: number; pending: PendingWish | null; recent: string[] };
-  stage: { index: number };
-  /** 처음 본 짝꿍 이야기 */
-  combosSeen: string[];
   rng: number;
-  totals: { wishes: number; feasts: number; wins: number; losses: number; talks: number; gifts: number; earned: number };
+  totals: { wishes: number; wins: number; losses: number; talks: number; gifts: number; pulls: number; stages: number };
   introSeen: boolean;
   /** 안내 단계(끝나면 안내 목록 길이 이상) */
   guide: number;
-  /** 본 이야기 화와 선택으로 생긴 깃발 */
-  story: {
-    done: string[];
-    flags: string[];
-    /** 이긴 이야기 전투(화 id#번호) */
-    won: string[];
-    /** 이야기 전투마다 진 횟수(기록용) */
-    losses: Record<string, number>;
-    /** 보다가 멈춘 화: 어느 장면에서 어느 전투를 앞두고 있었는지, 그때까지 고른 선택지 */
-    at?: { ep: string; scene: number; battle: number; choices: (number | null)[] };
-  };
-  /** 가진 장비(낀 것은 빼고 센다) */
+  /** 본 이야기 화(장을 다 깨면 본 것으로 친다)와 선택으로 생긴 깃발, 이미 본 컷신 */
+  story: { done: string[]; flags: string[]; watched: string[] };
+  /** 캠페인: 스테이지마다 딴 별(0~3) */
+  camp: { stars: Record<string, number> };
+  /** 모집: 모집 횟수, 마지막 SSR 뒤로 센 횟수(천장), 첫 열 번 모집을 했는지 */
+  gacha: { pulls: number; pity: number; firstTen: boolean };
+  /** 방치 보상: 마지막으로 받은 시각 */
+  afk: { since: number };
+  /** 가진 장비와 재료(낀 장비는 빼고 센다). memory = 아무 식객에게나 쓰는 기억 조각 */
   inventory: Record<string, number>;
-  /** 모험: 끝낸 노드(던전·퀘스트), 던전마다 깬 층 수, 연 보물상자, 전투마다 진 횟수(봐주기) */
-  adv: { cleared: string[]; floors: Record<string, number>; chests: string[]; losses: Record<string, number> };
-  /** 궁궐 화면에 서 있는 대표 식객 */
+  /** 로비에 서 있는 대표 식객 */
   favorite: string;
 }
 
