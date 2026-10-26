@@ -2,7 +2,7 @@
 // 숫자·흔들림·번쩍임처럼 DOM이 나은 효과는 BattleView가 Web Animations로 직접 건다.
 import type { Element } from '../data/roster';
 
-type Kind = 'spark' | 'dot' | 'leaf' | 'drop' | 'star' | 'smoke' | 'ring' | 'slash' | 'arrow' | 'comet' | 'orb' | 'shard';
+type Kind = 'spark' | 'dot' | 'leaf' | 'drop' | 'star' | 'smoke' | 'ring' | 'slash' | 'arrow' | 'comet' | 'shard';
 
 interface P {
   kind: Kind;
@@ -18,9 +18,6 @@ interface P {
   vr: number;
   g: number;
   drag: number;
-  /** 날아가는 기운: 크기가 자라며 휘어 날아간다 */
-  size1?: number;
-  el?: Element | 'none';
   /** 혜성: 출발점과 도착점 */
   x0?: number;
   y0?: number;
@@ -59,6 +56,8 @@ export class FxCanvas {
   private h = 0;
   /** 배속: 입자 수명도 이만큼 빨리 흐른다 */
   speed = 1;
+  /** 히트스톱: 켜져 있는 동안 입자가 제자리에 멈춰 있다가, 풀리면 흩어진다 */
+  frozen = false;
 
   constructor(private canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext('2d')!;
@@ -121,12 +120,6 @@ export class FxCanvas {
   comet(x0: number, y0: number, x1: number, y1: number, el: Element | 'none', ms = 200) {
     const pal = PALETTE[el];
     this.add({ kind: 'comet', x: x0, y: y0, x0, y0, x1, y1, color: pal[Math.min(2, pal.length - 1)], size: 7, max: ms });
-  }
-
-  /** 공격자에게서 대상으로 날아가는 기운 덩어리. 다가갈수록 커지고, 지나간 자리에 속성 입자를 남긴다 */
-  orb(x0: number, y0: number, x1: number, y1: number, el: Element | 'none', ms = 320, size0 = 8, size1 = 22) {
-    const pal = PALETTE[el];
-    this.add({ kind: 'orb', x: x0, y: y0, x0, y0, x1, y1, el, color: pal[Math.min(2, pal.length - 1)], size: size0, size1, max: ms });
   }
 
   /** 맞은 자리에서 흩어지는 세모 조각 */
@@ -218,19 +211,7 @@ export class FxCanvas {
         p.y = p.y0! + (p.y1! - p.y0!) * e;
         // 지나간 자리에 불티를 남긴다
         if (Math.random() < 0.9) this.ps.push({ kind: 'dot', x: px, y: py, vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5, life: 0, max: 260, size: 2 + Math.random() * 2, color: p.color, rot: 0, vr: 0, g: 0, drag: 0.9 });
-      } else if (p.kind === 'orb') {
-        // 살짝 위로 휘는 길(이차 베지에)
-        const e = t * t * (3 - 2 * t);
-        const mx = (p.x0! + p.x1!) / 2;
-        const my = Math.min(p.y0!, p.y1!) - Math.abs(p.x1! - p.x0!) * 0.18;
-        const px = p.x;
-        const py = p.y;
-        p.x = (1 - e) * (1 - e) * p.x0! + 2 * (1 - e) * e * mx + e * e * p.x1!;
-        p.y = (1 - e) * (1 - e) * p.y0! + 2 * (1 - e) * e * my + e * e * p.y1!;
-        const pal = PALETTE[p.el ?? 'none'];
-        const shape: Kind = p.el === 'wood' ? 'leaf' : p.el === 'water' ? 'drop' : p.el === 'light' ? 'star' : p.el === 'dark' ? 'smoke' : 'dot';
-        for (let j = 0; j < 2; j++) this.ps.push({ kind: shape, x: px + (Math.random() - 0.5) * 8, y: py + (Math.random() - 0.5) * 8, vx: (Math.random() - 0.5) * 1.2, vy: (Math.random() - 0.5) * 1.2 - (p.el === 'fire' ? 0.6 : 0), life: 0, max: 320 + Math.random() * 200, size: 2 + Math.random() * 3, color: pal[Math.floor(Math.random() * pal.length)], rot: Math.random() * 6, vr: 0.1, g: 0, drag: 0.92 });
-      } else if (p.kind !== 'ring' && p.kind !== 'slash') {
+      } else if (p.kind !== 'ring' && p.kind !== 'slash' && !this.frozen) {
         p.vx *= Math.pow(p.drag, k);
         p.vy = p.vy * Math.pow(p.drag, k) + p.g * k;
         p.x += p.vx * k;
@@ -371,23 +352,6 @@ export class FxCanvas {
         c.arc(4, 0, p.size * 0.6, 0, Math.PI * 2);
         c.fill();
         c.globalAlpha = 1;
-        break;
-      }
-      case 'orb': {
-        c.globalAlpha = 1;
-        const r = p.size + ((p.size1 ?? p.size) - p.size) * t;
-        const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2.4);
-        g.addColorStop(0, '#ffffff');
-        g.addColorStop(0.28, p.color);
-        g.addColorStop(1, 'rgba(0,0,0,0)');
-        c.fillStyle = g;
-        c.beginPath();
-        c.arc(p.x, p.y, r * 2.4, 0, Math.PI * 2);
-        c.fill();
-        c.fillStyle = '#fff';
-        c.beginPath();
-        c.arc(p.x, p.y, r * 0.55, 0, Math.PI * 2);
-        c.fill();
         break;
       }
       case 'shard': {

@@ -530,10 +530,11 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 
 /* 턴제 전투: 전장 */
 .bf { position: fixed; inset: 0; max-width: 480px; margin: 0 auto; z-index: 46; overflow: hidden; background: #0f0b12; color: #fff; user-select: none; -webkit-user-select: none; --spd: 1; }
-.bf-scene { position: absolute; inset: 0; transform-origin: 50% 42%; }
+.bf-scene { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
 .bf-field { position: absolute; inset: 0; transition: filter 1s ease; }
-.bf-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: brightness(.6) saturate(.85); background: #241c2a; }
-.bf-fog { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(10,6,14,.75) 0%, rgba(10,6,14,0) 20%, rgba(10,6,14,0) 58%, rgba(10,6,14,.82) 78%, #0c0910 100%); }
+/* 배경은 좌우로 16%씩 넉넉히 깔아 둔다: 카메라가 가장자리 적에게 다가가도 빈 곳이 드러나지 않게 */
+.bf-bg { position: absolute; top: 0; left: -16%; width: 132%; height: 100%; object-fit: cover; filter: brightness(.6) saturate(.85); background: #241c2a; transition: filter .3s ease; }
+.bf-fog { position: absolute; top: 0; bottom: 0; left: -16%; right: -16%; pointer-events: none; background: linear-gradient(180deg, rgba(10,6,14,.75) 0%, rgba(10,6,14,0) 20%, rgba(10,6,14,0) 58%, rgba(10,6,14,.82) 78%, #0c0910 100%); }
 .bf.end-lose .bf-field { filter: grayscale(.85) brightness(.55); }
 .bf-foe { position: absolute; aspect-ratio: 2 / 3; transform: translateX(-50%); pointer-events: none; transition: opacity .4s ease; animation: bf-enter calc(.6s / var(--spd)) ease both; }
 @keyframes bf-enter { from { opacity: 0; translate: 0 -6%; } }
@@ -551,7 +552,7 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .bf-tag em { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font: 800 10px var(--sans); font-style: normal; color: #ffe27a; background: rgba(0,0,0,.6); border-radius: 6px; padding: 0 5px; white-space: nowrap; }
 .bf-tag em.down { color: #c9a7ff; top: -34px; }
 .bf-hp { position: relative; flex: 1; height: 6px; border-radius: 3px; background: rgba(0,0,0,.6); overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
-.bf-hp b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, #d8402f, #ff8a5d); transition: width calc(.22s / var(--spd)) ease-out; }
+.bf-hp b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, #d8402f, #ff8a5d); transition: width .05s linear; }
 .bf-hp b.lag { background: #fff1c9; transition: width calc(.55s / var(--spd)) ease calc(.3s / var(--spd)); }
 .bf-hp.mine b:not(.lag) { background: linear-gradient(90deg, #2fa86a, #8fe3a8); }
 .bf-hp.big { height: 9px; }
@@ -993,3 +994,20 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .bf-num.status { font: 400 30px var(--title); color: #fff; -webkit-text-stroke: 1.2px #8a5cd0; text-shadow: 0 0 10px rgba(138,92,208,.9); }
 .bf-num.status.down { -webkit-text-stroke-color: #5b4a8a; }
 @keyframes bf-num { 0% { opacity: 0; transform: translate(-50%, -20%) scale(.55); } 12% { opacity: 1; transform: translate(-50%, -55%) scale(1.12); } 24% { transform: translate(-50%, -60%) scale(1); } 82% { opacity: 1; transform: translate(-50%, -78%); } 100% { opacity: 0; transform: translate(-50%, -95%); } }
+
+/* 숫자가 크게 박혔다가 두세 프레임 만에 제 크기로 줄어든다(참고 영상의 '쾅' 숫자) */
+.bf-num.slam { animation: bf-slam var(--d, 1s) linear forwards; }
+@keyframes bf-slam {
+  0% { opacity: .5; transform: translate(-50%, -50%) scale(var(--big, 3)); }
+  4% { opacity: .55; transform: translate(-50%, -50%) scale(var(--big, 3)); animation-timing-function: cubic-bezier(.15,.85,.3,1); }
+  15% { opacity: 1; transform: translate(-50%, -62%) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -72%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -82%) scale(1); }
+}
+
+/* 행동하는 동안: 맞는 적(또는 덤벼드는 적)만 맨 앞에 밝게, 나머지와 배경은 어둡게 */
+.bf-sprite { transition: filter .25s ease; }
+.bf-foe[data-tgt] { z-index: 9 !important; }
+.bf[data-focus] .bf-foe:not([data-tgt]) .bf-sprite { filter: brightness(.38) saturate(.6) drop-shadow(0 8px 12px rgba(0,0,0,.55)); }
+.bf[data-focus] .bf-foe:not([data-tgt]) .bf-tag { opacity: .35; }
+.bf[data-focus] .bf-bg { filter: brightness(.4) saturate(.7); }

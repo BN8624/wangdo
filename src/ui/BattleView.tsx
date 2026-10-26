@@ -82,6 +82,9 @@ const lineOf = (id: string, n: number) => {
 
 const SKILL_TINT: Record<SkillKind, string> = { strike: '#e0603c', stun: '#9a6ad0', weaken: '#5b4a8a', rally: '#d9a72a', guard: '#3f87c9', heal: '#3fb86a' };
 
+/** 맞는 순간 세상이 멈추는 시간(ms, 1배속 기준). 배속을 올려도 다른 동작보다 덜 줄어든다 */
+const HOLD = { normal: 90, heavy: 150 };
+
 export function BattleView({
   setup,
   seed,
@@ -163,15 +166,19 @@ export function BattleView({
   }, [speed]);
 
   // ───── 연출 도우미 ─────
-  const sleep = (ms: number) =>
+  // sleep은 배속만큼 줄고, beat(맞는 순간의 멈춤·실루엣·숫자)는 덜 준다. 배속을 올려도 접촉의 무게는 남긴다
+  const dur = (ms: number) => ms / speedRef.current;
+  const beatDur = (ms: number) => ms / Math.sqrt(speedRef.current);
+  const wait = (ms: number) =>
     new Promise<void>((done) => {
       const t = setTimeout(() => {
         timers.current.delete(t);
         done();
-      }, ms / speedRef.current);
+      }, ms);
       timers.current.add(t);
     });
-  const dur = (ms: number) => ms / speedRef.current;
+  const sleep = (ms: number) => wait(dur(ms));
+  const beat = (ms: number) => wait(beatDur(ms));
   const reg = (key: string) => (el: HTMLElement | null) => {
     if (el) nodes.current.set(key, el);
     else nodes.current.delete(key);
@@ -186,27 +193,69 @@ export function BattleView({
     const fy = part === 'head' ? (foe ? 0.2 : 0.12) : part === 'feet' ? 0.92 : foe ? 0.42 : 0.42;
     return { x: r.left - R.left + r.width / 2, y: r.top - R.top + r.height * fy };
   };
-  const animate = (el: Element | HTMLElement | null | undefined, frames: Keyframe[], ms: number, opts: KeyframeAnimationOptions = {}) => {
-    if (el && 'animate' in el) (el as HTMLElement).animate(frames, { duration: dur(ms), easing: 'ease-out', ...opts });
+  /** 실제 시간(ms)으로 거는 애니메이션 */
+  const anim = (el: Element | HTMLElement | null | undefined, frames: Keyframe[], ms: number, opts: KeyframeAnimationOptions = {}) => {
+    if (el && 'animate' in el) (el as HTMLElement).animate(frames, { duration: ms, easing: 'ease-out', ...opts });
+  };
+  const animate = (el: Element | HTMLElement | null | undefined, frames: Keyframe[], ms: number, opts: KeyframeAnimationOptions = {}) => anim(el, frames, dur(ms), opts);
+  /** 지금 모습에서 to로 옮겨 그 자세를 유지한다(앞서 건 자세는 거둔다) */
+  const poseTo = (el: HTMLElement | null | undefined, to: Keyframe, ms: number, easing = 'ease-out') => {
+    if (!el) return;
+    const cs = getComputedStyle(el);
+    const from: Keyframe = { transform: cs.transform, filter: cs.filter };
+    for (const a of el.getAnimations()) if (!('animationName' in a)) a.cancel();
+    el.animate([from, { transform: 'none', filter: 'none', ...to }], { duration: dur(ms), easing, fill: 'forwards' });
+  };
+  /** 카메라: 장면을 at 지점(장면 너비·높이의 %)이 가운데 쪽으로 오게 s배로 당긴다. at이 없으면 제자리 */
+  const camTo = (s: number, at: { x: number; y: number } | null, ms: number, easing = 'cubic-bezier(.3,0,.2,1)') => {
+    const el = sceneRef.current;
+    if (!el) return;
+    const W = el.offsetWidth;
+    const H = el.offsetHeight;
+    let tx = 0;
+    let ty = 0;
+    if (at) {
+      const px = (at.x / 100) * W;
+      const py = (at.y / 100) * H;
+      // 대상을 적 무대 가운데(62%, 34%) 쪽으로 끌어오되, 배경 가장자리가 드러나지 않게 막는다(배경은 좌우로 16%씩 더 깔려 있다)
+      const fx = px + (W * 0.62 - px) * 0.45;
+      const fy = py + (H * 0.34 - py) * 0.45;
+      tx = Math.min(0.16 * s * W, Math.max(W - 1.16 * s * W, fx - s * px));
+      ty = Math.min(0, Math.max(H * (1 - s), fy - s * py));
+    } else s = 1;
+    poseTo(el, { transform: `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${s})` }, ms, easing);
+  };
+  /** 행동하는 동안 keys의 적만 맨 앞에 밝게 두고 나머지는 어둡게 한다. 빈 배열이면 풀기 */
+  const spotlight = (keys: string[]) => {
+    const root = rootRef.current;
+    if (!root) return;
+    root.toggleAttribute('data-focus', keys.length > 0);
+    for (const el of root.querySelectorAll('[data-tgt]')) el.removeAttribute('data-tgt');
+    for (const k of keys) nodes.current.get(k)?.closest('.bf-foe')?.setAttribute('data-tgt', '');
+  };
+  /** 대상들의 가운데(장면 기준 %) */
+  const focus = (keys: string[]) => {
+    const pts = keys.map((k) => nodes.current.get(k)?.closest<HTMLElement>('[data-cx]')?.dataset).filter((d): d is DOMStringMap => !!d);
+    if (!pts.length) return null;
+    return { x: pts.reduce((a, d) => a + Number(d.cx), 0) / pts.length, y: pts.reduce((a, d) => a + Number(d.cy), 0) / pts.length };
   };
   const shake = (p: number) => {
     const f: Keyframe[] = [{ transform: 'translate(0,0)' }];
     for (let i = 0; i < 5; i++) f.push({ transform: `translate(${(i % 2 ? -1 : 1) * p * (1 - i / 5)}px, ${(i % 2 ? 1 : -1) * p * 0.5 * (1 - i / 5)}px)` });
     f.push({ transform: 'translate(0,0)' });
-    animate(fieldRef.current, f, 320, { easing: 'linear' });
+    anim(fieldRef.current, f, beatDur(320), { easing: 'linear' });
   };
-  const zoom = () => animate(sceneRef.current, [{ transform: 'scale(1)' }, { transform: 'scale(1.045)', offset: 0.25 }, { transform: 'scale(1)' }], 420);
   const flash = (red = false, a = 0.5) => animate(red ? redRef.current : whiteRef.current, [{ opacity: 0 }, { opacity: a, offset: 0.15 }, { opacity: 0 }], red ? 420 : 260);
-  /** 접촉 순간: 대상 전체를 단색 실루엣으로 번쩍(흰색, 치명타는 붉은색) */
+  /** 접촉 순간: 대상 전체를 단색 실루엣으로 덮었다가(hold) 옅어지며 원래 모습이 비친다 */
   const silhouette = (el: HTMLElement | null | undefined, color: string, hold = 70) => {
     const sil = el?.querySelector<HTMLElement>('.bf-sil');
     if (!sil) return;
     sil.style.background = color;
-    const ms = hold + 280;
-    animate(sil, [{ opacity: 1 }, { opacity: 1, offset: hold / ms }, { opacity: 0 }], ms, { easing: 'linear' });
+    const ms = hold + 300;
+    anim(sil, [{ opacity: 1 }, { opacity: 1, offset: hold / ms }, { opacity: 0 }], beatDur(ms), { easing: 'linear' });
   };
-  /** 대상 둘레로 퍼지는 렌즈 고리 */
-  const lens = (key: string, size: number, tint = 'rgba(255,255,255,.7)') => {
+  /** 접촉 직전 대상 둘레에 맺히는 렌즈 고리: pre 뒤(맞는 순간)에 가장 크고, 곧 퍼지며 사라진다 */
+  const lens = (key: string, size: number, tint: string, pre: number) => {
     const layer = layerRef.current;
     if (!layer) return;
     const p = pos(key, 'mid');
@@ -215,22 +264,28 @@ export function BattleView({
     Object.assign(d.style, { left: `${p.x}px`, top: `${p.y}px`, width: `${size}px`, height: `${size}px` });
     d.style.setProperty('--tint', tint);
     layer.appendChild(d);
-    d.animate([{ transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 0.9, offset: 0.55 }, { transform: 'translate(-50%,-50%) scale(1.12)', opacity: 0 }], { duration: dur(520), easing: 'cubic-bezier(.2,.8,.3,1)' });
+    const a = dur(pre);
+    const b = beatDur(280);
+    d.animate([{ transform: 'translate(-50%,-50%) scale(.62)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: a / (a + b) }, { transform: 'translate(-50%,-50%) scale(1.16)', opacity: 0 }], { duration: a + b, easing: 'cubic-bezier(.3,.6,.3,1)' });
     const t = setTimeout(() => {
       d.remove();
       timers.current.delete(t);
-    }, dur(540));
+    }, a + b + 20);
     timers.current.add(t);
   };
-  const number = (key: string, text: string, kind: string, label?: string) => {
+  /** 숫자. slam이면 그 배율로 크게 박혔다가 곧 제 크기로 줄어든다 */
+  const number = (key: string, text: string, kind: string, label?: string, slam = 0) => {
     const layer = layerRef.current;
     if (!layer) return;
     const p = pos(key, 'head');
     const d = document.createElement('div');
-    d.className = `bf-num ${kind}`;
-    d.style.left = `${p.x + (Math.random() - 0.5) * 24}px`;
+    d.className = `bf-num ${kind} ${slam ? 'slam' : ''}`;
+    const W = rootRef.current?.clientWidth ?? 390;
+    d.style.left = `${Math.min(W - 56, Math.max(56, p.x + (Math.random() - 0.5) * (slam ? 10 : 24)))}px`;
     d.style.top = `${p.y}px`;
-    d.style.setProperty('--d', `${dur(1150)}ms`);
+    const ms = slam ? beatDur(1000) : dur(1150);
+    d.style.setProperty('--d', `${ms}ms`);
+    if (slam) d.style.setProperty('--big', String(slam));
     if (label) {
       const s = document.createElement('small');
       s.textContent = label;
@@ -241,7 +296,7 @@ export function BattleView({
     const t = setTimeout(() => {
       d.remove();
       timers.current.delete(t);
-    }, dur(1200));
+    }, ms + 50);
     timers.current.add(t);
   };
   const unitOf = (side: 0 | 1, slot: number): Unit | undefined => (side === 0 ? combat.allies : combat.foes).find((u) => u.slot === slot);
@@ -279,38 +334,45 @@ export function BattleView({
     }
   };
 
-  const impact = (h: Extract<CombatEvent, { t: 'hit' }>, atk: Unit | undefined, kind: SkillKind | null) => {
+  /** 접촉 한 프레임: 실루엣·베기·조각·밀려남·숫자를 한꺼번에 낸다. 멈춤(hold)은 부르는 쪽이 건다 */
+  const impact = (h: Extract<CombatEvent, { t: 'hit' }>, atk: Unit | undefined, kind: SkillKind | null, solo: boolean, loud: boolean) => {
     const tk = K(h.tside, h.tslot);
     const el = atk?.element ?? 'fire';
     const p = pos(tk, 'mid');
     const big = kind === 'strike' || kind === 'stun';
+    const heavy = big || h.crit;
+    const hold = heavy ? HOLD.heavy : HOLD.normal;
     const node = nodes.current.get(tk);
+    // 맞는 순간 밀려난 자세로 바로 튀어 멈춰 있다가, 멈춤이 끝나면 돌아온다
+    const kick = (target: HTMLElement | null | undefined, pose: string, back = 380) => {
+      const a = beatDur(hold);
+      const b = dur(back);
+      anim(target, [{ transform: pose }, { transform: pose, offset: a / (a + b) }, { transform: 'translate(-2px, 1px)', offset: 0.85 }, { transform: 'none' }], a + b, { easing: 'ease-out' });
+    };
     if (h.tside === 1) {
-      silhouette(node, h.crit ? '#e0302a' : '#ffffff', h.crit || big ? 110 : 60);
-      lens(tk, Math.max(170, (node?.getBoundingClientRect().width ?? 120) * (big || h.crit ? 1.5 : 1.2)), h.crit ? 'rgba(255,120,110,.8)' : 'rgba(255,255,255,.75)');
-      if (big || h.crit) fx.current?.slash(p.x, p.y, el, true);
+      silhouette(node, h.crit ? '#e0302a' : '#ffffff', hold + 40);
+      fx.current?.slash(p.x, p.y, el, heavy);
       if (big) fx.current?.slash(p.x, p.y, el, true, 0.7);
-      fx.current?.burst(p.x, p.y, el, big ? 22 : 12, big ? 1.3 : 0.9);
-      fx.current?.shards(p.x, p.y, big || h.crit ? 10 : 6, h.crit ? '#ffb0a8' : '#e8f2ff', big ? 1.4 : 1);
-      animate(node, [{ transform: 'none' }, { transform: `translate(${big ? 16 : 8}px, -5px) rotate(${big ? 3 : 1.5}deg)`, offset: 0.18 }, { transform: 'translate(-3px, 1px)', offset: 0.55 }, { transform: 'none' }], big ? 520 : 420);
+      fx.current?.burst(p.x, p.y, el, heavy ? 20 : 12, heavy ? 1.3 : 0.9);
+      fx.current?.shards(p.x, p.y, heavy ? 12 : 7, h.crit ? '#ffb0a8' : '#e8f2ff', heavy ? 1.5 : 1.1);
+      kick(node, `translate(${heavy ? 18 : 10}px, -6px) rotate(${heavy ? 3 : 1.5}deg)`);
     } else {
-      const panel = node;
-      animate(panel, [{ transform: 'none' }, { transform: 'translate(-7px, 4px) rotate(-2deg)', offset: 0.2 }, { transform: 'translate(5px, 0) rotate(1deg)', offset: 0.5 }, { transform: 'none' }], 380);
-      animate(panel?.querySelector('.bf-hurt'), [{ opacity: 1 }, { opacity: 1, offset: 0.2 }, { opacity: 0 }], 420);
-      // 지금 크게 서 있는 식객이 맞으면 그 그림도 붉게 번쩍이며 밀린다
+      kick(node, 'translate(-8px, 5px) rotate(-2deg)', 320);
+      animate(node?.querySelector('.bf-hurt'), [{ opacity: 1 }, { opacity: 1, offset: 0.3 }, { opacity: 0 }], 460);
+      // 지금 크게 서 있는 식객이 맞으면 그 그림도 붉게 덮였다가 밀려난다
       if (atk && unitOf(0, h.tslot)?.id === leadId.current) {
-        silhouette(leadRef.current, '#e0302a', 80);
-        animate(leadRef.current, [{ transform: 'none' }, { transform: 'translate(-14px, 6px) rotate(-2deg)', offset: 0.2 }, { transform: 'none' }], 420);
+        silhouette(leadRef.current, '#e0302a', hold);
+        kick(leadRef.current, 'translate(-16px, 8px) rotate(-2deg)', 420);
       }
       fx.current?.claw(p.x, p.y - 10);
-      fx.current?.shards(p.x, p.y, 5, '#ffb0a8', 0.8);
-      flash(true, h.crit ? 0.7 : 0.4);
+      fx.current?.shards(p.x, p.y, 6, '#ffb0a8', 1);
+      flash(true, h.crit ? 0.7 : 0.45);
     }
-    if (h.crit) zoom();
-    shake(h.crit ? 7 : big ? 6 : h.tside === 0 ? 4 : 0);
-    play(h.tside === 0 ? 'hurt' : h.crit ? 'crit' : big ? 'heavy' : 'hit');
+    if (heavy || h.tside === 0) shake(heavy ? 7 : 4);
+    if (loud) play(h.tside === 0 ? 'hurt' : h.crit ? 'crit' : big ? 'heavy' : 'hit');
     const label = h.crit ? '치명타' : h.adv === 1 ? '상성 유리' : h.adv === -1 ? '상성 불리' : undefined;
-    number(tk, fmt(h.dmg), `${h.tside === 0 ? 'hurt' : 'dmg'} ${h.crit ? 'crit' : ''} ${h.adv === 1 ? 'adv' : h.adv === -1 ? 'weak' : ''} ${big ? 'big' : ''}`, label);
+    const slam = h.tside === 0 ? 2 : solo ? (heavy ? 3.4 : 2.8) : 1.9;
+    number(tk, fmt(h.dmg), `${h.tside === 0 ? 'hurt' : 'dmg'} ${h.crit ? 'crit' : ''} ${h.adv === 1 ? 'adv' : h.adv === -1 ? 'weak' : ''} ${big ? 'big' : ''}`, label, slam);
     if (h.side === 0) damage.current[h.slot] = (damage.current[h.slot] ?? 0) + h.dmg;
     const d = disp.current[tk];
     if (d) d.hp = h.hp;
@@ -334,6 +396,7 @@ export function BattleView({
     redraw();
   };
 
+  // 한 번의 행동: ① 예비 동작 → ② 겨누기(카메라가 대상에게) → ③ 내지르기(렌즈 고리) → ④ 접촉과 멈춤 → ⑤ 여운 → ⑥ 한 박자 쉼
   const playAction = async (act: Extract<CombatEvent, { t: 'act' }>, rest: CombatEvent[]) => {
     const key = K(act.side, act.slot);
     const u = unitOf(act.side, act.slot);
@@ -352,22 +415,32 @@ export function BattleView({
     if (sk && u) await playCutin(u, sk);
     if (run.current.cancelled) return;
     const hits = rest.filter((e): e is Extract<CombatEvent, { t: 'hit' }> => e.t === 'hit');
-    // 예비 동작: 내 편은 패널이 하얗게 두 번 번쩍이고 그 식객이 왼쪽 아래에 크게 선다. 적은 붉게 빛나며 덤벼든다
+    const targets = [...new Set(hits.map((h) => K(h.tside, h.tslot)))];
+    const heavy = hits.some((h) => h.crit) || kind === 'strike' || kind === 'stun';
     const node = nodes.current.get(key);
-    if (act.side === 0 && u) {
+    const mine = act.side === 0;
+
+    // ① 예비 동작: 내 편은 패널이 하얗게 두 번 번쩍이고 그 식객이 왼쪽 아래에 크게 서서 한마디 한다.
+    //    적은 붉게 달아오르며 몸을 움츠리고, 카메라가 그 적에게 조금 다가간다
+    let talking = false;
+    if (mine && u) {
       animate(node?.querySelector('.bf-strobe'), [{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 0, offset: 0.4 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], 300, { easing: 'linear' });
       animate(node, [{ transform: 'none' }, { transform: 'translateY(-12px)', offset: 0.4 }, { transform: 'none' }], 300);
       if (leadId.current !== u.id) setLead(u.id);
-      await sleep(220);
-      // 한마디(기술은 컷인이 말을 대신한다). 3배속에서는 생략
+      // 기술은 컷인이 말을 대신한다. 3배속에서는 생략
       if (!sk && hits.length && speedRef.current < 3) {
         setBubble({ text: lineOf(u.id, said.current), n: said.current++ });
-        await sleep(520);
-        setBubble(null);
-      }
+        talking = true;
+        await beat(420);
+      } else await sleep(240);
+    } else if (hits.length) {
+      spotlight([key]);
+      camTo(1.1, focus([key]), 300);
+      poseTo(node, { transform: 'scale(.95) translateY(-2%)', filter: 'drop-shadow(0 0 14px #ff3b2f) brightness(1.15)' }, 300);
+      await sleep(300);
     } else {
-      animate(node, [{ transform: 'none', filter: 'none' }, { transform: 'translateY(6%) scale(1.12)', filter: 'drop-shadow(0 0 16px #ff3b2f) brightness(1.2)', offset: 0.45 }, { transform: 'none', filter: 'none' }], 460, { easing: 'cubic-bezier(.3,.1,.3,1)' });
-      await sleep(220);
+      animate(node, [{ filter: 'none' }, { filter: 'drop-shadow(0 0 16px #ff3b2f) brightness(1.2)', offset: 0.45 }, { filter: 'none' }], 460);
+      await sleep(240);
     }
 
     // 내 편을 향한 기술 효과(치유·방어·격려)
@@ -409,24 +482,37 @@ export function BattleView({
       await sleep(220);
     }
 
-    // 기운이 대상에게 날아가며 커진다(내 편은 크게 선 식객의 가슴께에서, 적은 그 적에게서)
     if (hits.length) {
-      const from = act.side === 0 ? pos('lead', 'mid') : pos(key, 'mid');
-      const el = act.side === 0 ? u?.element ?? 'none' : 'dark';
-      play('whoosh');
-      for (const h of hits) {
-        const to = pos(K(h.tside, h.tslot), 'mid');
-        fx.current?.orb(from.x, from.y, to.x, to.y, el, dur(kind ? 360 : 300), kind ? 10 : 7, kind ? 30 : 20);
+      const LUNGE = 90;
+      if (mine) {
+        // ② 겨누기: 카메라가 맞을 적에게 다가가고, 식객은 몸을 뒤로 당긴다
+        spotlight(targets);
+        camTo(targets.length > 1 ? 1.1 : sk ? 1.34 : 1.24, focus(targets), 300);
+        poseTo(leadRef.current, { transform: 'translate(-12px, 8px) scale(.98)' }, 300, 'cubic-bezier(.3,0,.3,1)');
+        await sleep(300);
+        if (talking) setBubble(null);
+        // ③ 내지르기: 식객이 앞으로 튀어 나가고, 대상 둘레에 렌즈 고리가 맺힌다
+        for (const k of targets) {
+          const w = nodes.current.get(k)?.getBoundingClientRect().width ?? 120;
+          lens(k, Math.max(170, w * (heavy ? 1.5 : 1.25)), heavy ? 'rgba(255,120,110,.8)' : 'rgba(255,255,255,.75)', LUNGE);
+        }
+        poseTo(leadRef.current, { transform: 'translate(24px, -14px) scale(1.045)' }, LUNGE, 'cubic-bezier(.6,0,1,.6)');
+      } else {
+        // 적이 화면 쪽으로 덮쳐 온다
+        poseTo(node, { transform: 'scale(1.3) translateY(14%)', filter: 'drop-shadow(0 0 22px #ff3b2f) brightness(1.3)' }, LUNGE, 'cubic-bezier(.6,0,1,.6)');
       }
-      await sleep(kind ? 350 : 290);
-    }
-    for (let i = 0; i < hits.length; i++) {
-      if (i > 0) await sleep(kind === 'weaken' ? 90 : 60);
+      play('whoosh');
+      await sleep(LUNGE);
       if (run.current.cancelled) return;
-      impact(hits[i], u, kind);
+      // ④ 접촉: 모든 대상이 같은 순간에 맞고, 세상이 잠깐 멈춘다(입자도 제자리에 섰다가 풀리면 흩어진다)
+      if (fx.current) fx.current.frozen = true;
+      hits.forEach((h, i) => impact(h, u, kind, hits.length === 1, i === 0));
       redraw();
-      // 접촉 순간 잠깐 멈춘다(평타는 짧게, 강타·치명타는 길게)
-      await sleep(hits[i].crit || kind === 'strike' || kind === 'stun' ? 100 : 45);
+      await beat(heavy ? HOLD.heavy : HOLD.normal);
+      if (fx.current) fx.current.frozen = false;
+      // ⑤ 여운: 공격한 쪽이 제자리로
+      if (mine) poseTo(leadRef.current, { transform: 'none' }, 460, 'cubic-bezier(.2,.7,.3,1)');
+      else poseTo(node, { transform: 'none', filter: 'none' }, 380, 'cubic-bezier(.2,.7,.3,1)');
     }
     for (const b of buffs.filter((x) => x.kind !== 'atkUp')) {
       await sleep(120);
@@ -443,11 +529,12 @@ export function BattleView({
       }
     }
     const downs = rest.filter((e): e is Extract<CombatEvent, { t: 'down' }> => e.t === 'down');
-    if (downs.length) {
-      await sleep(200);
-      await Promise.all(downs.map((d) => die(d.side, d.slot)));
-    }
-    await sleep(sk ? 520 : hits.length ? 380 : 300);
+    await sleep(hits.length ? 360 : 200);
+    if (downs.length) await Promise.all(downs.map((d) => die(d.side, d.slot)));
+    // ⑥ 카메라가 물러나고 한 박자 쉰다
+    spotlight([]);
+    camTo(1, null, 460);
+    await sleep(sk ? 380 : 260);
     setDim(false);
     setActing(null);
   };
@@ -476,6 +563,8 @@ export function BattleView({
   const playEnding = async () => {
     const o = conclude();
     if (!o) return;
+    camTo(1, null, 300);
+    spotlight([]);
     setActing(null);
     setEnding(o.won ? 'win' : 'lose');
     play(o.won ? 'win' : 'lose');
@@ -522,7 +611,10 @@ export function BattleView({
     for (const t of timers.current) clearTimeout(t);
     timers.current.clear();
     fx.current?.clear();
+    if (fx.current) fx.current.frozen = false;
+    spotlight([]);
     layerRef.current?.replaceChildren();
+    for (const el of [sceneRef.current, leadRef.current]) for (const a of el?.getAnimations() ?? []) if (!('animationName' in a)) a.cancel();
     for (let i = 0; i < 5000 && !combat.done; i++) {
       for (const e of combat.step()) if (e.t === 'hit' && e.side === 0) damage.current[e.slot] = (damage.current[e.slot] ?? 0) + e.dmg;
     }
@@ -574,6 +666,8 @@ export function BattleView({
                 key={u.id}
                 className={`bf-foe ${d?.down ? 'dead' : ''} ${acting === K(1, u.slot) ? 'acting' : ''} ${u.boss ? 'boss' : ''}`}
                 style={{ left: `${s.x}%`, bottom: `${s.feet}%`, height: `${s.h}%`, zIndex: s.z }}
+                data-cx={s.x}
+                data-cy={100 - s.feet - s.h * 0.55}
               >
                 <div className="bf-shadow" />
                 <div className="bf-body" ref={reg(K(1, u.slot))}>
