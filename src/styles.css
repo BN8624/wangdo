@@ -839,26 +839,23 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .fm-head { min-width: 0; display: grid; }
 .fm-head small { font: 700 12px var(--sans); color: rgba(255,255,255,.7); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .fm-head b { font: 400 22px/1.25 var(--title); }
-.fm-foes { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 12px 14px 0; }
-.fm-foe { flex: none; width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #3a3040; box-shadow: 0 0 0 2px var(--el); }
-.fm-foe.boss { width: 52px; height: 52px; box-shadow: 0 0 0 2px var(--gold-light), 0 0 0 4px var(--el); }
+.fm-foes { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 14px 14px 0; }
+.fm-foe { flex: none; width: 54px; height: 54px; border-radius: 50%; overflow: hidden; background: #3a3040; box-shadow: 0 0 0 2px var(--el); }
+.fm-foe.boss { width: 64px; height: 64px; box-shadow: 0 0 0 2px var(--gold-light), 0 0 0 4px var(--el); }
 .fm-foe img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 6%; transform: scale(1.7); transform-origin: 50% 0; }
 .fm-foes small { flex-basis: 100%; font: 700 12px var(--sans); color: rgba(255,255,255,.8); }
-.fm-team { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; gap: 5px; padding: 10px 8px 0; }
-/* 칸마다 자기 자리 안에서만 보인다(겹치지 않게). 모두 같은 크기로 서고, 칸 밖으로 나가는 꼬리·리본·무기는 칸 가장자리에서 옅게 잘린다 */
-.fm-slot { position: relative; height: 100%; max-height: 380px; padding: 0; display: flex; align-items: flex-end; justify-content: center; border-radius: 14px; overflow: hidden; background: linear-gradient(to top, color-mix(in srgb, var(--el, #fff) 22%, transparent), rgba(255,255,255,.03) 45%, transparent); }
-.fm-slot::before { content: ''; position: absolute; left: 8%; right: 8%; bottom: 44px; height: 16px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--el, #fff) 70%, transparent), transparent); opacity: .8; }
-/* 전신: 모두 같은 키(화면 폭의 78%까지)로, 몸 중심(--cx)을 칸 가운데에 */
-.fm-stand-wrap { pointer-events: none; position: absolute; left: 50%; bottom: 50px; height: min(calc(100% - 56px), calc(min(100vw, 480px) * .78)); transform: translateX(var(--cx, -50%)); }
-.fm-stand { display: block; height: 100%; width: auto; max-width: none; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
-.fm-plate { position: relative; width: 100%; display: grid; justify-items: center; gap: 1px; padding: 6px 0 4px; border-radius: 0 0 14px 14px; background: rgba(10,6,14,.72); border-top: 2px solid var(--el); }
+/* 편성 칸: 카드 그림(머리~허벅지)을 얼굴 쪽에 맞춰 세로로 길게. 다섯 장이 나란히, 겹치지 않는다 */
+.fm-team { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-content: end; align-items: end; gap: 6px; padding: 10px 8px 0; }
+.fm-slot { position: relative; padding: 0; display: flex; flex-direction: column; border-radius: 12px; overflow: hidden; background: #241c2a; box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--el, #fff) 75%, transparent), 0 8px 18px rgba(0,0,0,.45); }
+.fm-card { display: block; width: 100%; aspect-ratio: 5 / 14; object-fit: cover; object-position: 50% 6%; }
+.fm-slot .portrait-fallback { display: grid; place-items: center; width: 100%; aspect-ratio: 5 / 14; }
+.fm-plate { position: relative; width: 100%; display: grid; justify-items: center; gap: 1px; padding: 6px 0 5px; background: rgba(10,6,14,.88); border-top: 2px solid var(--el); }
 .fm-plate b { font: 400 14px var(--title); }
 .fm-plate small { font: 700 10px var(--sans); color: rgba(255,255,255,.8); }
 .fm-plate i { font-style: normal; color: var(--gold-light); letter-spacing: -2px; }
-.fm-slot.empty::before { display: none; }
-.fm-slot.empty { border: 1.5px dashed rgba(255,255,255,.3); margin: 0 3px; max-height: 210px; align-items: center; }
+.fm-slot.empty { aspect-ratio: 5 / 16.6; align-items: center; justify-content: center; background: rgba(255,255,255,.04); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.28); border: 0; }
 .fm-plus { font-size: 30px; color: rgba(255,255,255,.6); }
-.fm-slot.on { box-shadow: 0 0 0 2px var(--seal); }
+.fm-slot.on { box-shadow: 0 0 0 2.5px var(--seal), 0 8px 18px rgba(0,0,0,.45); }
 .fm-reward { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 10px 14px 0; font: 700 13px var(--serif); }
 .fm-reward > small { font: 700 11px var(--sans); color: rgba(255,255,255,.65); }
 .fm-reward > span { display: inline-flex; align-items: center; gap: 3px; }
@@ -1048,4 +1045,3 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .gc-trade b { font: 700 13px var(--sans); }
 .gc-trade small { font-size: 11px; opacity: .8; }
 .gc-trade .btn { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
-.fm-slot:not(.empty)::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
