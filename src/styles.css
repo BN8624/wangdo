@@ -540,18 +540,19 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .bf[data-region="galaxy"], .bf[data-region="observatory"], .bf[data-region="skyroad"] { --field-haze: rgba(39,34,66,.16); --field-edge: rgba(24,23,48,.32); }
 .bf[data-region="jade"], .bf[data-region="archive"] { --field-haze: rgba(39,55,52,.1); --field-edge: rgba(28,40,40,.24); }
 .bf[data-region="thunder"] { --field-haze: rgba(41,35,61,.2); --field-edge: rgba(25,20,40,.36); }
-.bf-scene { position: absolute; inset: 0; transform-origin: 50% 42%; }
+.bf-scene { position: absolute; inset: 0; transform-origin: 0 0; will-change: transform; }
 .bf-field { position: absolute; inset: 0; transition: filter 1s ease; }
-.bf-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; background: #241c2a; }
-.bf-atmosphere { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 43%, var(--field-haze) 0%, transparent 58%), radial-gradient(ellipse at 50% 43%, transparent 28%, var(--field-edge) 100%); }
-.bf-fog { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(10,6,14,.75) 0%, transparent 20%, transparent 60%, rgba(10,6,14,.76) 80%, #0c0910 100%); }
+/* 배경은 좌우로 16%씩 넉넉히 깔아 카메라가 가장자리 적을 따라가도 빈 곳이 드러나지 않게 한다. */
+.bf-bg { position: absolute; top: 0; left: -16%; width: 132%; height: 100%; object-fit: cover; background: #241c2a; transition: filter .3s ease; }
+.bf-atmosphere { position: absolute; top: 0; bottom: 0; left: -16%; right: -16%; pointer-events: none; background: radial-gradient(ellipse at 50% 43%, var(--field-haze) 0%, transparent 58%), radial-gradient(ellipse at 50% 43%, transparent 28%, var(--field-edge) 100%); }
+.bf-fog { position: absolute; top: 0; bottom: 0; left: -16%; right: -16%; pointer-events: none; background: linear-gradient(180deg, rgba(10,6,14,.75) 0%, transparent 20%, transparent 60%, rgba(10,6,14,.76) 80%, #0c0910 100%); }
 .bf.end-lose .bf-field { filter: grayscale(.85) brightness(.55); }
 .bf-foe { position: absolute; aspect-ratio: 2 / 3; transform: translateX(-50%); pointer-events: none; transition: opacity .4s ease; animation: bf-enter calc(.6s / var(--spd)) ease both; }
 @keyframes bf-enter { from { opacity: 0; translate: 0 -6%; } }
 .bf-foe.dead { opacity: 0; }
 .bf-body { position: absolute; inset: 0; transform-origin: 50% 100%; }
 .bf-sprite, .bf-sprite-fb { width: 100%; height: 100%; object-fit: contain; object-position: 50% 100%; transform-origin: 50% 100%; filter: drop-shadow(0 8px 12px rgba(0,0,0,.55)); animation: bf-idle 2.8s ease-in-out infinite; }
-.bf-foe.portrait .bf-sprite { -webkit-mask-image: linear-gradient(to top, transparent 0, #000 9%); mask-image: linear-gradient(to top, transparent 0, #000 9%); }
+.bf-foe.portrait .bf-body { -webkit-mask-image: linear-gradient(to top, transparent 0, #000 9%); mask-image: linear-gradient(to top, transparent 0, #000 9%); }
 .bf-sprite-fb { display: grid; place-items: end center; font: 400 18px var(--title); color: #fff; }
 .bf-foe:nth-child(even) .bf-sprite { animation-delay: -1.4s; }
 @keyframes bf-idle { 50% { transform: scaleY(1.014) translateY(-.6%); } }
@@ -566,7 +567,7 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .bf-tag em { position: absolute; top: -18px; left: 50%; transform: translateX(-50%); font: 800 10px var(--sans); font-style: normal; color: #ffe27a; background: rgba(0,0,0,.6); border-radius: 6px; padding: 0 5px; white-space: nowrap; }
 .bf-tag em.down { color: #c9a7ff; top: -34px; }
 .bf-hp { position: relative; flex: 1; height: 6px; border-radius: 3px; background: rgba(0,0,0,.6); overflow: hidden; box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
-.bf-hp b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, #d8402f, #ff8a5d); transition: width calc(.22s / var(--spd)) ease-out; }
+.bf-hp b { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: linear-gradient(90deg, #d8402f, #ff8a5d); transition: width .05s linear; }
 .bf-hp b.lag { background: #fff1c9; transition: width calc(.55s / var(--spd)) ease calc(.3s / var(--spd)); }
 .bf-hp.mine b:not(.lag) { background: linear-gradient(90deg, #2fa86a, #8fe3a8); }
 .bf-hp.big { height: 9px; }
@@ -974,3 +975,62 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .guide { bottom: calc(var(--nav-h) + 8px + env(safe-area-inset-bottom)); }
 .app:has(.view.lb, .view.gc, .view.cp, .ykp) .guide { top: calc(var(--top-h) + 8px + env(safe-area-inset-top)); bottom: auto; }
 .fm-pick-btns { display: flex; gap: 6px; }
+
+/* ── 전투 v3: 대결 구도(사선 띠·크게 선 식객·말풍선·실루엣 번쩍·렌즈 고리·큰 숫자) ── */
+.bf-band { position: absolute; top: -30%; height: 160%; pointer-events: none; transform: rotate(-30deg); transform-origin: 50% 50%; }
+.bf-band.b1 { left: 30%; width: 26%; background: linear-gradient(90deg, rgba(10,6,14,0), rgba(10,6,14,.55) 20%, rgba(10,6,14,.55) 80%, rgba(10,6,14,0)); }
+.bf-band.b2 { left: 22%; width: 2px; background: rgba(255,255,255,.22); }
+.bf-band.b3 { left: 61%; width: 7%; background: rgba(255,255,255,.06); }
+.bf-sil { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: #fff; -webkit-mask-size: contain; mask-size: contain; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: 50% 100%; mask-position: 50% 100%; }
+.bf-lead { position: absolute; z-index: 5; left: -4%; bottom: calc(146px + env(safe-area-inset-bottom)); width: 68%; height: 44%; overflow: hidden; pointer-events: none; -webkit-mask-image: linear-gradient(to top, transparent 0, #000 18%), linear-gradient(to left, transparent 0, #000 22%); -webkit-mask-composite: source-in; mask-image: linear-gradient(to top, transparent 0, #000 18%), linear-gradient(to left, transparent 0, #000 22%); mask-composite: intersect; }
+/* 머리부터 허리께까지: 전신 그림을 크게 두고 상자가 잘라 낸다 */
+.bf-lead-in { position: absolute; left: -38%; top: 0; width: 170%; aspect-ratio: 2 / 3; animation: bf-lead-in calc(.26s / var(--spd)) cubic-bezier(.2,.8,.3,1) both; }
+@keyframes bf-lead-in { from { opacity: 0; transform: translateX(-26%); } }
+.bf-lead-art { width: 100%; height: 100%; object-fit: contain; object-position: 50% 0; filter: drop-shadow(6px 0 18px rgba(0,0,0,.45)); animation: bf-idle 3.2s ease-in-out infinite; transform-origin: 50% 100%; }
+.bf-lead .bf-sil { -webkit-mask-size: 100% 100%; mask-size: 100% 100%; -webkit-mask-position: 0 0; mask-position: 0 0; }
+.bf-bubble { position: absolute; z-index: 9; left: 44%; bottom: calc(146px + 27% + env(safe-area-inset-bottom)); max-width: 58%; padding: 9px 14px 10px; border-radius: 14px 14px 14px 3px; background: #fffaf2; color: #2a1d22; font: 600 15px/1.45 var(--sans); box-shadow: 0 6px 18px rgba(0,0,0,.45), 0 0 0 2px rgba(42,29,34,.85); animation: bf-pop calc(.22s / var(--spd)) cubic-bezier(.2,1.5,.4,1) both; pointer-events: none; }
+.bf-bubble b { display: block; font: 400 12px var(--title); color: var(--seal); margin-bottom: 1px; }
+.bf-bubble::before { content: ''; position: absolute; left: -9px; bottom: 6px; border: 8px solid transparent; border-right-color: rgba(42,29,34,.85); border-left: 0; }
+@keyframes bf-pop { from { opacity: 0; transform: scale(.6) translateX(-12px); } }
+.bf-lens { position: absolute; pointer-events: none; border-radius: 50%; transform: translate(-50%, -50%); background: radial-gradient(circle, rgba(255,255,255,0) 58%, color-mix(in srgb, var(--tint) 35%, transparent) 70%, var(--tint) 73%, rgba(255,255,255,0) 77%); -webkit-backdrop-filter: brightness(1.28) saturate(1.15); backdrop-filter: brightness(1.28) saturate(1.15); }
+.bf-strobe { position: absolute; inset: 0; z-index: 3; pointer-events: none; opacity: 0; background: #fff; }
+.bf-allies { z-index: 6; }
+/* 숫자: 크고 가는 명조, 오래 남는다 */
+.bf-num { font: 400 34px/1 var(--title); letter-spacing: -.5px; color: #fff; text-shadow: 0 0 6px rgba(0,0,0,.85), 0 2px 10px rgba(0,0,0,.6); }
+.bf-num small { font: 400 20px/1 var(--title); color: #ff7d93; text-shadow: 0 0 6px rgba(0,0,0,.8); margin-bottom: 2px; letter-spacing: 1px; }
+.bf-num.big { font-size: 44px; }
+.bf-num.crit { font-size: 46px; color: #ff8fa2; }
+.bf-num.crit small { color: #ff6f86; font-size: 26px; }
+.bf-num.adv small { color: #ffd36b; font-size: 14px; }
+.bf-num.weak { font-size: 26px; color: #d8d0de; }
+.bf-num.weak small { color: #b8aec4; font-size: 13px; }
+.bf-num.hurt { font-size: 28px; color: #ff9a8a; }
+.bf-num.heal { font-size: 28px; color: #9af0b4; }
+.bf-num.status { font: 400 30px var(--title); color: #fff; -webkit-text-stroke: 1.2px #8a5cd0; text-shadow: 0 0 10px rgba(138,92,208,.9); }
+.bf-num.status.down { -webkit-text-stroke-color: #5b4a8a; }
+@keyframes bf-num { 0% { opacity: 0; transform: translate(-50%, -20%) scale(.55); } 12% { opacity: 1; transform: translate(-50%, -55%) scale(1.12); } 24% { transform: translate(-50%, -60%) scale(1); } 82% { opacity: 1; transform: translate(-50%, -78%); } 100% { opacity: 0; transform: translate(-50%, -95%); } }
+
+/* 숫자가 크게 박혔다가 두세 프레임 만에 제 크기로 줄어든다(참고 영상의 '쾅' 숫자) */
+.bf-num.slam { animation: bf-slam var(--d, 1s) linear forwards; }
+@keyframes bf-slam {
+  0% { opacity: .5; transform: translate(-50%, -50%) scale(var(--big, 3)); }
+  4% { opacity: .55; transform: translate(-50%, -50%) scale(var(--big, 3)); animation-timing-function: cubic-bezier(.15,.85,.3,1); }
+  15% { opacity: 1; transform: translate(-50%, -62%) scale(1); }
+  80% { opacity: 1; transform: translate(-50%, -72%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -82%) scale(1); }
+}
+
+/* 행동하는 동안: 맞는 적(또는 덤벼드는 적)만 맨 앞에 밝게, 나머지와 배경은 어둡게 */
+.bf-sprite { transition: filter .25s ease; }
+.bf-foe[data-tgt] { z-index: 9 !important; }
+.bf[data-focus] .bf-foe:not([data-tgt]) .bf-sprite { filter: brightness(.38) saturate(.6) drop-shadow(0 8px 12px rgba(0,0,0,.55)); }
+.bf[data-focus] .bf-foe:not([data-tgt]) .bf-tag { opacity: .35; }
+.bf[data-focus] .bf-bg { filter: brightness(.4) saturate(.7); }
+
+/* 한 방에 쓰러뜨린 숫자(일격): 더 크고 금빛 */
+.bf-num.ko { font-size: 54px; color: #ffe08a; }
+.bf-num.ko small { color: #ffd36b; font-size: 26px; letter-spacing: 4px; }
+/* 맞고 있는 졸개의 큰 체력 막대: 한 대에 얼마나 깎이는지 보인다 */
+.bf-bossbar.tgt { animation: bf-tgtbar calc(.16s / var(--spd)) ease-out both; }
+.bf-bossbar.tgt span { font-size: 14px; opacity: .92; }
+@keyframes bf-tgtbar { from { opacity: 0; transform: translateY(-6px); } }

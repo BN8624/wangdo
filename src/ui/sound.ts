@@ -1,8 +1,8 @@
-// 소리: 음원 파일 없이 브라우저에서 합성한다(무료, 용량 0).
+// 소리: 대부분 브라우저에서 합성한다(무료, 용량 0). 전투 타격음만 Kenney의 CC0 효과음(public/sfx, 약 130KB)을 겹쳐 쓴다.
 // 가야금 같은 퉁김 소리는 카플러스-스트롱(잡음을 짧은 줄에 돌려 감쇠시키는 방식)으로 만들고,
 // 배경음은 평조 오음계 위를 천천히 걷는 가락을 그때그때 지어낸다. 첫 터치 뒤에만 소리가 난다(모바일 자동 재생 제한).
 
-export type Sfx = 'hit' | 'crit' | 'skill' | 'heal' | 'stamp' | 'win' | 'lose' | 'chime' | 'coin' | 'levelup' | 'promote';
+export type Sfx = 'hit' | 'crit' | 'heavy' | 'hurt' | 'whoosh' | 'skill' | 'heal' | 'stamp' | 'win' | 'lose' | 'chime' | 'coin' | 'levelup' | 'promote';
 export type BgmMood = 'home' | 'story' | 'battle' | 'off';
 
 const KEY = 'wangdo.sound';
@@ -84,7 +84,46 @@ function ensure(): AudioContext | null {
   sfxGain.gain.value = SFX_VOLUME;
   sfxGain.connect(master);
   startScheduler();
+  loadSamples(ctx);
   return ctx;
+}
+
+// ───────────── 녹음된 타격음(Kenney, CC0) ─────────────
+
+const SAMPLES: Record<string, string[]> = {
+  hit: ['hit0', 'hit1', 'hit2', 'hit3', 'hit4'],
+  crit: ['crit0', 'crit1', 'crit2'],
+  glass: ['glass0', 'glass1'],
+  heavy: ['heavy0', 'heavy1'],
+  hurt: ['hurt0', 'hurt1', 'hurt2'],
+  whoosh: ['whoosh0', 'whoosh1'],
+};
+const buffers: Record<string, AudioBuffer[]> = {};
+
+function loadSamples(c: AudioContext) {
+  for (const [group, names] of Object.entries(SAMPLES)) {
+    buffers[group] = [];
+    for (const n of names)
+      fetch(`sfx/${n}.mp3`)
+        .then((r) => r.arrayBuffer())
+        .then((b) => c.decodeAudioData(b))
+        .then((buf) => buffers[group].push(buf))
+        .catch(() => undefined);
+  }
+}
+
+/** 녹음된 소리를 한 번 낸다(같은 무리에서 무작위, 높낮이를 살짝 흔들어 반복이 덜 티 나게). 없으면 false */
+function sample(c: AudioContext, dest: AudioNode, group: string, at: number, vol: number, rate = 1): boolean {
+  const list = buffers[group];
+  if (!list?.length) return false;
+  const src = c.createBufferSource();
+  src.buffer = list[Math.floor(Math.random() * list.length)];
+  src.playbackRate.value = rate * (0.94 + Math.random() * 0.12);
+  const g = c.createGain();
+  g.gain.value = vol;
+  src.connect(g).connect(dest);
+  src.start(at);
+  return true;
 }
 
 // ───────────── 재료: 퉁김·종·북·잡음 ─────────────
@@ -198,11 +237,30 @@ export function play(name: Sfx) {
   const d = sfxGain;
   switch (name) {
     case 'hit':
-      drum(c, d, t, 0.5, 120);
+      // 접촉음(몸통) + 낮은 북으로 무게
+      if (sample(c, d, 'hit', t, 1)) drum(c, d, t, 0.25, 110);
+      else drum(c, d, t, 0.5, 120);
       break;
     case 'crit':
-      drum(c, d, t, 0.7, 95);
-      noise(c, d, t, 0.12, 0.25, 'highpass', 2500);
+      if (sample(c, d, 'crit', t, 1.1)) {
+        sample(c, d, 'glass', t + 0.015, 0.45, 1.1);
+        drum(c, d, t, 0.4, 85);
+      } else {
+        drum(c, d, t, 0.7, 95);
+        noise(c, d, t, 0.12, 0.25, 'highpass', 2500);
+      }
+      break;
+    case 'heavy':
+      if (sample(c, d, 'heavy', t, 0.9)) {
+        sample(c, d, 'crit', t, 0.9, 0.85);
+        drum(c, d, t, 0.5, 70);
+      } else drum(c, d, t, 0.8, 80);
+      break;
+    case 'hurt':
+      if (!sample(c, d, 'hurt', t, 1)) drum(c, d, t, 0.45, 100);
+      break;
+    case 'whoosh':
+      if (!sample(c, d, 'whoosh', t, 0.5, 1.3)) noise(c, d, t, 0.18, 0.12, 'bandpass', 1800, 0.8);
       break;
     case 'skill':
       noise(c, d, t, 0.5, 0.18, 'bandpass', 1400, 0.6);

@@ -30,6 +30,11 @@ export const levelMult = (level: number) => 1 + B.levelGrowth * (Math.max(1, lev
 export const levelCap = (stars: number) => B.levelCap[Math.min(6, Math.max(1, stars))];
 export const starCost = (stars: number) => (stars >= 6 ? null : B.starCost[stars]);
 export const startStars = (id: string) => YOKAI_BY_ID[id]?.grade ?? 1;
+/** 별 하나를 더 올리면 공격력이 몇 % 오르나(★4부터는 starAtk까지 붙어 크게 오른다) */
+export const starAtkGain = (stars: number) => {
+  const a = (s: number) => B.starMult[Math.min(6, Math.max(1, s))] * B.starAtk[Math.min(6, Math.max(1, s))];
+  return Math.round((a(stars + 1) / a(stars) - 1) * 100);
+};
 
 /** 레벨 L → L+1 비용 */
 export const levelExpCost = (level: number) => Math.round(B.expBase * Math.pow(level, B.expExp) + B.expFlat);
@@ -39,10 +44,11 @@ export const levelCoinCost = (level: number) => Math.round(B.coinBase * Math.pow
 export function heroStats(id: string, y: YokaiState, team: string[] = []): CombatStats {
   const role = roleOf(id);
   const base = B.roleBase[role];
-  const m = levelMult(y.level) * B.starMult[Math.min(6, Math.max(1, y.stars))] * (1 + B.bondBonus * bondLevel(y.bond));
+  const star = Math.min(6, Math.max(1, y.stars));
+  const m = levelMult(y.level) * B.starMult[star] * (1 + B.bondBonus * bondLevel(y.bond));
   const st: CombatStats = {
     hp: base.hp * wobble(id, 'hp') * m,
-    atk: base.atk * wobble(id, 'atk') * m,
+    atk: base.atk * wobble(id, 'atk') * m * B.starAtk[star],
     def: base.def * wobble(id, 'def') * m,
     spd: Math.round(base.spd * (0.95 + (wobble(id, 'spd') - 0.9) * 0.5)),
     crit: base.crit,
@@ -125,6 +131,8 @@ export function foeUnit(o: {
   kind: 'grunt' | 'elite' | 'boss';
   power: number;
   skill?: boolean;
+  /** 체력만 더 곱한다(장의 벽) */
+  tough?: number;
 }): UnitInit {
   const base = B.roleBase[o.role];
   const k = B.foeKind[o.kind];
@@ -135,7 +143,7 @@ export function foeUnit(o: {
     art: o.art,
     element: o.element,
     role: o.role,
-    hp: Math.round(base.hp * k.hp * m),
+    hp: Math.round(base.hp * k.hp * m * (o.tough ?? 1)),
     atk: Math.round(base.atk * k.atk * m),
     def: Math.round(base.def * k.def * m),
     spd: Math.round(base.spd * k.spd),

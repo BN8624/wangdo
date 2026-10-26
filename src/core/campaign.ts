@@ -178,6 +178,8 @@ export function stageWaves(st: StageDef): UnitInit[][] {
   };
   const tutorial = st.chapter === 0 && st.k === 1;
   const power = (1 + B.foeChapterGrowth * st.chapter) * (st.battle?.power ?? 1) * (tutorial ? 0.5 : 1);
+  // 대장·정예 스테이지는 장의 벽: 별을 올린 만큼 시원해지는 건 졸개 스테이지이고, 벽은 키워야 넘는다
+  const tough = st.battle && !tutorial ? 1 + B.gateHpGrowth * st.chapter : 1;
   const grunt = (i: number, w: number) => {
     const f = pool[Math.floor(pick() * pool.length)];
     return foeUnit({
@@ -189,6 +191,7 @@ export function stageWaves(st: StageDef): UnitInit[][] {
       element: ELEMENTS[hash(f.name) % ELEMENTS.length],
       kind: 'grunt',
       power,
+      tough,
       skill: pick() < 0.35,
     });
   };
@@ -208,6 +211,7 @@ export function stageWaves(st: StageDef): UnitInit[][] {
       element: b.rival && YOKAI_BY_ID[b.rival] ? (ELEMENTS[hash(b.rival) % ELEMENTS.length]) : ELEMENTS[hash(b.foe) % ELEMENTS.length],
       kind,
       power,
+      tough,
       skill: true,
     });
     const last = waves[waves.length - 1];

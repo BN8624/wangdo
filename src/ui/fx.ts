@@ -2,7 +2,7 @@
 // 숫자·흔들림·번쩍임처럼 DOM이 나은 효과는 BattleView가 Web Animations로 직접 건다.
 import type { Element } from '../data/roster';
 
-type Kind = 'spark' | 'dot' | 'leaf' | 'drop' | 'star' | 'smoke' | 'ring' | 'slash' | 'arrow' | 'comet';
+type Kind = 'spark' | 'dot' | 'leaf' | 'drop' | 'star' | 'smoke' | 'ring' | 'slash' | 'arrow' | 'comet' | 'shard';
 
 interface P {
   kind: Kind;
@@ -56,6 +56,8 @@ export class FxCanvas {
   private h = 0;
   /** 배속: 입자 수명도 이만큼 빨리 흐른다 */
   speed = 1;
+  /** 히트스톱: 켜져 있는 동안 입자가 제자리에 멈춰 있다가, 풀리면 흩어진다 */
+  frozen = false;
 
   constructor(private canvas: HTMLCanvasElement) {
     this.ctx = canvas.getContext('2d')!;
@@ -120,6 +122,26 @@ export class FxCanvas {
     this.add({ kind: 'comet', x: x0, y: y0, x0, y0, x1, y1, color: pal[Math.min(2, pal.length - 1)], size: 7, max: ms });
   }
 
+  /** 맞은 자리에서 흩어지는 세모 조각 */
+  shards(x: number, y: number, n = 8, color = '#ffffff', power = 1) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const v = (1.5 + Math.random() * 3.5) * power;
+      this.add({ kind: 'shard', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, max: 700 + Math.random() * 500, size: 5 + Math.random() * 7, color, vr: (Math.random() - 0.5) * 0.2, drag: 0.95 });
+    }
+  }
+
+  /** 늘 화면을 천천히 떠도는 옅은 세모 조각(전장이 멈춰 보이지 않게) */
+  private ambient = false;
+  private ambientAt = 0;
+  setAmbient(on: boolean) {
+    this.ambient = on;
+    if (on && !this.raf) {
+      this.last = performance.now();
+      this.raf = requestAnimationFrame(this.loop);
+    }
+  }
+
   /** 적이 내 편을 할퀴는 세 줄 */
   claw(x: number, y: number) {
     for (let i = -1; i <= 1; i++) this.add({ kind: 'slash', x: x + i * 16, y: y + i * 6, color: '#ff7a6a', angle: 1.05, len: 90, width: 8, max: 280 });
@@ -156,6 +178,7 @@ export class FxCanvas {
   }
 
   stop() {
+    this.ambient = false;
     cancelAnimationFrame(this.raf);
     this.raf = 0;
     this.clear();
@@ -167,6 +190,13 @@ export class FxCanvas {
     const k = dt / 16.7;
     const c = this.ctx;
     c.clearRect(0, 0, this.w, this.h);
+    if (this.ambient) {
+      this.ambientAt += dt;
+      while (this.ambientAt > 380) {
+        this.ambientAt -= 380;
+        this.ps.push({ kind: 'shard', x: Math.random() * this.w, y: this.h * (0.15 + Math.random() * 0.6), vx: 0.15 + Math.random() * 0.25, vy: -0.1 - Math.random() * 0.2, life: 0, max: 3800 + Math.random() * 2000, size: 4 + Math.random() * 6, color: 'rgba(220,235,255,.55)', rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.02, g: 0, drag: 1 });
+      }
+    }
     const alive: P[] = [];
     for (const p of this.ps) {
       p.life += dt;
@@ -181,7 +211,7 @@ export class FxCanvas {
         p.y = p.y0! + (p.y1! - p.y0!) * e;
         // 지나간 자리에 불티를 남긴다
         if (Math.random() < 0.9) this.ps.push({ kind: 'dot', x: px, y: py, vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5, life: 0, max: 260, size: 2 + Math.random() * 2, color: p.color, rot: 0, vr: 0, g: 0, drag: 0.9 });
-      } else if (p.kind !== 'ring' && p.kind !== 'slash') {
+      } else if (p.kind !== 'ring' && p.kind !== 'slash' && !this.frozen) {
         p.vx *= Math.pow(p.drag, k);
         p.vy = p.vy * Math.pow(p.drag, k) + p.g * k;
         p.x += p.vx * k;
@@ -191,7 +221,7 @@ export class FxCanvas {
       this.draw(p, t);
     }
     this.ps = alive;
-    this.raf = alive.length ? requestAnimationFrame(this.loop) : 0;
+    this.raf = alive.length || this.ambient ? requestAnimationFrame(this.loop) : 0;
     if (!alive.length) c.clearRect(0, 0, this.w, this.h);
   };
 
@@ -322,6 +352,18 @@ export class FxCanvas {
         c.arc(4, 0, p.size * 0.6, 0, Math.PI * 2);
         c.fill();
         c.globalAlpha = 1;
+        break;
+      }
+      case 'shard': {
+        c.globalCompositeOperation = 'source-over';
+        c.translate(p.x, p.y);
+        c.rotate(p.rot);
+        c.beginPath();
+        c.moveTo(0, -p.size);
+        c.lineTo(p.size * 0.8, p.size * 0.6);
+        c.lineTo(-p.size * 0.8, p.size * 0.6);
+        c.closePath();
+        c.fill();
         break;
       }
       case 'arrow': {

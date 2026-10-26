@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { affordable, bondLevel, equip, giftPrice, giveGift, hasNewTalk, levelUp, outing, outingPrice, setFavorite, starUp, unseenScene } from '../core/engine';
 import { fmt } from '../core/format';
 import type { GameState } from '../core/types';
-import { heroPower, heroStats, levelCap, levelCoinCost, levelExpCost, starCost } from '../core/units';
+import { heroPower, heroStats, levelCap, levelCoinCost, levelExpCost, starAtkGain, starCost } from '../core/units';
 import { BALANCE as B } from '../data/balance';
 import { ART } from '../data/art';
 import { ITEM_BY_ID, itemEffect, type Slot } from '../data/items';
@@ -252,7 +252,12 @@ function GrowTab({ view, id }: { view: GameState; id: string }) {
         <div className="exp-row">
           <span>
             별 <b>★{y.stars}</b>
-            {cost !== null && <small> → ★{y.stars + 1} (상한 Lv {levelCap(y.stars + 1)})</small>}
+            {cost !== null && (
+              <small>
+                {' '}
+                → ★{y.stars + 1} (상한 Lv {levelCap(y.stars + 1)} · 공격 +{starAtkGain(y.stars)}%)
+              </small>
+            )}
           </span>
           <span className="soft">{cost === null ? '가장 높은 별' : `조각 ${y.shards} / ${cost}`}</span>
         </div>

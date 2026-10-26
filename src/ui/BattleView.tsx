@@ -1,6 +1,6 @@
-// 턴제 전투 화면. 위쪽 전장에 적이 전신으로 서고, 아래에 내 편 다섯이 패널로 선다.
-// combat.ts의 Combat을 한 차례씩 진행하며, 차례마다 돌진·도약·베기·피격·입자·숫자·흔들림으로 연출한다.
-// 고유 기술은 화면을 어둡게 하고 전신 컷인을 띄운 뒤 기술마다 다른 효과를 낸다. 자동·수동, 1~3배속, 건너뛰기.
+// 턴제 전투 화면. 사선 띠로 나눈 대결 구도: 오른쪽 위에 적, 왼쪽 아래에 지금 나선 식객이 크게 서고, 맨 아래 내 편 다섯 패널.
+// 한 번의 공격 = 패널이 번쩍(예비) → 식객이 한마디 → 기운이 대상에게 날아가 커지며 꽂힘 → 접촉 순간 대상이 단색 실루엣으로
+// 번쩍(치명타는 붉게)·렌즈 고리·조각·큰 숫자 → 반동. 고유 기술은 컷인 뒤 같은 흐름을 크게. 자동·수동, 1~3배속, 건너뛰기.
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { COMBAT, Combat, type CombatEvent, type CombatResult, type CombatSetup, type SkillKind, type Unit } from '../core/combat';
 import { fmt } from '../core/format';
@@ -58,19 +58,19 @@ interface Spot {
   z: number;
 }
 
-/** 적 배치: 대장은 앞 가운데 크게, 나머지는 앞줄·뒷줄로 */
+/** 적 배치: 오른쪽 위 무대. 대장은 앞 가운데 크게, 나머지는 앞줄·뒷줄로 */
 function arrange(foes: Unit[]): Spot[] {
-  const F = (x: number): Spot => ({ x, feet: 25, h: 30, z: 3 });
-  const B = (x: number): Spot => ({ x, feet: 40, h: 25, z: 2 });
-  const far = (x: number): Spot => ({ x, feet: 47, h: 21, z: 1 });
+  const F = (x: number): Spot => ({ x, feet: 42, h: 28, z: 3 });
+  const B = (x: number): Spot => ({ x, feet: 54, h: 22, z: 2 });
+  const far = (x: number): Spot => ({ x, feet: 61, h: 18, z: 1 });
   const boss = foes.findIndex((u) => u.boss);
   if (boss >= 0) {
     const others = foes.length - 1;
-    const rest = others <= 0 ? [] : others === 1 ? [B(80)] : others === 2 ? [B(15), B(85)] : [B(13), B(87), far(50), far(30)];
+    const rest = others <= 0 ? [] : others === 1 ? [B(90)] : others === 2 ? [B(46), B(92)] : [B(44), B(93), far(80), far(58)];
     let k = 0;
-    return foes.map((_, i) => (i === boss ? { x: 50, feet: 23, h: 42, z: 4 } : rest[k++] ?? B(50)));
+    return foes.map((_, i) => (i === boss ? { x: 70, feet: 38, h: 42, z: 4 } : rest[k++] ?? B(72)));
   }
-  const layouts: Spot[][] = [[], [F(50)], [F(29), F(71)], [B(50), F(23), F(77)], [B(30), B(70), F(18), F(82)], [B(15), B(50), B(85), F(31), F(69)]];
+  const layouts: Spot[][] = [[], [F(70)], [F(58), F(86)], [B(74), F(56), F(88)], [B(62), B(90), F(54), F(80)], [B(50), B(72), B(93), F(60), F(85)]];
   return layouts[Math.min(5, foes.length)];
 }
 
@@ -90,11 +90,15 @@ function EnemyFigure({ unit, spot, down, acting, bodyRef, children }: {
   const figure = source ? ART.enemy(source[1] as 'boss' | 'grunt', source[2]) : null;
   const [failedFigure, setFailedFigure] = useState<string | null>(null);
   const full = !!figure && !missingEnemyFigures.has(figure) && failedFigure !== figure;
+  const height = spot.h;
+  const displayedArt = full ? figure : unit.art;
 
   return (
     <div
       className={`bf-foe ${full ? 'full' : 'portrait'} ${down ? 'dead' : ''} ${acting ? 'acting' : ''} ${unit.boss ? 'boss' : ''}`}
-      style={{ left: `${spot.x}%`, bottom: `${spot.feet}%`, height: `${spot.h * (full ? 1.16 : 1)}%`, zIndex: spot.z }}
+      style={{ left: `${spot.x}%`, bottom: `${spot.feet}%`, height: `${height}%`, zIndex: spot.z }}
+      data-cx={spot.x}
+      data-cy={100 - spot.feet - height * 0.55}
     >
       <div className="bf-shadow" />
       <div className="bf-body" ref={bodyRef}>
@@ -112,13 +116,25 @@ function EnemyFigure({ unit, spot, down, acting, bodyRef, children }: {
         ) : (
           <Art className="bf-sprite" src={unit.art} alt={unit.name} fallback={<div className="bf-sprite-fb">{unit.name}</div>} />
         )}
+        <i className="bf-sil" style={{ WebkitMaskImage: `url(${displayedArt})`, maskImage: `url(${displayedArt})` }} />
       </div>
       {children}
     </div>
   );
 }
 
+/** 식객이 공격할 때 하는 말(돌아가며) */
+const lineOf = (id: string, n: number) => {
+  const l = ALLY_LINES[id]?.attack ?? [];
+  return l.length ? l[n % l.length] : '';
+};
+
 const SKILL_TINT: Record<SkillKind, string> = { strike: '#e0603c', stun: '#9a6ad0', weaken: '#5b4a8a', rally: '#d9a72a', guard: '#3f87c9', heal: '#3fb86a' };
+
+/** 맞는 순간 세상이 멈추는 시간(ms, 1배속 기준). 배속을 올려도 다른 동작보다 덜 줄어든다. 무게 0 보통 · 1 묵직 · 2 일격 */
+const HOLD = [90, 150, 210];
+/** 한 대에 최대 체력의 이만큼 이상 깎으면 묵직한 한 방으로 친다(별을 많이 올린 식객일수록 자주 나온다) */
+const CHUNK_HEAVY = 0.4;
 
 export function BattleView({
   setup,
@@ -162,6 +178,18 @@ export function BattleView({
   const [dim, setDim] = useState(false);
   const [ending, setEnding] = useState<'win' | 'lose' | null>(null);
   const [outcome, setOutcome] = useState<BattleOutcome | null>(null);
+  /** 왼쪽 아래에 크게 서 있는 식객(마지막으로 나선 식객) */
+  const [lead, setLeadState] = useState<string>(() => setup.allies.find(Boolean)?.id ?? '');
+  // 재생 중인 비동기 흐름이 늘 최신 값을 읽도록 ref에도 둔다
+  const leadId = useRef(lead);
+  const setLead = (id: string) => {
+    leadId.current = id;
+    setLeadState(id);
+  };
+  const [bubble, setBubble] = useState<{ text: string; n: number } | null>(null);
+  /** 지금 맞고 있는 적(위에 큰 체력 막대로 보여 한 대에 얼마나 깎이는지 보이게) */
+  const [tgtSlot, setTgtSlot] = useState<number | null>(null);
+  const said = useRef(0);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -171,6 +199,7 @@ export function BattleView({
   const whiteRef = useRef<HTMLDivElement>(null);
   const redRef = useRef<HTMLDivElement>(null);
   const nodes = useRef(new Map<string, HTMLElement>());
+  const leadRef = useRef<HTMLDivElement | null>(null);
   const fx = useRef<FxCanvas | null>(null);
   const run = useRef({ cancelled: false });
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
@@ -190,15 +219,19 @@ export function BattleView({
   }, [speed]);
 
   // ───── 연출 도우미 ─────
-  const sleep = (ms: number) =>
+  // sleep은 배속만큼 줄고, beat(맞는 순간의 멈춤·실루엣·숫자)는 덜 준다. 배속을 올려도 접촉의 무게는 남긴다
+  const dur = (ms: number) => ms / speedRef.current;
+  const beatDur = (ms: number) => ms / Math.sqrt(speedRef.current);
+  const wait = (ms: number) =>
     new Promise<void>((done) => {
       const t = setTimeout(() => {
         timers.current.delete(t);
         done();
-      }, ms / speedRef.current);
+      }, ms);
       timers.current.add(t);
     });
-  const dur = (ms: number) => ms / speedRef.current;
+  const sleep = (ms: number) => wait(dur(ms));
+  const beat = (ms: number) => wait(beatDur(ms));
   const reg = (key: string) => (el: HTMLElement | null) => {
     if (el) nodes.current.set(key, el);
     else nodes.current.delete(key);
@@ -213,26 +246,99 @@ export function BattleView({
     const fy = part === 'head' ? (foe ? 0.2 : 0.12) : part === 'feet' ? 0.92 : foe ? 0.42 : 0.42;
     return { x: r.left - R.left + r.width / 2, y: r.top - R.top + r.height * fy };
   };
-  const animate = (el: Element | HTMLElement | null | undefined, frames: Keyframe[], ms: number, opts: KeyframeAnimationOptions = {}) => {
-    if (el && 'animate' in el) (el as HTMLElement).animate(frames, { duration: dur(ms), easing: 'ease-out', ...opts });
+  /** 실제 시간(ms)으로 거는 애니메이션 */
+  const anim = (el: Element | HTMLElement | null | undefined, frames: Keyframe[], ms: number, opts: KeyframeAnimationOptions = {}) => {
+    if (el && 'animate' in el) (el as HTMLElement).animate(frames, { duration: ms, easing: 'ease-out', ...opts });
+  };
+  const animate = (el: Element | HTMLElement | null | undefined, frames: Keyframe[], ms: number, opts: KeyframeAnimationOptions = {}) => anim(el, frames, dur(ms), opts);
+  /** 지금 모습에서 to로 옮겨 그 자세를 유지한다(앞서 건 자세는 거둔다) */
+  const poseTo = (el: HTMLElement | null | undefined, to: Keyframe, ms: number, easing = 'ease-out') => {
+    if (!el) return;
+    const cs = getComputedStyle(el);
+    const from: Keyframe = { transform: cs.transform, filter: cs.filter };
+    for (const a of el.getAnimations()) if (!('animationName' in a)) a.cancel();
+    el.animate([from, { transform: 'none', filter: 'none', ...to }], { duration: dur(ms), easing, fill: 'forwards' });
+  };
+  /** 카메라: 장면을 at 지점(장면 너비·높이의 %)이 가운데 쪽으로 오게 s배로 당긴다. at이 없으면 제자리 */
+  const camTo = (s: number, at: { x: number; y: number } | null, ms: number, easing = 'cubic-bezier(.3,0,.2,1)') => {
+    const el = sceneRef.current;
+    if (!el) return;
+    const W = el.offsetWidth;
+    const H = el.offsetHeight;
+    let tx = 0;
+    let ty = 0;
+    if (at) {
+      const px = (at.x / 100) * W;
+      const py = (at.y / 100) * H;
+      // 대상을 적 무대 가운데(62%, 34%) 쪽으로 끌어오되, 배경 가장자리가 드러나지 않게 막는다(배경은 좌우로 16%씩 더 깔려 있다)
+      const fx = px + (W * 0.62 - px) * 0.45;
+      const fy = py + (H * 0.34 - py) * 0.45;
+      tx = Math.min(0.16 * s * W, Math.max(W - 1.16 * s * W, fx - s * px));
+      ty = Math.min(0, Math.max(H * (1 - s), fy - s * py));
+    } else s = 1;
+    poseTo(el, { transform: `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${s})` }, ms, easing);
+  };
+  /** 행동하는 동안 keys의 적만 맨 앞에 밝게 두고 나머지는 어둡게 한다. 빈 배열이면 풀기 */
+  const spotlight = (keys: string[]) => {
+    const root = rootRef.current;
+    if (!root) return;
+    root.toggleAttribute('data-focus', keys.length > 0);
+    for (const el of root.querySelectorAll('[data-tgt]')) el.removeAttribute('data-tgt');
+    for (const k of keys) nodes.current.get(k)?.closest('.bf-foe')?.setAttribute('data-tgt', '');
+  };
+  /** 대상들의 가운데(장면 기준 %) */
+  const focus = (keys: string[]) => {
+    const pts = keys.map((k) => nodes.current.get(k)?.closest<HTMLElement>('[data-cx]')?.dataset).filter((d): d is DOMStringMap => !!d);
+    if (!pts.length) return null;
+    return { x: pts.reduce((a, d) => a + Number(d.cx), 0) / pts.length, y: pts.reduce((a, d) => a + Number(d.cy), 0) / pts.length };
   };
   const shake = (p: number) => {
     const f: Keyframe[] = [{ transform: 'translate(0,0)' }];
     for (let i = 0; i < 5; i++) f.push({ transform: `translate(${(i % 2 ? -1 : 1) * p * (1 - i / 5)}px, ${(i % 2 ? 1 : -1) * p * 0.5 * (1 - i / 5)}px)` });
     f.push({ transform: 'translate(0,0)' });
-    animate(fieldRef.current, f, 320, { easing: 'linear' });
+    anim(fieldRef.current, f, beatDur(320), { easing: 'linear' });
   };
-  const zoom = () => animate(sceneRef.current, [{ transform: 'scale(1)' }, { transform: 'scale(1.045)', offset: 0.25 }, { transform: 'scale(1)' }], 420);
   const flash = (red = false, a = 0.5) => animate(red ? redRef.current : whiteRef.current, [{ opacity: 0 }, { opacity: a, offset: 0.15 }, { opacity: 0 }], red ? 420 : 260);
-  const number = (key: string, text: string, kind: string, label?: string) => {
+  /** 접촉 순간: 대상 전체를 단색 실루엣으로 덮었다가(hold) 옅어지며 원래 모습이 비친다 */
+  const silhouette = (el: HTMLElement | null | undefined, color: string, hold = 70) => {
+    const sil = el?.querySelector<HTMLElement>('.bf-sil');
+    if (!sil) return;
+    sil.style.background = color;
+    const ms = hold + 300;
+    anim(sil, [{ opacity: 1 }, { opacity: 1, offset: hold / ms }, { opacity: 0 }], beatDur(ms), { easing: 'linear' });
+  };
+  /** 접촉 직전 대상 둘레에 맺히는 렌즈 고리: pre 뒤(맞는 순간)에 가장 크고, 곧 퍼지며 사라진다 */
+  const lens = (key: string, size: number, tint: string, pre: number) => {
+    const layer = layerRef.current;
+    if (!layer) return;
+    const p = pos(key, 'mid');
+    const d = document.createElement('div');
+    d.className = 'bf-lens';
+    Object.assign(d.style, { left: `${p.x}px`, top: `${p.y}px`, width: `${size}px`, height: `${size}px` });
+    d.style.setProperty('--tint', tint);
+    layer.appendChild(d);
+    const a = dur(pre);
+    const b = beatDur(280);
+    d.animate([{ transform: 'translate(-50%,-50%) scale(.62)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: a / (a + b) }, { transform: 'translate(-50%,-50%) scale(1.16)', opacity: 0 }], { duration: a + b, easing: 'cubic-bezier(.3,.6,.3,1)' });
+    const t = setTimeout(() => {
+      d.remove();
+      timers.current.delete(t);
+    }, a + b + 20);
+    timers.current.add(t);
+  };
+  /** 숫자. slam이면 그 배율로 크게 박혔다가 곧 제 크기로 줄어든다 */
+  const number = (key: string, text: string, kind: string, label?: string, slam = 0) => {
     const layer = layerRef.current;
     if (!layer) return;
     const p = pos(key, 'head');
     const d = document.createElement('div');
-    d.className = `bf-num ${kind}`;
-    d.style.left = `${p.x + (Math.random() - 0.5) * 30}px`;
+    d.className = `bf-num ${kind} ${slam ? 'slam' : ''}`;
+    const W = rootRef.current?.clientWidth ?? 390;
+    d.style.left = `${Math.min(W - 56, Math.max(56, p.x + (Math.random() - 0.5) * (slam ? 10 : 24)))}px`;
     d.style.top = `${p.y}px`;
-    d.style.setProperty('--d', `${dur(1000)}ms`);
+    const ms = slam ? beatDur(1000) : dur(1150);
+    d.style.setProperty('--d', `${ms}ms`);
+    if (slam) d.style.setProperty('--big', String(slam));
     if (label) {
       const s = document.createElement('small');
       s.textContent = label;
@@ -243,7 +349,7 @@ export function BattleView({
     const t = setTimeout(() => {
       d.remove();
       timers.current.delete(t);
-    }, dur(1050));
+    }, ms + 50);
     timers.current.add(t);
   };
   const unitOf = (side: 0 | 1, slot: number): Unit | undefined => (side === 0 ? combat.allies : combat.foes).find((u) => u.slot === slot);
@@ -281,36 +387,55 @@ export function BattleView({
     }
   };
 
-  const impact = (h: Extract<CombatEvent, { t: 'hit' }>, atk: Unit | undefined, kind: SkillKind | null) => {
+  /** 한 대의 무게: 0 보통 · 1 묵직(치명타·강타·기절, 또는 최대 체력의 40% 이상) · 2 일격(절반 넘게 깎으며 쓰러뜨림) */
+  const weightOf = (h: Extract<CombatEvent, { t: 'hit' }>, kind: SkillKind | null) => {
+    const chunk = h.dmg / Math.max(1, unitOf(h.tside, h.tslot)?.maxHp ?? 1);
+    if (h.hp <= 0 && chunk >= 0.5) return 2;
+    return h.crit || kind === 'strike' || kind === 'stun' || chunk >= CHUNK_HEAVY ? 1 : 0;
+  };
+
+  /** 접촉 한 프레임: 실루엣·베기·조각·밀려남·숫자를 한꺼번에 낸다. 멈춤(hold)은 부르는 쪽이 건다 */
+  const impact = (h: Extract<CombatEvent, { t: 'hit' }>, atk: Unit | undefined, kind: SkillKind | null, solo: boolean, loud: boolean) => {
     const tk = K(h.tside, h.tslot);
     const el = atk?.element ?? 'fire';
     const p = pos(tk, 'mid');
     const big = kind === 'strike' || kind === 'stun';
+    const w = weightOf(h, kind);
+    const heavy = w > 0;
+    const ko = w === 2;
+    const hold = HOLD[w];
+    const node = nodes.current.get(tk);
+    // 맞는 순간 밀려난 자세로 바로 튀어 멈춰 있다가, 멈춤이 끝나면 돌아온다
+    const kick = (target: HTMLElement | null | undefined, pose: string, back = 380) => {
+      const a = beatDur(hold);
+      const b = dur(back);
+      anim(target, [{ transform: pose }, { transform: pose, offset: a / (a + b) }, { transform: 'translate(-2px, 1px)', offset: 0.85 }, { transform: 'none' }], a + b, { easing: 'ease-out' });
+    };
     if (h.tside === 1) {
-      fx.current?.slash(p.x, p.y, el, big || h.crit);
-      if (big) fx.current?.slash(p.x, p.y, el, true, 0.7);
-      fx.current?.burst(p.x, p.y, el, big ? 34 : h.crit ? 26 : 16, big ? 1.5 : 1);
-      fx.current?.ring(p.x, p.y, PALETTE[el][1], big ? 110 : 60, big ? 10 : 6);
-      animate(
-        nodes.current.get(tk),
-        [{ filter: 'brightness(1)', transform: 'none' }, { filter: 'brightness(3) saturate(0)', transform: `translate(${big ? 14 : 7}px, -6px)`, offset: 0.12 }, { filter: 'brightness(1)', transform: 'translate(-4px, 2px)', offset: 0.5 }, { transform: 'none' }],
-        420,
-      );
+      silhouette(node, h.crit ? '#e0302a' : '#ffffff', hold + (ko ? 120 : 40));
+      fx.current?.slash(p.x, p.y, el, heavy);
+      if (big || ko) fx.current?.slash(p.x, p.y, el, true, 0.7);
+      fx.current?.burst(p.x, p.y, el, ko ? 30 : heavy ? 20 : 12, ko ? 1.7 : heavy ? 1.3 : 0.9);
+      fx.current?.shards(p.x, p.y, ko ? 20 : heavy ? 12 : 7, h.crit ? '#ffb0a8' : ko ? '#fff1c4' : '#e8f2ff', ko ? 2 : heavy ? 1.5 : 1.1);
+      kick(node, `translate(${ko ? 26 : heavy ? 18 : 10}px, -6px) rotate(${ko ? 5 : heavy ? 3 : 1.5}deg)`);
     } else {
+      kick(node, 'translate(-8px, 5px) rotate(-2deg)', 320);
+      animate(node?.querySelector('.bf-hurt'), [{ opacity: 1 }, { opacity: 1, offset: 0.3 }, { opacity: 0 }], 460);
+      // 지금 크게 서 있는 식객이 맞으면 그 그림도 붉게 덮였다가 밀려난다
+      if (atk && unitOf(0, h.tslot)?.id === leadId.current) {
+        silhouette(leadRef.current, '#e0302a', hold);
+        kick(leadRef.current, 'translate(-16px, 8px) rotate(-2deg)', 420);
+      }
       fx.current?.claw(p.x, p.y - 10);
-      fx.current?.burst(p.x, p.y, 'none', 10, 0.8);
-      animate(nodes.current.get(tk), [{ transform: 'none' }, { transform: 'translate(-7px, 4px) rotate(-2deg)', offset: 0.2 }, { transform: 'translate(5px, 0) rotate(1deg)', offset: 0.5 }, { transform: 'none' }], 380);
-      animate(nodes.current.get(tk)?.querySelector('.bf-hurt'), [{ opacity: 0 }, { opacity: 0.85, offset: 0.15 }, { opacity: 0 }], 420);
-      flash(true, h.crit ? 0.8 : 0.45);
+      fx.current?.shards(p.x, p.y, 6, '#ffb0a8', 1);
+      flash(true, h.crit ? 0.7 : 0.45);
     }
-    if (h.crit) {
-      flash(false, 0.35);
-      zoom();
-    }
-    shake(h.crit ? 12 : big ? 10 : h.tside === 0 ? 6 : 4);
-    play(h.crit ? 'crit' : 'hit');
-    const label = h.crit ? '치명!' : h.adv === 1 ? '상성 유리' : h.adv === -1 ? '상성 불리' : undefined;
-    number(tk, fmt(h.dmg), `${h.tside === 0 ? 'hurt' : 'dmg'} ${h.crit ? 'crit' : ''} ${h.adv === 1 ? 'adv' : h.adv === -1 ? 'weak' : ''} ${big ? 'big' : ''}`, label);
+    if (heavy || h.tside === 0) shake(ko ? 9 : heavy ? 7 : 4);
+    if (loud) play(h.tside === 0 ? 'hurt' : h.crit ? 'crit' : heavy ? 'heavy' : 'hit');
+    const foe = h.tside === 1;
+    const label = ko && foe ? '일격' : h.crit ? '치명타' : h.adv === 1 ? '상성 유리' : h.adv === -1 ? '상성 불리' : undefined;
+    const slam = !foe ? 2 : solo ? [2.8, 3.4, 4][w] : 1.9 + 0.3 * w;
+    number(tk, fmt(h.dmg), `${foe ? 'dmg' : 'hurt'} ${h.crit ? 'crit' : ''} ${h.adv === 1 ? 'adv' : h.adv === -1 ? 'weak' : ''} ${heavy ? 'big' : ''} ${ko && foe ? 'ko' : ''}`, label, slam);
     if (h.side === 0) damage.current[h.slot] = (damage.current[h.slot] ?? 0) + h.dmg;
     const d = disp.current[tk];
     if (d) d.hp = h.hp;
@@ -334,6 +459,7 @@ export function BattleView({
     redraw();
   };
 
+  // 한 번의 행동: ① 예비 동작 → ② 겨누기(카메라가 대상에게) → ③ 내지르기(렌즈 고리) → ④ 접촉과 멈춤 → ⑤ 여운 → ⑥ 한 박자 쉼
   const playAction = async (act: Extract<CombatEvent, { t: 'act' }>, rest: CombatEvent[]) => {
     const key = K(act.side, act.slot);
     const u = unitOf(act.side, act.slot);
@@ -351,11 +477,35 @@ export function BattleView({
     const kind = sk?.kind ?? null;
     if (sk && u) await playCutin(u, sk);
     if (run.current.cancelled) return;
-    // 움직임: 내 편은 패널이 솟고, 적은 앞으로 덤벼든다
+    const hits = rest.filter((e): e is Extract<CombatEvent, { t: 'hit' }> => e.t === 'hit');
+    const targets = [...new Set(hits.map((h) => K(h.tside, h.tslot)))];
+    const weight = Math.max(0, ...hits.map((h) => weightOf(h, kind)));
+    const heavy = weight > 0;
     const node = nodes.current.get(key);
-    if (act.side === 0) animate(node, [{ transform: 'none' }, { transform: 'translateY(-18px) scale(1.06)', offset: 0.4 }, { transform: 'none' }], 320);
-    else animate(node, [{ transform: 'none' }, { transform: 'translateY(9%) scale(1.13)', offset: 0.45 }, { transform: 'none' }], 440, { easing: 'cubic-bezier(.3,.1,.3,1)' });
-    await sleep(act.side === 0 ? 170 : 220);
+    const mine = act.side === 0;
+
+    // ① 예비 동작: 내 편은 패널이 하얗게 두 번 번쩍이고 그 식객이 왼쪽 아래에 크게 서서 한마디 한다.
+    //    적은 붉게 달아오르며 몸을 움츠리고, 카메라가 그 적에게 조금 다가간다
+    let talking = false;
+    if (mine && u) {
+      animate(node?.querySelector('.bf-strobe'), [{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 0, offset: 0.4 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], 300, { easing: 'linear' });
+      animate(node, [{ transform: 'none' }, { transform: 'translateY(-12px)', offset: 0.4 }, { transform: 'none' }], 300);
+      if (leadId.current !== u.id) setLead(u.id);
+      // 기술은 컷인이 말을 대신한다. 3배속에서는 생략
+      if (!sk && hits.length && speedRef.current < 3) {
+        setBubble({ text: lineOf(u.id, said.current), n: said.current++ });
+        talking = true;
+        await beat(420);
+      } else await sleep(240);
+    } else if (hits.length) {
+      spotlight([key]);
+      camTo(1.1, focus([key]), 300);
+      poseTo(node, { transform: 'scale(.95) translateY(-2%)', filter: 'drop-shadow(0 0 14px #ff3b2f) brightness(1.15)' }, 300);
+      await sleep(300);
+    } else {
+      animate(node, [{ filter: 'none' }, { filter: 'drop-shadow(0 0 16px #ff3b2f) brightness(1.2)', offset: 0.45 }, { filter: 'none' }], 460);
+      await sleep(240);
+    }
 
     // 내 편을 향한 기술 효과(치유·방어·격려)
     const heals = rest.filter((e): e is Extract<CombatEvent, { t: 'heal' }> => e.t === 'heal');
@@ -396,23 +546,38 @@ export function BattleView({
       await sleep(220);
     }
 
-    // 타격: 내 편은 빛줄기가 날아가 꽂힌다
-    const hits = rest.filter((e): e is Extract<CombatEvent, { t: 'hit' }> => e.t === 'hit');
-    if (act.side === 0 && hits.length) {
-      const from = pos(key, 'head');
-      for (const h of hits) {
-        const to = pos(K(h.tside, h.tslot), 'mid');
-        fx.current?.comet(from.x, from.y, to.x, to.y, u?.element ?? 'none', dur(kind ? 240 : 190));
+    if (hits.length) {
+      const LUNGE = 90;
+      if (mine) {
+        // ② 겨누기: 카메라가 맞을 적에게 다가가고, 식객은 몸을 뒤로 당긴다
+        spotlight(targets);
+        if (targets.length === 1 && hits[0].tside === 1) setTgtSlot(hits[0].tslot);
+        camTo(targets.length > 1 ? 1.1 : sk ? 1.34 : 1.24, focus(targets), 300);
+        poseTo(leadRef.current, { transform: 'translate(-12px, 8px) scale(.98)' }, 300, 'cubic-bezier(.3,0,.3,1)');
+        await sleep(300);
+        if (talking) setBubble(null);
+        // ③ 내지르기: 식객이 앞으로 튀어 나가고, 대상 둘레에 렌즈 고리가 맺힌다
+        for (const k of targets) {
+          const w = nodes.current.get(k)?.getBoundingClientRect().width ?? 120;
+          lens(k, Math.max(170, w * (heavy ? 1.5 : 1.25)), heavy ? 'rgba(255,120,110,.8)' : 'rgba(255,255,255,.75)', LUNGE);
+        }
+        poseTo(leadRef.current, { transform: 'translate(24px, -14px) scale(1.045)' }, LUNGE, 'cubic-bezier(.6,0,1,.6)');
+      } else {
+        // 적이 화면 쪽으로 덮쳐 온다
+        poseTo(node, { transform: 'scale(1.3) translateY(14%)', filter: 'drop-shadow(0 0 22px #ff3b2f) brightness(1.3)' }, LUNGE, 'cubic-bezier(.6,0,1,.6)');
       }
-      await sleep(kind ? 230 : 180);
-    }
-    for (let i = 0; i < hits.length; i++) {
-      if (i > 0) await sleep(kind === 'weaken' ? 90 : 60);
+      play('whoosh');
+      await sleep(LUNGE);
       if (run.current.cancelled) return;
-      impact(hits[i], u, kind);
+      // ④ 접촉: 모든 대상이 같은 순간에 맞고, 세상이 잠깐 멈춘다(입자도 제자리에 섰다가 풀리면 흩어진다)
+      if (fx.current) fx.current.frozen = true;
+      hits.forEach((h, i) => impact(h, u, kind, hits.length === 1, i === 0));
       redraw();
-      // 세게 맞으면 잠깐 멈춘다(타격감)
-      if (hits[i].crit || kind === 'strike' || kind === 'stun') await sleep(90);
+      await beat(HOLD[weight]);
+      if (fx.current) fx.current.frozen = false;
+      // ⑤ 여운: 공격한 쪽이 제자리로
+      if (mine) poseTo(leadRef.current, { transform: 'none' }, 460, 'cubic-bezier(.2,.7,.3,1)');
+      else poseTo(node, { transform: 'none', filter: 'none' }, 380, 'cubic-bezier(.2,.7,.3,1)');
     }
     for (const b of buffs.filter((x) => x.kind !== 'atkUp')) {
       await sleep(120);
@@ -429,11 +594,13 @@ export function BattleView({
       }
     }
     const downs = rest.filter((e): e is Extract<CombatEvent, { t: 'down' }> => e.t === 'down');
-    if (downs.length) {
-      await sleep(200);
-      await Promise.all(downs.map((d) => die(d.side, d.slot)));
-    }
-    await sleep(sk ? 520 : hits.length ? 380 : 300);
+    await sleep(hits.length ? 360 : 200);
+    if (downs.length) await Promise.all(downs.map((d) => die(d.side, d.slot)));
+    // ⑥ 카메라가 물러나고 한 박자 쉰다
+    spotlight([]);
+    setTgtSlot(null);
+    camTo(1, null, 460);
+    await sleep(sk ? 380 : 260);
     setDim(false);
     setActing(null);
   };
@@ -462,6 +629,8 @@ export function BattleView({
   const playEnding = async () => {
     const o = conclude();
     if (!o) return;
+    camTo(1, null, 300);
+    spotlight([]);
     setActing(null);
     setEnding(o.won ? 'win' : 'lose');
     play(o.won ? 'win' : 'lose');
@@ -481,6 +650,7 @@ export function BattleView({
     if (canvasRef.current) {
       fx.current = new FxCanvas(canvasRef.current);
       fx.current.speed = speedRef.current;
+      fx.current.setAmbient(true);
     }
     const onResize = () => fx.current?.resize();
     window.addEventListener('resize', onResize);
@@ -507,7 +677,10 @@ export function BattleView({
     for (const t of timers.current) clearTimeout(t);
     timers.current.clear();
     fx.current?.clear();
+    if (fx.current) fx.current.frozen = false;
+    spotlight([]);
     layerRef.current?.replaceChildren();
+    for (const el of [sceneRef.current, leadRef.current]) for (const a of el?.getAnimations() ?? []) if (!('animationName' in a)) a.cancel();
     for (let i = 0; i < 5000 && !combat.done; i++) {
       for (const e of combat.step()) if (e.t === 'hit' && e.side === 0) damage.current[e.slot] = (damage.current[e.slot] ?? 0) + e.dmg;
     }
@@ -518,6 +691,8 @@ export function BattleView({
     setCutin(null);
     setFoeSkill(null);
     setBanner(null);
+    setBubble(null);
+    setTgtSlot(null);
     setDim(false);
     setActing(null);
     const o = conclude();
@@ -537,6 +712,8 @@ export function BattleView({
   const spots = useMemo(() => arrange(foes), [foes]);
   const boss = foes.find((u) => u.boss);
   const bossDisp = boss ? disp.current[K(1, boss.slot)] : null;
+  const tgt = !boss && tgtSlot !== null ? foes.find((u) => u.slot === tgtSlot) : undefined;
+  const tgtDisp = tgt ? disp.current[K(1, tgt.slot)] : null;
   const order = combat.done ? [] : combat.upcoming(6);
   const waveNo = Math.max(1, combat.wave + 1);
 
@@ -547,6 +724,9 @@ export function BattleView({
           <Art className="bf-bg" src={ART.battle(bg)} fallback={<div className="bf-bg" />} />
           <div className="bf-atmosphere" />
           <div className="bf-fog" />
+          <i className="bf-band b1" />
+          <i className="bf-band b2" />
+          <i className="bf-band b3" />
           {foes.map((u, i) => {
             const s = spots[i] ?? { x: 50, feet: 30, h: 30, z: 1 };
             const d = disp.current[K(1, u.slot)];
@@ -577,6 +757,20 @@ export function BattleView({
         </div>
       </div>
 
+      {lead && (
+        <div className="bf-lead" ref={(el) => { leadRef.current = el; reg('lead')(el); }}>
+          <div className="bf-lead-in" key={lead}>
+            <Art className="bf-lead-art" src={ART.full(lead)} alt={YOKAI_BY_ID[lead]?.name} fallback={null} />
+            <i className="bf-sil" style={{ WebkitMaskImage: `url(${ART.full(lead)})`, maskImage: `url(${ART.full(lead)})` }} />
+          </div>
+        </div>
+      )}
+      {bubble && (
+        <div className="bf-bubble" key={bubble.n}>
+          <b>{YOKAI_BY_ID[lead]?.name}</b>
+          {bubble.text}
+        </div>
+      )}
       <div className={`bf-dim ${dim ? 'on' : ''}`} />
       <canvas className="bf-canvas" ref={canvasRef} />
       <div className="bf-layer" ref={layerRef} />
@@ -613,6 +807,18 @@ export function BattleView({
           <div className="bf-hp big">
             <b className="lag" style={{ width: `${(bossDisp.hp / bossDisp.max) * 100}%` }} />
             <b style={{ width: `${(bossDisp.hp / bossDisp.max) * 100}%` }} />
+          </div>
+        </div>
+      )}
+      {tgt && tgtDisp && !tgtDisp.down && (
+        <div className="bf-bossbar tgt" key={tgt.id}>
+          <span>
+            <i style={{ background: ELEMENT_COLOR[tgt.element] }} />
+            {tgt.name}
+          </span>
+          <div className="bf-hp big">
+            <b className="lag" style={{ width: `${(tgtDisp.hp / tgtDisp.max) * 100}%` }} />
+            <b style={{ width: `${(tgtDisp.hp / tgtDisp.max) * 100}%` }} />
           </div>
         </div>
       )}
@@ -656,6 +862,7 @@ export function BattleView({
               </span>
               <span className="bf-hurt" />
               <span className="bf-shine" />
+              <span className="bf-strobe" />
               {u.shield > 0 && !d?.down && <em className="bf-st sh">{fmt(u.shield)}</em>}
               {u.atkUp > 0 && !d?.down && <em className="bf-st up">공↑</em>}
               {ready && <em className="bf-ready">{auto ? '기술' : queued ? '대기' : '누르기'}</em>}
