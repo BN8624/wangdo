@@ -19,7 +19,7 @@ const HEROINE =
 const FRAME = {
   full: `${HEROINE} Full body from head to feet at eye level, her signature pose, feet firmly on the same baseline (or seated if stated), with 5% safety padding for head, shoes and props. Use her established role-specific fantasy costume with Korean Joseon collars, knots and accessories. Isolated on a fully transparent background (PNG with alpha), no scenery, no floor, no shadow.`,
   card: `${HEROINE} Vertical portrait from head to mid-thigh at eye level. She looks toward the viewer with her characteristic expression. A quiet, softly blurred background belonging to her story; no lantern bokeh, petals or decorative sparkles.`,
-  cg: `${HEROINE} Tall vertical 2:3 romantic story illustration (event CG) of her alone, seen from the point of view of the viewer who is with her (the viewer is not drawn). Express the specific emotional moment, with quiet warm lighting and a subdued background. Keep her face and hands clear of the bottom quarter reserved for dialogue.`,
+  cg: `${HEROINE} Tall vertical 2:3 romantic story illustration (event CG) of her alone, seen from the point of view of the viewer who is with her. The viewer is never drawn: no hand, arm, sleeve, leg or silhouette of the viewer anywhere in the frame; anything she gives or receives stays in her own hands or on a surface. Express the specific emotional moment, with quiet warm lighting and a subdued background. Keep her face and hands clear of the bottom quarter reserved for dialogue.`,
   bg: 'Background art with no people. Tall vertical composition for a phone screen, the lower third fairly open.',
   banner: 'Wide background art with no people, the main subject in the middle horizontal band so it can be cropped into a wide banner.',
   foe: 'A group of adversaries for a battle screen, centered, plain dark background. Menacing but stylish, no gore.',
@@ -28,7 +28,7 @@ const FRAME = {
   grunt: 'One adult Korean Joseon-fantasy adversary, head to mid-thigh portrait facing the viewer at eye level. Preserve the identity reference face, hair, outfit and signature prop. Transparent background, no scenery, floor or shadow. Readable large shapes, restrained ornament, no gore.',
   enemy: 'One adult Korean Joseon-fantasy opponent for the battle field, COMPLETE FULL BODY from the top of the head to both feet with 5% transparent safety padding. Both feet visibly grounded on the same baseline, balanced combat-ready pose, eye-level camera. Preserve the identity reference face, hair, outfit, palette and signature weapon; extend the existing portrait into a coherent full body. Transparent background, no scenery, no floor, no painted shadow, no frame, no other characters. Keep weapons inside the canvas. No anatomy or clothing cropped by the image edges.',
   item: 'One clearly readable Korean Joseon-fantasy story prop, centered square composition with 8% safety padding, fully transparent background and no scenery, frame or text. Use a simple three-quarter view and restrained materials.',
-  scene: 'Tall vertical 2:3 first-person story event illustration. The protagonist is outside the image; at most their hand or sleeve may appear at an edge. Preserve referenced character identities. Depict the specific narrative action and emotional expression, with a quiet background. Keep faces and important gestures in the upper three quarters for the dialogue overlay. No collage, no text, no explicit nudity or sexual activity.',
+  scene: 'Tall vertical 2:3 first-person story event illustration. The protagonist is never drawn: no hand, arm, sleeve or silhouette of the protagonist anywhere in the image; anything handed over stays in the hands of the other character or on a surface. Preserve referenced character identities. Depict the specific narrative action and emotional expression, with a quiet background. Keep faces and important gestures in the upper three quarters for the dialogue overlay. No collage, no text, no explicit nudity or sexual activity.',
 } as const;
 
 export type ArtKind = keyof typeof FRAME;
@@ -62,11 +62,11 @@ export const ART_SPECS: Record<ArtKind, { aspect: 'portrait' | 'landscape' | 'sq
 };
 export const ASPECT = Object.fromEntries(Object.entries(ART_SPECS).map(([kind, spec]) => [kind, spec.aspect])) as Record<ArtKind, 'portrait' | 'landscape' | 'square'>;
 
-/** 화풍 기준 그림: 인물은 구미호 시안, 배경은 궁궐 시안 */
+/** 화풍 기준 그림: 인물은 백설 카드(2026-10 정본을 art/에 고정해 백설을 다시 그려도 기준이 흔들리지 않게), 배경은 궁궐 시안 */
 export const ANCHOR: Record<ArtKind, string> = {
-  full: 'public/art/card/baekseol.webp',
-  card: 'public/art/card/baekseol.webp',
-  cg: 'public/art/card/baekseol.webp',
+  full: 'art/style-heroine-card.webp',
+  card: 'art/style-heroine-card.webp',
+  cg: 'art/style-heroine-card.webp',
   bg: 'art/style-scene.png',
   banner: 'art/style-scene.png',
   foe: 'art/style-scene.png',

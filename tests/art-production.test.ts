@@ -31,7 +31,7 @@ describe('아트 제작 명세', () => {
 
   it('화풍과 식객 동일성을 별도 참조하고 이벤트는 해당 등장인물을 참조한다', () => {
     expect(artReferences(asset('cg-sodam-3'))).toEqual([
-      { role: 'style', path: 'public/art/card/baekseol.webp' },
+      { role: 'style', path: 'art/style-heroine-card.webp' },
       { role: 'identity', path: 'public/art/card/sodam.webp' },
     ]);
     expect(artReferences(asset('scene-s3e3-loom'))).toContainEqual({ role: 'identity', path: 'public/art/card/yunseul.webp' });
