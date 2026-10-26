@@ -2,7 +2,7 @@
 // 숫자·흔들림·번쩍임처럼 DOM이 나은 효과는 BattleView가 Web Animations로 직접 건다.
 import type { Element } from '../data/roster';
 
-type Kind = 'spark' | 'dot' | 'leaf' | 'drop' | 'star' | 'smoke' | 'ring' | 'slash' | 'arrow' | 'comet';
+type Kind = 'spark' | 'dot' | 'leaf' | 'drop' | 'star' | 'smoke' | 'ring' | 'slash' | 'arrow' | 'comet' | 'orb' | 'shard';
 
 interface P {
   kind: Kind;
@@ -18,6 +18,9 @@ interface P {
   vr: number;
   g: number;
   drag: number;
+  /** 날아가는 기운: 크기가 자라며 휘어 날아간다 */
+  size1?: number;
+  el?: Element | 'none';
   /** 혜성: 출발점과 도착점 */
   x0?: number;
   y0?: number;
@@ -120,6 +123,32 @@ export class FxCanvas {
     this.add({ kind: 'comet', x: x0, y: y0, x0, y0, x1, y1, color: pal[Math.min(2, pal.length - 1)], size: 7, max: ms });
   }
 
+  /** 공격자에게서 대상으로 날아가는 기운 덩어리. 다가갈수록 커지고, 지나간 자리에 속성 입자를 남긴다 */
+  orb(x0: number, y0: number, x1: number, y1: number, el: Element | 'none', ms = 320, size0 = 8, size1 = 22) {
+    const pal = PALETTE[el];
+    this.add({ kind: 'orb', x: x0, y: y0, x0, y0, x1, y1, el, color: pal[Math.min(2, pal.length - 1)], size: size0, size1, max: ms });
+  }
+
+  /** 맞은 자리에서 흩어지는 세모 조각 */
+  shards(x: number, y: number, n = 8, color = '#ffffff', power = 1) {
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const v = (1.5 + Math.random() * 3.5) * power;
+      this.add({ kind: 'shard', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, max: 700 + Math.random() * 500, size: 5 + Math.random() * 7, color, vr: (Math.random() - 0.5) * 0.2, drag: 0.95 });
+    }
+  }
+
+  /** 늘 화면을 천천히 떠도는 옅은 세모 조각(전장이 멈춰 보이지 않게) */
+  private ambient = false;
+  private ambientAt = 0;
+  setAmbient(on: boolean) {
+    this.ambient = on;
+    if (on && !this.raf) {
+      this.last = performance.now();
+      this.raf = requestAnimationFrame(this.loop);
+    }
+  }
+
   /** 적이 내 편을 할퀴는 세 줄 */
   claw(x: number, y: number) {
     for (let i = -1; i <= 1; i++) this.add({ kind: 'slash', x: x + i * 16, y: y + i * 6, color: '#ff7a6a', angle: 1.05, len: 90, width: 8, max: 280 });
@@ -156,6 +185,7 @@ export class FxCanvas {
   }
 
   stop() {
+    this.ambient = false;
     cancelAnimationFrame(this.raf);
     this.raf = 0;
     this.clear();
@@ -167,6 +197,13 @@ export class FxCanvas {
     const k = dt / 16.7;
     const c = this.ctx;
     c.clearRect(0, 0, this.w, this.h);
+    if (this.ambient) {
+      this.ambientAt += dt;
+      while (this.ambientAt > 380) {
+        this.ambientAt -= 380;
+        this.ps.push({ kind: 'shard', x: Math.random() * this.w, y: this.h * (0.15 + Math.random() * 0.6), vx: 0.15 + Math.random() * 0.25, vy: -0.1 - Math.random() * 0.2, life: 0, max: 3800 + Math.random() * 2000, size: 4 + Math.random() * 6, color: 'rgba(220,235,255,.55)', rot: Math.random() * 6, vr: (Math.random() - 0.5) * 0.02, g: 0, drag: 1 });
+      }
+    }
     const alive: P[] = [];
     for (const p of this.ps) {
       p.life += dt;
@@ -181,6 +218,18 @@ export class FxCanvas {
         p.y = p.y0! + (p.y1! - p.y0!) * e;
         // 지나간 자리에 불티를 남긴다
         if (Math.random() < 0.9) this.ps.push({ kind: 'dot', x: px, y: py, vx: (Math.random() - 0.5) * 1.5, vy: (Math.random() - 0.5) * 1.5, life: 0, max: 260, size: 2 + Math.random() * 2, color: p.color, rot: 0, vr: 0, g: 0, drag: 0.9 });
+      } else if (p.kind === 'orb') {
+        // 살짝 위로 휘는 길(이차 베지에)
+        const e = t * t * (3 - 2 * t);
+        const mx = (p.x0! + p.x1!) / 2;
+        const my = Math.min(p.y0!, p.y1!) - Math.abs(p.x1! - p.x0!) * 0.18;
+        const px = p.x;
+        const py = p.y;
+        p.x = (1 - e) * (1 - e) * p.x0! + 2 * (1 - e) * e * mx + e * e * p.x1!;
+        p.y = (1 - e) * (1 - e) * p.y0! + 2 * (1 - e) * e * my + e * e * p.y1!;
+        const pal = PALETTE[p.el ?? 'none'];
+        const shape: Kind = p.el === 'wood' ? 'leaf' : p.el === 'water' ? 'drop' : p.el === 'light' ? 'star' : p.el === 'dark' ? 'smoke' : 'dot';
+        for (let j = 0; j < 2; j++) this.ps.push({ kind: shape, x: px + (Math.random() - 0.5) * 8, y: py + (Math.random() - 0.5) * 8, vx: (Math.random() - 0.5) * 1.2, vy: (Math.random() - 0.5) * 1.2 - (p.el === 'fire' ? 0.6 : 0), life: 0, max: 320 + Math.random() * 200, size: 2 + Math.random() * 3, color: pal[Math.floor(Math.random() * pal.length)], rot: Math.random() * 6, vr: 0.1, g: 0, drag: 0.92 });
       } else if (p.kind !== 'ring' && p.kind !== 'slash') {
         p.vx *= Math.pow(p.drag, k);
         p.vy = p.vy * Math.pow(p.drag, k) + p.g * k;
@@ -191,7 +240,7 @@ export class FxCanvas {
       this.draw(p, t);
     }
     this.ps = alive;
-    this.raf = alive.length ? requestAnimationFrame(this.loop) : 0;
+    this.raf = alive.length || this.ambient ? requestAnimationFrame(this.loop) : 0;
     if (!alive.length) c.clearRect(0, 0, this.w, this.h);
   };
 
@@ -322,6 +371,35 @@ export class FxCanvas {
         c.arc(4, 0, p.size * 0.6, 0, Math.PI * 2);
         c.fill();
         c.globalAlpha = 1;
+        break;
+      }
+      case 'orb': {
+        c.globalAlpha = 1;
+        const r = p.size + ((p.size1 ?? p.size) - p.size) * t;
+        const g = c.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 2.4);
+        g.addColorStop(0, '#ffffff');
+        g.addColorStop(0.28, p.color);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        c.fillStyle = g;
+        c.beginPath();
+        c.arc(p.x, p.y, r * 2.4, 0, Math.PI * 2);
+        c.fill();
+        c.fillStyle = '#fff';
+        c.beginPath();
+        c.arc(p.x, p.y, r * 0.55, 0, Math.PI * 2);
+        c.fill();
+        break;
+      }
+      case 'shard': {
+        c.globalCompositeOperation = 'source-over';
+        c.translate(p.x, p.y);
+        c.rotate(p.rot);
+        c.beginPath();
+        c.moveTo(0, -p.size);
+        c.lineTo(p.size * 0.8, p.size * 0.6);
+        c.lineTo(-p.size * 0.8, p.size * 0.6);
+        c.closePath();
+        c.fill();
         break;
       }
       case 'arrow': {

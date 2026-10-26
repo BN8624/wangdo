@@ -1,6 +1,6 @@
-// 턴제 전투 화면. 위쪽 전장에 적이 전신으로 서고, 아래에 내 편 다섯이 패널로 선다.
-// combat.ts의 Combat을 한 차례씩 진행하며, 차례마다 돌진·도약·베기·피격·입자·숫자·흔들림으로 연출한다.
-// 고유 기술은 화면을 어둡게 하고 전신 컷인을 띄운 뒤 기술마다 다른 효과를 낸다. 자동·수동, 1~3배속, 건너뛰기.
+// 턴제 전투 화면. 사선 띠로 나눈 대결 구도: 오른쪽 위에 적, 왼쪽 아래에 지금 나선 식객이 크게 서고, 맨 아래 내 편 다섯 패널.
+// 한 번의 공격 = 패널이 번쩍(예비) → 식객이 한마디 → 기운이 대상에게 날아가 커지며 꽂힘 → 접촉 순간 대상이 단색 실루엣으로
+// 번쩍(치명타는 붉게)·렌즈 고리·조각·큰 숫자 → 반동. 고유 기술은 컷인 뒤 같은 흐름을 크게. 자동·수동, 1~3배속, 건너뛰기.
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { COMBAT, Combat, type CombatEvent, type CombatResult, type CombatSetup, type SkillKind, type Unit } from '../core/combat';
 import { fmt } from '../core/format';
@@ -58,21 +58,27 @@ interface Spot {
   z: number;
 }
 
-/** 적 배치: 대장은 앞 가운데 크게, 나머지는 앞줄·뒷줄로 */
+/** 적 배치: 오른쪽 위 무대. 대장은 앞 가운데 크게, 나머지는 앞줄·뒷줄로 */
 function arrange(foes: Unit[]): Spot[] {
-  const F = (x: number): Spot => ({ x, feet: 25, h: 30, z: 3 });
-  const B = (x: number): Spot => ({ x, feet: 40, h: 25, z: 2 });
-  const far = (x: number): Spot => ({ x, feet: 47, h: 21, z: 1 });
+  const F = (x: number): Spot => ({ x, feet: 42, h: 28, z: 3 });
+  const B = (x: number): Spot => ({ x, feet: 54, h: 22, z: 2 });
+  const far = (x: number): Spot => ({ x, feet: 61, h: 18, z: 1 });
   const boss = foes.findIndex((u) => u.boss);
   if (boss >= 0) {
     const others = foes.length - 1;
-    const rest = others <= 0 ? [] : others === 1 ? [B(80)] : others === 2 ? [B(15), B(85)] : [B(13), B(87), far(50), far(30)];
+    const rest = others <= 0 ? [] : others === 1 ? [B(90)] : others === 2 ? [B(46), B(92)] : [B(44), B(93), far(80), far(58)];
     let k = 0;
-    return foes.map((_, i) => (i === boss ? { x: 50, feet: 23, h: 42, z: 4 } : rest[k++] ?? B(50)));
+    return foes.map((_, i) => (i === boss ? { x: 70, feet: 38, h: 42, z: 4 } : rest[k++] ?? B(72)));
   }
-  const layouts: Spot[][] = [[], [F(50)], [F(29), F(71)], [B(50), F(23), F(77)], [B(30), B(70), F(18), F(82)], [B(15), B(50), B(85), F(31), F(69)]];
+  const layouts: Spot[][] = [[], [F(70)], [F(58), F(86)], [B(74), F(56), F(88)], [B(62), B(90), F(54), F(80)], [B(50), B(72), B(93), F(60), F(85)]];
   return layouts[Math.min(5, foes.length)];
 }
+
+/** 식객이 공격할 때 하는 말(돌아가며) */
+const lineOf = (id: string, n: number) => {
+  const l = ALLY_LINES[id]?.attack ?? [];
+  return l.length ? l[n % l.length] : '';
+};
 
 const SKILL_TINT: Record<SkillKind, string> = { strike: '#e0603c', stun: '#9a6ad0', weaken: '#5b4a8a', rally: '#d9a72a', guard: '#3f87c9', heal: '#3fb86a' };
 
@@ -118,6 +124,16 @@ export function BattleView({
   const [dim, setDim] = useState(false);
   const [ending, setEnding] = useState<'win' | 'lose' | null>(null);
   const [outcome, setOutcome] = useState<BattleOutcome | null>(null);
+  /** 왼쪽 아래에 크게 서 있는 식객(마지막으로 나선 식객) */
+  const [lead, setLeadState] = useState<string>(() => setup.allies.find(Boolean)?.id ?? '');
+  // 재생 중인 비동기 흐름이 늘 최신 값을 읽도록 ref에도 둔다
+  const leadId = useRef(lead);
+  const setLead = (id: string) => {
+    leadId.current = id;
+    setLeadState(id);
+  };
+  const [bubble, setBubble] = useState<{ text: string; n: number } | null>(null);
+  const said = useRef(0);
 
   const rootRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<HTMLDivElement>(null);
@@ -127,6 +143,7 @@ export function BattleView({
   const whiteRef = useRef<HTMLDivElement>(null);
   const redRef = useRef<HTMLDivElement>(null);
   const nodes = useRef(new Map<string, HTMLElement>());
+  const leadRef = useRef<HTMLDivElement | null>(null);
   const fx = useRef<FxCanvas | null>(null);
   const run = useRef({ cancelled: false });
   const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
@@ -180,15 +197,40 @@ export function BattleView({
   };
   const zoom = () => animate(sceneRef.current, [{ transform: 'scale(1)' }, { transform: 'scale(1.045)', offset: 0.25 }, { transform: 'scale(1)' }], 420);
   const flash = (red = false, a = 0.5) => animate(red ? redRef.current : whiteRef.current, [{ opacity: 0 }, { opacity: a, offset: 0.15 }, { opacity: 0 }], red ? 420 : 260);
+  /** 접촉 순간: 대상 전체를 단색 실루엣으로 번쩍(흰색, 치명타는 붉은색) */
+  const silhouette = (el: HTMLElement | null | undefined, color: string, hold = 70) => {
+    const sil = el?.querySelector<HTMLElement>('.bf-sil');
+    if (!sil) return;
+    sil.style.background = color;
+    const ms = hold + 280;
+    animate(sil, [{ opacity: 1 }, { opacity: 1, offset: hold / ms }, { opacity: 0 }], ms, { easing: 'linear' });
+  };
+  /** 대상 둘레로 퍼지는 렌즈 고리 */
+  const lens = (key: string, size: number, tint = 'rgba(255,255,255,.7)') => {
+    const layer = layerRef.current;
+    if (!layer) return;
+    const p = pos(key, 'mid');
+    const d = document.createElement('div');
+    d.className = 'bf-lens';
+    Object.assign(d.style, { left: `${p.x}px`, top: `${p.y}px`, width: `${size}px`, height: `${size}px` });
+    d.style.setProperty('--tint', tint);
+    layer.appendChild(d);
+    d.animate([{ transform: 'translate(-50%,-50%) scale(.3)', opacity: 1 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 0.9, offset: 0.55 }, { transform: 'translate(-50%,-50%) scale(1.12)', opacity: 0 }], { duration: dur(520), easing: 'cubic-bezier(.2,.8,.3,1)' });
+    const t = setTimeout(() => {
+      d.remove();
+      timers.current.delete(t);
+    }, dur(540));
+    timers.current.add(t);
+  };
   const number = (key: string, text: string, kind: string, label?: string) => {
     const layer = layerRef.current;
     if (!layer) return;
     const p = pos(key, 'head');
     const d = document.createElement('div');
     d.className = `bf-num ${kind}`;
-    d.style.left = `${p.x + (Math.random() - 0.5) * 30}px`;
+    d.style.left = `${p.x + (Math.random() - 0.5) * 24}px`;
     d.style.top = `${p.y}px`;
-    d.style.setProperty('--d', `${dur(1000)}ms`);
+    d.style.setProperty('--d', `${dur(1150)}ms`);
     if (label) {
       const s = document.createElement('small');
       s.textContent = label;
@@ -199,7 +241,7 @@ export function BattleView({
     const t = setTimeout(() => {
       d.remove();
       timers.current.delete(t);
-    }, dur(1050));
+    }, dur(1200));
     timers.current.add(t);
   };
   const unitOf = (side: 0 | 1, slot: number): Unit | undefined => (side === 0 ? combat.allies : combat.foes).find((u) => u.slot === slot);
@@ -242,30 +284,32 @@ export function BattleView({
     const el = atk?.element ?? 'fire';
     const p = pos(tk, 'mid');
     const big = kind === 'strike' || kind === 'stun';
+    const node = nodes.current.get(tk);
     if (h.tside === 1) {
-      fx.current?.slash(p.x, p.y, el, big || h.crit);
+      silhouette(node, h.crit ? '#e0302a' : '#ffffff', h.crit || big ? 110 : 60);
+      lens(tk, Math.max(170, (node?.getBoundingClientRect().width ?? 120) * (big || h.crit ? 1.5 : 1.2)), h.crit ? 'rgba(255,120,110,.8)' : 'rgba(255,255,255,.75)');
+      if (big || h.crit) fx.current?.slash(p.x, p.y, el, true);
       if (big) fx.current?.slash(p.x, p.y, el, true, 0.7);
-      fx.current?.burst(p.x, p.y, el, big ? 34 : h.crit ? 26 : 16, big ? 1.5 : 1);
-      fx.current?.ring(p.x, p.y, PALETTE[el][1], big ? 110 : 60, big ? 10 : 6);
-      animate(
-        nodes.current.get(tk),
-        [{ filter: 'brightness(1)', transform: 'none' }, { filter: 'brightness(3) saturate(0)', transform: `translate(${big ? 14 : 7}px, -6px)`, offset: 0.12 }, { filter: 'brightness(1)', transform: 'translate(-4px, 2px)', offset: 0.5 }, { transform: 'none' }],
-        420,
-      );
+      fx.current?.burst(p.x, p.y, el, big ? 22 : 12, big ? 1.3 : 0.9);
+      fx.current?.shards(p.x, p.y, big || h.crit ? 10 : 6, h.crit ? '#ffb0a8' : '#e8f2ff', big ? 1.4 : 1);
+      animate(node, [{ transform: 'none' }, { transform: `translate(${big ? 16 : 8}px, -5px) rotate(${big ? 3 : 1.5}deg)`, offset: 0.18 }, { transform: 'translate(-3px, 1px)', offset: 0.55 }, { transform: 'none' }], big ? 520 : 420);
     } else {
+      const panel = node;
+      animate(panel, [{ transform: 'none' }, { transform: 'translate(-7px, 4px) rotate(-2deg)', offset: 0.2 }, { transform: 'translate(5px, 0) rotate(1deg)', offset: 0.5 }, { transform: 'none' }], 380);
+      animate(panel?.querySelector('.bf-hurt'), [{ opacity: 1 }, { opacity: 1, offset: 0.2 }, { opacity: 0 }], 420);
+      // 지금 크게 서 있는 식객이 맞으면 그 그림도 붉게 번쩍이며 밀린다
+      if (atk && unitOf(0, h.tslot)?.id === leadId.current) {
+        silhouette(leadRef.current, '#e0302a', 80);
+        animate(leadRef.current, [{ transform: 'none' }, { transform: 'translate(-14px, 6px) rotate(-2deg)', offset: 0.2 }, { transform: 'none' }], 420);
+      }
       fx.current?.claw(p.x, p.y - 10);
-      fx.current?.burst(p.x, p.y, 'none', 10, 0.8);
-      animate(nodes.current.get(tk), [{ transform: 'none' }, { transform: 'translate(-7px, 4px) rotate(-2deg)', offset: 0.2 }, { transform: 'translate(5px, 0) rotate(1deg)', offset: 0.5 }, { transform: 'none' }], 380);
-      animate(nodes.current.get(tk)?.querySelector('.bf-hurt'), [{ opacity: 0 }, { opacity: 0.85, offset: 0.15 }, { opacity: 0 }], 420);
-      flash(true, h.crit ? 0.8 : 0.45);
+      fx.current?.shards(p.x, p.y, 5, '#ffb0a8', 0.8);
+      flash(true, h.crit ? 0.7 : 0.4);
     }
-    if (h.crit) {
-      flash(false, 0.35);
-      zoom();
-    }
-    shake(h.crit ? 12 : big ? 10 : h.tside === 0 ? 6 : 4);
-    play(h.crit ? 'crit' : 'hit');
-    const label = h.crit ? '치명!' : h.adv === 1 ? '상성 유리' : h.adv === -1 ? '상성 불리' : undefined;
+    if (h.crit) zoom();
+    shake(h.crit ? 7 : big ? 6 : h.tside === 0 ? 4 : 0);
+    play(h.tside === 0 ? 'hurt' : h.crit ? 'crit' : big ? 'heavy' : 'hit');
+    const label = h.crit ? '치명타' : h.adv === 1 ? '상성 유리' : h.adv === -1 ? '상성 불리' : undefined;
     number(tk, fmt(h.dmg), `${h.tside === 0 ? 'hurt' : 'dmg'} ${h.crit ? 'crit' : ''} ${h.adv === 1 ? 'adv' : h.adv === -1 ? 'weak' : ''} ${big ? 'big' : ''}`, label);
     if (h.side === 0) damage.current[h.slot] = (damage.current[h.slot] ?? 0) + h.dmg;
     const d = disp.current[tk];
@@ -307,11 +351,24 @@ export function BattleView({
     const kind = sk?.kind ?? null;
     if (sk && u) await playCutin(u, sk);
     if (run.current.cancelled) return;
-    // 움직임: 내 편은 패널이 솟고, 적은 앞으로 덤벼든다
+    const hits = rest.filter((e): e is Extract<CombatEvent, { t: 'hit' }> => e.t === 'hit');
+    // 예비 동작: 내 편은 패널이 하얗게 두 번 번쩍이고 그 식객이 왼쪽 아래에 크게 선다. 적은 붉게 빛나며 덤벼든다
     const node = nodes.current.get(key);
-    if (act.side === 0) animate(node, [{ transform: 'none' }, { transform: 'translateY(-18px) scale(1.06)', offset: 0.4 }, { transform: 'none' }], 320);
-    else animate(node, [{ transform: 'none' }, { transform: 'translateY(9%) scale(1.13)', offset: 0.45 }, { transform: 'none' }], 440, { easing: 'cubic-bezier(.3,.1,.3,1)' });
-    await sleep(act.side === 0 ? 170 : 220);
+    if (act.side === 0 && u) {
+      animate(node?.querySelector('.bf-strobe'), [{ opacity: 0 }, { opacity: 1, offset: 0.15 }, { opacity: 0, offset: 0.4 }, { opacity: 1, offset: 0.55 }, { opacity: 0 }], 300, { easing: 'linear' });
+      animate(node, [{ transform: 'none' }, { transform: 'translateY(-12px)', offset: 0.4 }, { transform: 'none' }], 300);
+      if (leadId.current !== u.id) setLead(u.id);
+      await sleep(220);
+      // 한마디(기술은 컷인이 말을 대신한다). 3배속에서는 생략
+      if (!sk && hits.length && speedRef.current < 3) {
+        setBubble({ text: lineOf(u.id, said.current), n: said.current++ });
+        await sleep(520);
+        setBubble(null);
+      }
+    } else {
+      animate(node, [{ transform: 'none', filter: 'none' }, { transform: 'translateY(6%) scale(1.12)', filter: 'drop-shadow(0 0 16px #ff3b2f) brightness(1.2)', offset: 0.45 }, { transform: 'none', filter: 'none' }], 460, { easing: 'cubic-bezier(.3,.1,.3,1)' });
+      await sleep(220);
+    }
 
     // 내 편을 향한 기술 효과(치유·방어·격려)
     const heals = rest.filter((e): e is Extract<CombatEvent, { t: 'heal' }> => e.t === 'heal');
@@ -352,23 +409,24 @@ export function BattleView({
       await sleep(220);
     }
 
-    // 타격: 내 편은 빛줄기가 날아가 꽂힌다
-    const hits = rest.filter((e): e is Extract<CombatEvent, { t: 'hit' }> => e.t === 'hit');
-    if (act.side === 0 && hits.length) {
-      const from = pos(key, 'head');
+    // 기운이 대상에게 날아가며 커진다(내 편은 크게 선 식객의 가슴께에서, 적은 그 적에게서)
+    if (hits.length) {
+      const from = act.side === 0 ? pos('lead', 'mid') : pos(key, 'mid');
+      const el = act.side === 0 ? u?.element ?? 'none' : 'dark';
+      play('whoosh');
       for (const h of hits) {
         const to = pos(K(h.tside, h.tslot), 'mid');
-        fx.current?.comet(from.x, from.y, to.x, to.y, u?.element ?? 'none', dur(kind ? 240 : 190));
+        fx.current?.orb(from.x, from.y, to.x, to.y, el, dur(kind ? 360 : 300), kind ? 10 : 7, kind ? 30 : 20);
       }
-      await sleep(kind ? 230 : 180);
+      await sleep(kind ? 350 : 290);
     }
     for (let i = 0; i < hits.length; i++) {
       if (i > 0) await sleep(kind === 'weaken' ? 90 : 60);
       if (run.current.cancelled) return;
       impact(hits[i], u, kind);
       redraw();
-      // 세게 맞으면 잠깐 멈춘다(타격감)
-      if (hits[i].crit || kind === 'strike' || kind === 'stun') await sleep(90);
+      // 접촉 순간 잠깐 멈춘다(평타는 짧게, 강타·치명타는 길게)
+      await sleep(hits[i].crit || kind === 'strike' || kind === 'stun' ? 100 : 45);
     }
     for (const b of buffs.filter((x) => x.kind !== 'atkUp')) {
       await sleep(120);
@@ -437,6 +495,7 @@ export function BattleView({
     if (canvasRef.current) {
       fx.current = new FxCanvas(canvasRef.current);
       fx.current.speed = speedRef.current;
+      fx.current.setAmbient(true);
     }
     const onResize = () => fx.current?.resize();
     window.addEventListener('resize', onResize);
@@ -474,6 +533,7 @@ export function BattleView({
     setCutin(null);
     setFoeSkill(null);
     setBanner(null);
+    setBubble(null);
     setDim(false);
     setActing(null);
     const o = conclude();
@@ -502,6 +562,9 @@ export function BattleView({
         <div className="bf-field" ref={fieldRef}>
           <Art className="bf-bg" src={ART.battle(bg)} fallback={<div className="bf-bg" />} />
           <div className="bf-fog" />
+          <i className="bf-band b1" />
+          <i className="bf-band b2" />
+          <i className="bf-band b3" />
           {foes.map((u, i) => {
             const s = spots[i] ?? { x: 50, feet: 30, h: 30, z: 1 };
             const d = disp.current[K(1, u.slot)];
@@ -515,6 +578,7 @@ export function BattleView({
                 <div className="bf-shadow" />
                 <div className="bf-body" ref={reg(K(1, u.slot))}>
                   <Art className="bf-sprite" src={u.art} alt={u.name} fallback={<div className="bf-sprite-fb">{u.name}</div>} />
+                  <i className="bf-sil" style={{ WebkitMaskImage: `url(${u.art})`, maskImage: `url(${u.art})` }} />
                 </div>
                 {!u.boss && d && !d.down && (
                   <div className="bf-tag">
@@ -533,6 +597,20 @@ export function BattleView({
         </div>
       </div>
 
+      {lead && (
+        <div className="bf-lead" ref={(el) => { leadRef.current = el; reg('lead')(el); }}>
+          <div className="bf-lead-in" key={lead}>
+            <Art className="bf-lead-art" src={ART.full(lead)} alt={YOKAI_BY_ID[lead]?.name} fallback={null} />
+            <i className="bf-sil" style={{ WebkitMaskImage: `url(${ART.full(lead)})`, maskImage: `url(${ART.full(lead)})` }} />
+          </div>
+        </div>
+      )}
+      {bubble && (
+        <div className="bf-bubble" key={bubble.n}>
+          <b>{YOKAI_BY_ID[lead]?.name}</b>
+          {bubble.text}
+        </div>
+      )}
       <div className={`bf-dim ${dim ? 'on' : ''}`} />
       <canvas className="bf-canvas" ref={canvasRef} />
       <div className="bf-layer" ref={layerRef} />
@@ -612,6 +690,7 @@ export function BattleView({
               </span>
               <span className="bf-hurt" />
               <span className="bf-shine" />
+              <span className="bf-strobe" />
               {u.shield > 0 && !d?.down && <em className="bf-st sh">{fmt(u.shield)}</em>}
               {u.atkUp > 0 && !d?.down && <em className="bf-st up">공↑</em>}
               {ready && <em className="bf-ready">{auto ? '기술' : queued ? '대기' : '누르기'}</em>}
