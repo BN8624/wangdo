@@ -353,7 +353,7 @@ export function Formation({ view, kicker, title, bg, waves, need, reward, onGo, 
         {team.map((id, i) => {
           const y = id ? view.yokai[id] : null;
           return (
-            <button key={i} className={`fm-slot ${i % 2 ? 'back' : 'front'} ${id ? '' : 'empty'} ${picking === i ? 'on' : ''}`} style={id ? { ['--el' as string]: ELEMENT_COLOR[elementOf(id)] } : undefined} onClick={() => setPicking(i)}>
+            <button key={i} className={`fm-slot ${id ? '' : 'empty'} ${picking === i ? 'on' : ''}`} style={id ? { ['--el' as string]: ELEMENT_COLOR[elementOf(id)] } : undefined} onClick={() => setPicking(i)}>
               {id && y ? (
                 <>
                   <Stand id={id} />
