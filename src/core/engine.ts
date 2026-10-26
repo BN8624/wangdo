@@ -701,8 +701,23 @@ export type FightResult =
 /** 치른 전투의 결과(이겼든 졌든) */
 export type Won = Extract<FightResult, { ok: true }>;
 
+/** 전투 씨앗: 같은 상대·같은 편성·같은 식객 상태(레벨·인연 단계·장비)면 늘 같은 전투가 나온다.
+ *  다시 눌러 운으로 이기는 게 아니라, 키우거나 편성을 바꿔야 결과가 달라진다. */
+export function battleSeed(s: GameState, info: StageInfo, party: string[]): number {
+  let h = 2166136261;
+  const mix = (t: string) => {
+    for (const c of t) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  };
+  mix(`${info.index}|${info.rounds.map((r) => r.stat + r.value).join(',')}|${info.weak}`);
+  for (const id of party) {
+    const y = s.yokai[id];
+    mix(`|${id}:${y?.level ?? 0}:${bondLevel(y?.bond ?? 0)}:${y?.gear.weapon ?? ''}:${y?.gear.trinket ?? ''}`);
+  }
+  return h >>> 0;
+}
+
 /** 전투를 치르고 보상을 나눈다. next: 이미 정산한 사본(제자리에서 고친다), arena: 나설 식객(손님 포함)이 든 상태.
- *  나선 식객은 경험치를 다 받고 쉬던 식객은 일부를 받는다. 지면 경험치·엽전·명성의 일부만 받는다. */
+ *  나선 식객은 경험치를 다 받고 쉬던 식객은 일부를 받는다. 지면 아무것도 얻지 못한다(지기만 해서는 강해지지 않는다). */
 export function playBattle(
   next: GameState,
   arena: GameState,
@@ -710,21 +725,21 @@ export function playBattle(
   party: string[],
   o: { boss?: boolean; drop?: string; giftChance?: number } = {},
 ): Won {
-  const battle = runBattle(battleSetup(arena, info, party), Math.floor(roll(next) * 4294967296));
+  const battle = runBattle(battleSetup(arena, info, party), battleSeed(arena, info, party));
   const won = battle.won;
-  const exp = Math.round(battleExp(info.level ?? 1, o.boss) * (won ? 1 : B.expLoseRatio));
+  const exp = won ? battleExp(info.level ?? 1, o.boss) : 0;
   const ups: LevelUp[] = [];
   for (const id of Object.keys(next.yokai)) {
     const up = grantExp(next, id, exp * (party.includes(id) ? 1 : B.expBenchRatio));
     if (up) ups.push(up);
   }
-  const fame = won ? info.fame : Math.round(info.fame * B.loseRewardRatio);
-  const coin = won ? info.coin : Math.round(info.coin * B.loseRewardRatio);
+  const fame = won ? info.fame : 0;
+  const coin = won ? info.coin : 0;
   next.res.fame += fame;
   next.res.coin += coin;
   next.totals = { ...next.totals, [won ? 'wins' : 'losses']: next.totals[won ? 'wins' : 'losses'] + 1 };
-  // 함께 싸운 식객은 정이 든다. 이길수록 상소가 쌓인다.
-  for (const id of party) if (next.yokai[id]) next.yokai[id].bond += won ? B.battleBond : 1;
+  // 함께 이긴 식객은 정이 든다. 이길수록 상소가 쌓인다.
+  if (won) for (const id of party) if (next.yokai[id]) next.yokai[id].bond += B.battleBond;
   if (won && next.totals.wins % B.winsPerPetition === 0) next.wish = { ...next.wish, charges: next.wish.charges + 1 };
   const drops: string[] = [];
   if (won && o.drop && ITEM_BY_ID[o.drop]) {

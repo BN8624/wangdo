@@ -392,6 +392,7 @@
       "foe": "창고지기와 몽둥이 장정들",
       "set": "backhill",
       "level": 1,
+      "power": 0.3,
       "grunt": 1,
       "size": 1,
       "weak": "stun",

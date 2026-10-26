@@ -1,6 +1,5 @@
 // 이야기 속 전투. 화마다 장면 사이에 전투가 끼어 '대화 → 전투 → 대화'로 이어진다.
-// 질 때마다 상대가 지쳐 약해지므로(봐주기) 이야기가 영영 막히지는 않는다.
-import { BALANCE as B } from '../data/balance';
+// 상대는 지쳐 주지 않는다. 버거우면 모험에서 키운 뒤 다시 온다(첫 전투만은 반드시 이기게 약하게 둔다).
 import { EPISODES } from '../data/story';
 import { CHAPTERS } from '../data/stages';
 import type { SkillKind } from './battle';
@@ -18,9 +17,6 @@ export const storyBattleOrder = (ep: Episode, n: number) => ORDER.get(battleKey(
 
 const WEAK_KINDS: SkillKind[] = ['strike', 'stun', 'guard', 'weaken', 'rally'];
 
-/** 진 횟수에 따른 상대 세기(1 = 그대로) */
-export const mercyOf = (losses: number) => Math.max(B.storyMercyFloor, 1 - B.storyMercyStep * losses);
-
 /** 이야기 전투 하나의 상대 정보. 토벌과 같은 모양이라 전투 화면·편성 계산을 그대로 쓴다 */
 export function storyBattleInfo(s: GameState, ep: Episode, n: number): StageInfo {
   const b = ep.battles![n];
@@ -28,8 +24,6 @@ export function storyBattleInfo(s: GameState, ep: Episode, n: number): StageInfo
   const chapterIndex = Math.max(0, CHAPTERS.findIndex((c) => c.id === b.set));
   const chapter = CHAPTERS[chapterIndex];
   const size = Math.min(3, Math.max(1, b.size ?? 3));
-  const losses = s.story.losses[battleKey(ep, n)] ?? 0;
-  const mercy = mercyOf(losses);
 
   let seed = k * 104729 + 7;
   const pick = () => {
@@ -40,10 +34,9 @@ export function storyBattleInfo(s: GameState, ep: Episode, n: number): StageInfo
   const stats: StatKey[] = b.stats?.length ? b.stats.slice(0, size) : roundStats(withGuests(s, ep, n), size, pick);
   const factors = { 1: [1], 2: [0.95, 1.05], 3: [0.9, 1, 1.1] }[size]!;
   const level = b.level ?? 1;
-  const base = foeValue(level, b.boss ? 'boss' : 'story') * mercy;
+  const base = foeValue(level, b.boss ? 'boss' : 'story') * (b.power ?? 1);
   return {
-    // 봐주기 단계마다 다른 번호(추천 편성 계산을 따로 저장하려고)
-    index: 100_000 + k * 100 + losses,
+    index: 100_000 + k * 100,
     chapter,
     chapterIndex,
     number: b.grunt ?? 1,
@@ -59,7 +52,6 @@ export function storyBattleInfo(s: GameState, ep: Episode, n: number): StageInfo
     art: b.art,
     bg: b.bg,
     story: { ep: ep.id, n },
-    mercy,
     line: b.line,
   };
 }
@@ -81,7 +73,7 @@ export function nextStoryBattle(s: GameState, ep: Episode): number | null {
   return i < 0 ? null : i;
 }
 
-/** 이야기 전투를 치른다. 이기면 경험치·엽전·선물, 지면 일부를 받고 상대가 조금 지친다 */
+/** 이야기 전투를 치른다. 이기면 경험치·엽전·선물, 지면 아무것도 얻지 못한다 */
 export function storyFight(s: GameState, now: number, ep: Episode, n: number, party: string[]): [GameState, FightResult] {
   const b = ep.battles?.[n];
   if (!b) return [s, { ok: false, reason: 'bad-party' }];

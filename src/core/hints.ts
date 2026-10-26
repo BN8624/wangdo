@@ -62,7 +62,7 @@ function storyHint(s: GameState): Hint | null {
   const info = storyBattleInfo(s, ep, n);
   const chance = partyPlan(withGuests(s, ep, n), info).chance;
   if (chance >= 0.35) return { text: `${info.foe}와(과)의 전투가 기다려요 · 이길 확률 ${Math.round(chance * 100)}%`, target: 'story' };
-  return { text: `${info.foe}이(가) 버거워요. ${levelAdvice(s)} 다시 도전해도 상대가 지쳐요.`, target: 'adv' };
+  return { text: `${info.foe}이(가) 버거워요. ${levelAdvice(s)}`, target: 'adv' };
 }
 
 /** 모험이 다음 할 일: 열린 던전·사연·만남 */

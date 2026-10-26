@@ -1,6 +1,5 @@
 // 출전 준비: 상대·약점·편성·이길 확률·보상. 이야기 전투와 모험(필드·던전·사연)이 함께 쓴다.
 import { useEffect, useState, type ReactNode } from 'react';
-import { BALANCE } from '../data/balance';
 import { BATTLE } from '../core/battle';
 import { battleExp, bestParty } from '../core/engine';
 import { fmt } from '../core/format';
@@ -37,7 +36,6 @@ export function FoePrep({
     setParty(bestParty(arena, info));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [info.index, owned]);
-  const tired = info.mercy !== undefined && info.mercy < 1 ? Math.round((1 - info.mercy) * 100) : 0;
   const exp = battleExp(info.level ?? 1, boss ?? info.isBoss);
 
   return (
@@ -58,7 +56,6 @@ export function FoePrep({
             약점 <b>{SKILL_LABEL[info.weak]}</b>
             <small>이 기술은 {BATTLE.weakHit}배로 들어가요</small>
           </div>
-          {tired > 0 && <div className="bprep-tired">다시 도전 · 상대가 지쳐 {tired}% 약해졌어요</div>}
           {note}
         </div>
       </div>
@@ -74,7 +71,7 @@ export function FoePrep({
         <span>
           <ResIcon kind="fame" size={16} />+{fmt(info.fame)}
         </span>
-        <em>지면 {Math.round(BALANCE.loseRewardRatio * 100)}%</em>
+        <em>지면 얻는 것 없음</em>
       </div>
       <div className="bprep-actions">
         {children}

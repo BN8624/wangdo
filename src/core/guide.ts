@@ -27,7 +27,7 @@ export const GUIDE: GuideStep[] = [
   { who: 'baekseol', text: '이야기는 앞 화만 보면 바로 이어져요. 다음 화를 보세요.', target: 'story', tab: 'home', done: (s) => s.story.done.includes('s1e02'), reward: { coin: 300 } },
   { who: 'muyeong', text: '무영이다. 훈련장은 내게 맡겨. 호위 일로 엽전을 벌어 오지.', target: 'wp-woodyard', tab: 'home', done: (s) => workplaceOf(s, 'muyeong') !== null, reward: { coin: 200 } },
   { who: 'muyeong', text: '고갯길 산적굴이 열렸소. 던전은 층마다 싸움과 보물상자가 있고 맨 끝에 두목이 있소. 들어가 보시오.', target: 'node-bandit-cave go', tab: 'adv', done: (s) => (s.adv.floors['bandit-cave'] ?? 0) >= 1 || s.adv.cleared.includes('bandit-cave'), reward: { fame: 5 } },
-  { who: 'baekseol', text: '산적굴을 돌파하면 다음 이야기가 열려요. 이야기 속 전투와 던전은 지면 다시 도전할수록 상대가 지쳐요.', target: 'story', tab: 'home', done: (s) => s.story.done.includes('s1e03'), reward: { grain: 200 } },
+  { who: 'baekseol', text: '산적굴을 돌파하면 다음 이야기가 열려요. 버거운 상대는 뒷산에서 레벨을 올리고 장비를 갖춘 뒤 다시 와요.', target: 'story', tab: 'home', done: (s) => s.story.done.includes('s1e03'), reward: { grain: 200 } },
   { who: 'sodam', text: '소담이에요. 논밭과 장부는 제가 볼게요. 저를 논밭에 보내 주세요.', target: 'wp-field', tab: 'home', done: (s) => workplaceOf(s, 'sodam') !== null, reward: { coin: 200 } },
   { who: 'baekseol', text: '곡식으로 연회를 열면 명성도 오르고 다들 기분이 좋아지죠.', target: 'feast', tab: 'home', done: (s) => s.totals.feasts >= 1, reward: { coin: 300 } },
   { who: 'baekseol', text: '권세와 명성이 차면 승급이에요. 관직이 오르면 일터 칸과 수입이 늘어요.', target: 'promote', tab: 'home', done: (s) => s.rank >= 1, reward: { gift: 'norigae' } },

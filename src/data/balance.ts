@@ -22,9 +22,8 @@ export const BALANCE = {
   expGainExp: 1.25,
   expGainFlat: 10,
   expBossMult: 3,
-  /** 쉬던 식객이 받는 몫, 졌을 때 받는 몫 */
+  /** 쉬던 식객이 받는 몫(지면 아무도 받지 못한다) */
   expBenchRatio: 0.3,
-  expLoseRatio: 0.3,
   /** 전투 엽전·명성 = base × 상대레벨^exp + flat */
   battleCoinBase: 5,
   battleCoinExp: 1.6,
@@ -43,7 +42,7 @@ export const BALANCE = {
   bondStatBonus: 0.08,
   /** 식객마다 새 대화 수(처음 듣는 대화만 호감도를 올린다) */
   talkTopics: 8,
-  /** 함께 싸워 이기면 오르는 호감도(지면 1) */
+  /** 함께 싸워 이기면 오르는 호감도 */
   battleBond: 2,
   /** 대화 대답의 delta(1·4·8)에 곱하는 값 */
   talkMult: 2,
@@ -77,14 +76,12 @@ export const BALANCE = {
   stageCoinBase: 60,
   stageCoinGrowth: 1.22,
   bossRewardMult: 3,
-  /** 져도 이기면 받을 명성·엽전의 이만큼은 위로금으로 받는다 */
-  loseRewardRatio: 0.3,
-  /** 질 때마다 상대가 이만큼 지치고, 이 아래로는 내려가지 않는다 */
-  storyMercyStep: 0.1,
-  storyMercyFloor: 0.55,
   /** 필드·던전 잡졸을 이기면 이 확률로 선물을 줍는다(대장·이야기 전투는 언제나) */
   fieldGiftChance: 0.08,
   dungeonGiftChance: 0.25,
+
+  /** 모의 플레이: 이길 확률이 이만큼은 돼 보여야 도전한다(못 미치면 필드에서 키운다) */
+  simTryChance: 0.4,
 
   /** 추천 편성: 칸마다 그 능력치 상위 몇 명을 후보로 두고, 조합마다 몇 번 싸워 볼지 */
   partyPick: 4,

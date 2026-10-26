@@ -421,17 +421,8 @@ export function BattleView({ result, onClose }: { result: Won; onClose: () => vo
             </div>
           ) : (
             <div className="sub">
-              <span className="reward-list consolation">
-                위로금
-                <span>
-                  <ResIcon kind="fame" />+{fmt(result.fame)}
-                </span>
-                <span>
-                  <ResIcon kind="coin" />+{fmt(result.coin)}
-                </span>
-              </span>
               {battle.rounds >= BATTLE.maxRounds && !state.hp.every((h) => h <= 0) ? '시간 안에 쓰러뜨리지 못했어요.' : '식객들이 모두 쓰러졌어요.'}{' '}
-              {stage.mercy !== undefined ? '다시 도전할수록 상대가 지쳐 약해져요.' : '편성을 바꾸거나 필드에서 식객을 키워서 다시 도전해요.'}
+              같은 식객·장비·편성이면 결과도 같아요. 필드에서 레벨을 올리거나, 장비·편성을 바꿔 다시 도전해요.
             </div>
           )}
           {!!result.ups?.length && (

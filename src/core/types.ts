@@ -120,8 +120,6 @@ export interface StageInfo {
   rival?: string;
   /** 이야기 속 전투면 어느 화의 몇 번째 전투인지 */
   story?: { ep: string; n: number };
-  /** 진 횟수만큼 상대가 지친 정도(1 = 그대로) */
-  mercy?: number;
   /** 상대가 처음 외치는 말 */
   line?: string;
   /** 상대 레벨(경험치·표시용) */
@@ -179,7 +177,7 @@ export interface GameState {
     flags: string[];
     /** 이긴 이야기 전투(화 id#번호) */
     won: string[];
-    /** 이야기 전투마다 진 횟수: 질수록 상대가 지친다 */
+    /** 이야기 전투마다 진 횟수(기록용) */
     losses: Record<string, number>;
     /** 보다가 멈춘 화: 어느 장면에서 어느 전투를 앞두고 있었는지, 그때까지 고른 선택지 */
     at?: { ep: string; scene: number; battle: number; choices: (number | null)[] };
@@ -230,6 +228,8 @@ export interface StoryBattle {
   rival?: string;
   /** 상대 그림(art/<art>.webp). 있으면 set·grunt·boss보다 먼저 쓴다 */
   art?: string;
+  /** 상대 세기 배율(기본 1). 첫 전투처럼 반드시 이겨야 하는 판만 낮춘다 */
+  power?: number;
   /** 전투 배경(art/battle/<bg>.webp). 없으면 set의 배경 */
   bg?: string;
   /** 나설 식객 수(1~3, 기본 3) */

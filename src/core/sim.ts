@@ -3,11 +3,12 @@
 //
 // 사람의 시간: 전투 한 판을 보는 데 1분, 연속 수련은 한 판에 0.3분, 이야기 한 화 5분, 사연 장면 2분,
 // 대화 0.5분, 상소·승급·연회·장보기는 잠깐. 그동안 일터는 계속 돌아간다.
-// 사람처럼: 이길 만하면 싸우고, 버거우면 지칠 때까지 부딪쳐 보다가, 그래도 안 되면 필드에서 키운 뒤 다시 온다.
+// 사람처럼: 이길 만해 보이면 싸우고, 지면 같은 조건으로는 다시 붙지 않고 필드에서 키운 뒤(레벨·장비가 바뀐 뒤) 다시 온다.
 
 import {
   MINUTE,
   STAT_KEYS,
+  battleSeed,
   buyItem,
   chooseWish,
   equip,
@@ -32,7 +33,7 @@ import { WORKPLACES } from '../data/village';
 import { WISH_BY_ID } from '../data/wishes';
 import { YOKAI_BY_ID } from '../data/yokai';
 import { advFight, bestField, dungeonEncounter, fieldEncounter, nodeDone, nodeOpen, pathSteps, questEncounter } from './adventure';
-import { mercyOf, nextStoryBattle, storyBattleInfo, storyFight, withGuests } from './campaign';
+import { nextStoryBattle, storyBattleInfo, storyFight, withGuests } from './campaign';
 import { completeEpisode, isUnlocked, nextEpisode } from './story';
 import type { GameState, StageInfo, WorkplaceId } from './types';
 
@@ -125,7 +126,7 @@ function gearUp(s: GameState, now: number): GameState {
   return s;
 }
 
-type Target = { kind: 'story' | 'node'; info: StageInfo; arena: GameState; losses: number; node?: NodeDef };
+type Target = { kind: 'story' | 'node'; info: StageInfo; arena: GameState; node?: NodeDef };
 
 /** 지금 싸울 수 있는 것들을 지도의 길 순서대로: 열린 이야기 전투, 열렸지만 안 끝낸 던전·사연·만남 */
 function targets(s: GameState): Target[] {
@@ -137,14 +138,14 @@ function targets(s: GameState): Target[] {
         if (!ep || st.id !== ep.id || !isUnlocked(s, ep)) continue;
         const n = nextStoryBattle(s, ep);
         if (n === null) continue;
-        out.push({ kind: 'story', info: storyBattleInfo(s, ep, n), arena: withGuests(s, ep, n), losses: s.story.losses[`${ep.id}#${n}`] ?? 0 });
+        out.push({ kind: 'story', info: storyBattleInfo(s, ep, n), arena: withGuests(s, ep, n) });
         continue;
       }
       const node = st.node;
       if ((node.kind !== 'dungeon' && node.kind !== 'quest') || !nodeOpen(s, node) || nodeDone(s, node)) continue;
       const info = node.kind === 'dungeon' ? dungeonEncounter(s, node) : questEncounter(s, node);
       if (!info) continue;
-      out.push({ kind: 'node', node, info, arena: s, losses: info.mercy !== undefined ? Math.round((1 - info.mercy) / B.storyMercyStep) : 0 });
+      out.push({ kind: 'node', node, info, arena: s });
     }
   return out;
 }
@@ -159,6 +160,7 @@ export function simulateRun(maxMinutes = 30 * 60, seed = 7): RunReport {
   let s = arrange(newGame(start, seed), start);
   const report: RunReport = { episodeAt: {}, nodeAt: {}, levelAt: {}, battles: { story: 0, dungeon: 0, quest: 0, field: 0, losses: 0 }, minutes: 0, stuck: null, final: s, fights: [], coinAt: {}, snapshots: {} };
   const seenScene = new Set<string>();
+  const lost = new Set<number>();
   let trainStreak = 0;
 
   while (t < maxMinutes && !allDone(s)) {
@@ -205,12 +207,12 @@ export function simulateRun(maxMinutes = 30 * 60, seed = 7): RunReport {
       continue;
     }
 
-    // 이길 만한 것부터(지칠 때까지는 부딪쳐 본다)
+    // 이길 만해 보이는 것부터. 같은 조건으로 이미 진 상대는 결과가 같으니 건너뛴다
     let fought = false;
     for (const tg of targets(s)) {
       const { party, chance } = partyPlan(tg.arena, tg.info);
-      const tired = tg.info.mercy !== undefined && mercyOf(tg.losses) > B.storyMercyFloor;
-      if (chance < 0.3 && !(tired && chance >= 0.08)) continue;
+      const seed = battleSeed(tg.arena, tg.info, party);
+      if (chance < B.simTryChance || lost.has(seed)) continue;
       const log = { level: tg.info.level ?? 0, avg: avg(s), chance, kind: tg.kind === 'story' ? 'story' : tg.node!.kind === 'dungeon' ? (tg.info.isBoss ? 'boss' : 'dungeon') : 'quest', t };
       if (tg.kind === 'story') {
         const e = nextEpisode(s, EPISODES)!;
@@ -218,7 +220,10 @@ export function simulateRun(maxMinutes = 30 * 60, seed = 7): RunReport {
         if (!r.ok) continue;
         s = after;
         report.battles.story++;
-        if (!r.won) report.battles.losses++;
+        if (!r.won) {
+          report.battles.losses++;
+          lost.add(seed);
+        }
         report.fights.push({ ...log, won: r.won });
       } else {
         const node = tg.node!;
@@ -230,7 +235,10 @@ export function simulateRun(maxMinutes = 30 * 60, seed = 7): RunReport {
         if (!r.ok) continue;
         s = after;
         report.battles[node.kind === 'dungeon' ? 'dungeon' : 'quest']++;
-        if (!r.won) report.battles.losses++;
+        if (!r.won) {
+          report.battles.losses++;
+          lost.add(seed);
+        }
         report.fights.push({ ...log, won: r.won });
         if (r.recruit) s = arrange(s, at());
         if (r.cleared) report.nodeAt[r.cleared] = t + TIME.battle;

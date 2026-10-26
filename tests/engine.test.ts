@@ -37,6 +37,8 @@ import { GUIDE, advanceGuide } from '../src/core/guide';
 import { advFight, dungeonEncounter, fieldEncounter, questEncounter, reenterDungeon } from '../src/core/adventure';
 import { NODE_BY_ID, type DungeonDef, type FieldDef, type QuestDef } from '../src/data/world';
 import { ITEM_BY_ID } from '../src/data/items';
+import { EPISODE_BY_ID } from '../src/data/story';
+import { storyBattleInfo, storyFight } from '../src/core/campaign';
 import { deserialize, exportCode, importCode, serialize } from '../src/core/save';
 import { BALANCE } from '../src/data/balance';
 import { RANKS } from '../src/data/ranks';
@@ -277,15 +279,18 @@ describe('모험', () => {
     expect(s.inventory[cave.boss.drop!]).toBe(1);
   });
 
-  it('던전에서 지면 상대가 지친다', () => {
+  it('상대는 지쳐 주지 않고, 같은 조건으로 다시 싸우면 결과도 같다', () => {
     const s = game();
     s.story.done.push('s2e08');
-    const cave = NODE_BY_ID['underworld-gate'] as DungeonDef;
-    const before = dungeonEncounter(s, cave)!;
-    const [next, r] = advFight(s, T0, cave.id, bestParty(s, before));
+    const gate = NODE_BY_ID['underworld-gate'] as DungeonDef;
+    const before = dungeonEncounter(s, gate)!;
+    const party = bestParty(s, before);
+    const [next, r] = advFight(s, T0, gate.id, party);
     expect(r.ok && !r.won).toBe(true);
-    const after = dungeonEncounter(next, cave)!;
-    expect(after.rounds[0].value).toBeLessThan(before.rounds[0].value);
+    const after = dungeonEncounter(next, gate)!;
+    expect(after.rounds).toEqual(before.rounds);
+    const [, again] = advFight(next, T0, gate.id, party);
+    expect(again.ok && again.battle.events).toEqual(r.ok && r.battle.events);
   });
 
   it('만남을 끝내면 그 식객이 합류한다', () => {
@@ -297,17 +302,29 @@ describe('모험', () => {
     expect(s.yokai.seorin?.level).toBeGreaterThan(1);
   });
 
-  it('질 때도 경험치와 엽전의 일부는 받는다', () => {
+  it('지면 경험치·엽전·호감도를 얻지 못한다(지기만 해서는 강해지지 않는다)', () => {
     const s = game();
     s.story.done.push('s2e08');
-    const cave = NODE_BY_ID['underworld-gate'] as DungeonDef;
-    const before = s.res.coin;
-    const [after, r] = advFight(s, T0, cave.id, bestParty(s, dungeonEncounter(s, cave)!));
+    const gate = NODE_BY_ID['underworld-gate'] as DungeonDef;
+    const party = bestParty(s, dungeonEncounter(s, gate)!);
+    const [after, r] = advFight(s, T0, gate.id, party);
     expect(r.ok && !r.won).toBe(true);
     if (!r.ok) return;
-    expect(r.coin).toBe(Math.round(r.stage.coin * BALANCE.loseRewardRatio));
-    expect(after.res.coin).toBeCloseTo(before + r.coin);
-    expect(r.exp).toBeGreaterThan(0);
+    expect([r.exp, r.coin, r.fame]).toEqual([0, 0, 0]);
+    for (const id of Object.keys(s.yokai)) {
+      expect(after.yokai[id].exp).toBe(s.yokai[id].exp);
+      expect(after.yokai[id].bond).toBe(s.yokai[id].bond);
+    }
+  });
+
+  it('첫 전투는 반드시 이긴다', () => {
+    for (const seed of [1, 2, 3]) {
+      const s = newGame(T0, seed);
+      const ep = EPISODE_BY_ID['s1e01'];
+      const info = storyBattleInfo(s, ep, 0);
+      const [, r] = storyFight(s, T0, ep, 0, bestParty(s, info));
+      expect(r.ok && r.won).toBe(true);
+    }
   });
 });
 

@@ -1,11 +1,10 @@
 // 모험: 마을·필드·던전·개인 퀘스트. 지도는 src/data/world.ts.
 // 필드는 몇 번이고 싸우는 수련장(봐주기 없음), 던전은 층마다 전투와 보물상자, 마지막 층에 대장.
-// 던전·퀘스트 전투는 질 때마다 상대가 지친다(이야기 전투와 같은 봐주기).
+// 상대는 지쳐 주지 않는다. 같은 조건이면 결과도 같으므로, 막히면 필드에서 키우거나 장비·편성을 바꾼다.
 import { BALANCE as B } from '../data/balance';
 import { CHAPTERS } from '../data/stages';
 import { EPISODE_BY_ID } from '../data/story';
 import { NODE_BY_ID, REGIONS, type DungeonDef, type FieldDef, type FoeDef, type NodeDef, type QuestDef, type Req } from '../data/world';
-import { mercyOf } from './campaign';
 import { addItem, avgLevel, roundStats, battleCoin, battleFame, foeValue, freshYokai, playBattle, settle, type FightResult, type FoeKind, type Won } from './engine';
 import { nextRandom } from './rng';
 import type { GameState, StageInfo, StatKey } from './types';
@@ -73,16 +72,15 @@ function hash(text: string): number {
 }
 
 /** 상대 정보(토벌과 같은 모양이라 전투 화면·편성 계산을 그대로 쓴다) */
-function makeInfo(s: GameState, foe: FoeDef, o: { key: string; level: number; kind: FoeKind; bg: string; mercy?: number; boss?: boolean }): StageInfo {
+function makeInfo(s: GameState, foe: FoeDef, o: { key: string; level: number; kind: FoeKind; bg: string; boss?: boolean }): StageInfo {
   const pick = seeded(hash(o.key));
   const size = partySize(s);
   const stats: StatKey[] = roundStats(s, size, pick);
   const factors = { 1: [1], 2: [0.95, 1.05], 3: [0.9, 1, 1.1] }[size]!;
-  const mercy = o.mercy ?? 1;
-  const base = foeValue(o.level, o.kind) * mercy;
+  const base = foeValue(o.level, o.kind);
   const chapter = CHAPTERS.find((c) => c.id === o.bg) ?? CHAPTERS[0];
   return {
-    index: 200_000 + (Math.abs(hash(o.key)) % 99_000) * 10 + Math.round((1 - mercy) * 9),
+    index: 200_000 + (Math.abs(hash(o.key)) % 99_000) * 10,
     chapter,
     chapterIndex: CHAPTERS.indexOf(chapter),
     number: 1,
@@ -96,7 +94,6 @@ function makeInfo(s: GameState, foe: FoeDef, o: { key: string; level: number; ki
     bg: o.bg,
     art: foe.art,
     line: foe.line,
-    ...(o.mercy !== undefined ? { mercy } : {}),
   };
 }
 
@@ -126,7 +123,7 @@ export function dungeonEncounter(s: GameState, d: DungeonDef): StageInfo | null 
   const boss = floor === d.floors.length - 1;
   const key = `${d.id}@${floor}.${battle}`;
   const foe = boss ? d.boss : d.pool[(floor * 2 + battle) % d.pool.length];
-  return makeInfo(s, foe, { key, level: fl.level, kind: boss ? 'boss' : 'dungeon', bg: d.bg, mercy: mercyOf(s.adv.losses[key] ?? 0), boss });
+  return makeInfo(s, foe, { key, level: fl.level, kind: boss ? 'boss' : 'dungeon', bg: d.bg, boss });
 }
 
 /** 퀘스트에서 지금 싸울 상대(다 이겼으면 null) */
@@ -135,7 +132,7 @@ export function questEncounter(s: GameState, q: QuestDef): StageInfo | null {
   const b = q.battles[n];
   if (!b) return null;
   const key = `${q.id}.${n}`;
-  return makeInfo(s, b, { key, level: b.level, kind: n === q.battles.length - 1 ? 'boss' : 'dungeon', bg: battleBgFor(q.bg), mercy: mercyOf(s.adv.losses[key] ?? 0) });
+  return makeInfo(s, b, { key, level: b.level, kind: n === q.battles.length - 1 ? 'boss' : 'dungeon', bg: battleBgFor(q.bg) });
 }
 
 /** 퀘스트 장면 배경(이야기 배경 키)에 어울리는 전투 배경 */
