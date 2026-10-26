@@ -844,17 +844,14 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .fm-foe.boss { width: 52px; height: 52px; box-shadow: 0 0 0 2px var(--gold-light), 0 0 0 4px var(--el); }
 .fm-foe img { width: 100%; height: 100%; object-fit: cover; object-position: 50% 6%; transform: scale(1.7); transform-origin: 50% 0; }
 .fm-foes small { flex-basis: 100%; font: 700 12px var(--sans); color: rgba(255,255,255,.8); }
-.fm-team { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, 1fr); align-items: end; gap: 2px; padding: 10px 6px 0; }
-.fm-slot { position: relative; height: 100%; max-height: 360px; padding: 0; display: flex; align-items: flex-end; justify-content: center; border-radius: 14px; }
-.fm-slot::before { content: ''; position: absolute; left: 6%; right: 6%; bottom: 46px; height: 20px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--el, #fff) 70%, transparent), transparent); opacity: .8; }
-/* 전신: 칸 폭에 맞춘 크기(화면 폭의 62%가 키 상한)로, 몸 중심(--cx)을 칸 가운데에. 홀수 칸(2·4번)은 뒷줄로 조금 작고 높게 */
-.fm-stand-wrap { pointer-events: none; position: absolute; left: 50%; bottom: 52px; height: min(calc(100% - 60px), calc(min(100vw, 480px) * .7)); transform: translateX(var(--cx, -50%)); }
+.fm-team { flex: 1; min-height: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); align-items: end; gap: 5px; padding: 10px 8px 0; }
+/* 칸마다 자기 자리 안에서만 보인다(겹치지 않게). 모두 같은 크기로 서고, 칸 밖으로 나가는 꼬리·리본·무기는 칸 가장자리에서 옅게 잘린다 */
+.fm-slot { position: relative; height: 100%; max-height: 380px; padding: 0; display: flex; align-items: flex-end; justify-content: center; border-radius: 14px; overflow: hidden; background: linear-gradient(to top, color-mix(in srgb, var(--el, #fff) 22%, transparent), rgba(255,255,255,.03) 45%, transparent); }
+.fm-slot::before { content: ''; position: absolute; left: 8%; right: 8%; bottom: 44px; height: 16px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--el, #fff) 70%, transparent), transparent); opacity: .8; }
+/* 전신: 모두 같은 키(화면 폭의 78%까지)로, 몸 중심(--cx)을 칸 가운데에 */
+.fm-stand-wrap { pointer-events: none; position: absolute; left: 50%; bottom: 50px; height: min(calc(100% - 56px), calc(min(100vw, 480px) * .78)); transform: translateX(var(--cx, -50%)); }
 .fm-stand { display: block; height: 100%; width: auto; max-width: none; object-fit: contain; object-position: 50% 100%; filter: drop-shadow(0 6px 10px rgba(0,0,0,.5)); }
-.fm-slot.front { z-index: 2; }
-.fm-slot.back { z-index: 1; }
-.fm-slot.back .fm-stand-wrap { bottom: 84px; height: min(calc(100% - 92px), calc(min(100vw, 480px) * .62)); filter: brightness(.9); }
-.fm-slot.back::before { bottom: 78px; }
-.fm-plate { position: relative; width: 100%; display: grid; justify-items: center; gap: 1px; padding: 6px 0 4px; border-radius: 10px; background: rgba(10,6,14,.72); border-top: 2px solid var(--el); }
+.fm-plate { position: relative; width: 100%; display: grid; justify-items: center; gap: 1px; padding: 6px 0 4px; border-radius: 0 0 14px 14px; background: rgba(10,6,14,.72); border-top: 2px solid var(--el); }
 .fm-plate b { font: 400 14px var(--title); }
 .fm-plate small { font: 700 10px var(--sans); color: rgba(255,255,255,.8); }
 .fm-plate i { font-style: normal; color: var(--gold-light); letter-spacing: -2px; }
@@ -1051,3 +1048,4 @@ body:has(.guide) .sheet { max-height: calc(100dvh - 150px); }
 .gc-trade b { font: 700 13px var(--sans); }
 .gc-trade small { font-size: 11px; opacity: .8; }
 .gc-trade .btn { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.fm-slot:not(.empty)::after { content: ''; position: absolute; inset: 0; pointer-events: none; border-radius: 14px; box-shadow: inset 0 0 0 1px rgba(255,255,255,.08); }
