@@ -117,7 +117,8 @@ CHARS = {
     'muyeong': ('FighterWhite', {
         '#8f3e56': '#3f4652', '#d3a2c0': '#9aa3b5', '#f2eaf1': '#d5dae6',
     }, 'horns'),
-    'keeper': ('Noble', {}, None),
+    # 창고지기: 원본의 페도라를 갓으로 바꿔 그린다
+    'keeper': ('Noble', {}, 'gat'),
     'thug': ('Monk2', {}, None),
     'innkeeper': ('OldMan', {}, None),
     'widow': ('OldWoman', {}, None),
@@ -216,6 +217,8 @@ def overlay(frame, kind, facing):
             for dx in (-2, -1, 0, 1, 2):
                 if px[ex + dx, b - 1][3] == 0 or abs(dx) < 2:
                     put(px, w, h, ex + dx, b - 1, OUTLINE if abs(dx) == 2 else (inner if dx == 0 else white))
+    elif kind == 'gat':
+        gat(frame)
     elif kind == 'horns':
         ivory = hexrgb('#efe6d2')
         xs = [xl + 3, xr - 3] if facing in (0, 1) else ([xl + 5] if facing == 2 else [xr - 5])
@@ -226,6 +229,77 @@ def overlay(frame, kind, facing):
                 put(px, w, h, hx - 1, yy, OUTLINE)
                 put(px, w, h, hx, yy, ivory)
                 put(px, w, h, hx + 1, yy, OUTLINE)
+
+
+GAT_DARK = hexrgb('#2b2730')
+GAT_LIGHT = hexrgb('#5a5560')
+GAT_STRAP = hexrgb('#c9a24a')
+
+
+def gat(frame):
+    """페도라 → 갓: 챙(가장 넓은 줄) 위를 지우고, 얇고 넓은 챙 위에 좁고 높은 원통 몸통을 세운 뒤 갓끈을 늘어뜨린다"""
+    px = frame.load()
+    w, h = frame.size
+    rows = [sum(1 for x in range(w) if px[x, y][3] > 0) for y in range(min(h, 14))]
+    brim = max(range(len(rows)), key=lambda y: (rows[y], y))  # 가장 넓은 줄 중 아래(챙 몸통)
+    xs = [x for x in range(w) if px[x, brim][3] > 0]
+    cx = (xs[0] + xs[-1] + 1) // 2
+    for y in range(brim):
+        for x in range(w):
+            px[x, y] = (0, 0, 0, 0)
+    # 챙: 비치는 말총 느낌으로 밝은 한 줄 + 아래 외곽선(원본의 다음 줄)
+    for x in range(xs[0] + 1, xs[-1]):
+        px[x, brim] = (*GAT_LIGHT, 255)
+    put(px, w, h, xs[0], brim, OUTLINE)
+    put(px, w, h, xs[-1], brim, OUTLINE)
+    # 몸통(대우): 너비 6, 높이 6, 윗모서리를 둥글게
+    x0, x1 = cx - 3, cx + 2
+    y0 = max(0, brim - 7)
+    for x in range(x0 + 1, x1):
+        put(px, w, h, x, y0, OUTLINE)
+    for y in range(y0 + 1, brim):
+        put(px, w, h, x0, y, OUTLINE)
+        put(px, w, h, x1, y, OUTLINE)
+        for x in range(x0 + 1, x1):
+            put(px, w, h, x, y, GAT_LIGHT if (x == x0 + 1 or y == y0 + 1) else GAT_DARK)
+    # 갓끈: 챙 양끝 안쪽에서 구슬 둘
+    for sx in (xs[0] + 2, xs[-1] - 2):
+        for y in (brim + 3, brim + 5):
+            if px[sx, y][3] > 0:
+                put(px, w, h, sx, y, GAT_STRAP)
+
+
+def gat_face(img):
+    """대화창 얼굴(38×38): 모자를 지우고 갓(얇고 넓은 챙 + 높은 원통 + 갓끈)을 그린다"""
+    px = img.load()
+    w, h = img.size
+    bg = px[0, h // 2]
+    shade = hexrgb('#8f3e56')
+    # 얼굴 위 그림자 띠의 첫 줄 = 모자 밑
+    under = next(y for y in range(h) if any(px[x, y][:3] == shade for x in range(w)))
+    for y in range(under):
+        for x in range(w):
+            px[x, y] = bg
+    cx = w // 2
+    # 챙: 얇고 넓게
+    by = under - 2
+    for x in range(cx - 17, cx + 17):
+        put(px, w, h, x, by, GAT_LIGHT)
+        put(px, w, h, x, by + 1, OUTLINE if abs(x - cx + 0.5) > 15 else GAT_DARK)
+    # 몸통: 너비 10, 위로 갈수록 살짝 좁아지고 윗모서리가 둥글다
+    x0, x1 = cx - 5, cx + 4
+    y0 = max(1, by - 10)
+    for y in range(y0, by):
+        inset = 1 if y < y0 + 3 else 0
+        for x in range(x0 + inset, x1 + 1 - inset):
+            if y == y0 and x in (x0 + inset, x1 - inset):
+                continue
+            edge = x in (x0 + inset, x1 - inset) or y == y0
+            put(px, w, h, x, y, OUTLINE if edge else (GAT_LIGHT if x in (x0 + 1, x0 + 2) or y == y0 + 1 else GAT_DARK))
+    # 갓끈: 챙 아래로 턱까지 늘어진 구슬 줄
+    for sx in (cx - 9, cx + 8):
+        for y in range(by + 3, min(h, by + 17), 2):
+            put(px, w, h, sx, y, GAT_STRAP)
 
 
 def load(src, rel):
@@ -303,6 +377,8 @@ def build(src):
         img = load(src, rel)
         if fid in FACE_RECOLOR:
             recolor(img, CHARS[FACE_RECOLOR[fid]][1])
+        if fid == 'keeper':
+            gat_face(img)
         fp.add(fid, img)
     fp.image().save(os.path.join(OUT, 'faces.png'))
     atlas['faces'] = fp.rects()

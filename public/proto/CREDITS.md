@@ -12,6 +12,7 @@
 | 나(주인공) | Actor/Character/SamuraiBlue | 옷을 베옷 색으로, 얼굴의 붉은 칠을 살빛으로 |
 | 백설 | Actor/Character/Princess | 흰머리·흰 옷·밝은 살빛, 여우귀 덧그림 |
 | 무영 | Actor/Character/FighterWhite | 옷을 먹빛 갑옷 색으로, 뿔 둘 덧그림 |
+| 창고지기 | Actor/Character/Noble | 페도라를 갓(얇고 넓은 챙, 높은 원통 몸통, 갓끈)으로 다시 그림. 대화창 얼굴도 같이 |
 | 초가 | Backgrounds/Tilesets/TilesetHouse (0,0)·(8,0) | 주황 지붕을 볏짚 색으로 |
 | 기와집 | Backgrounds/Tilesets/TilesetHouse (12,0) | 붉은 지붕을 먹빛 회색으로 |
 
