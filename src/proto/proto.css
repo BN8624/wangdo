@@ -14,7 +14,7 @@
   --hp: #e0574a;
   --hp-back: #3a2a30;
   --radius: 6px;
-  --gutter: 10px;
+  --gutter: 16px;
   color-scheme: dark;
 }
 @media (prefers-color-scheme: dark) {

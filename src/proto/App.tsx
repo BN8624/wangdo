@@ -26,6 +26,7 @@ export function App() {
   const [fx, setFx] = useState<Effect | null>(null);
   const [ui, setUiState] = useState<Ui>(loadUi);
   const [menu, setMenu] = useState(false);
+  const [resetAsk, setResetAsk] = useState(false);
   const [fading, setFading] = useState(false);
   const [error, setError] = useState('');
   const [hasSave, setHasSave] = useState(() => !!load());
@@ -292,16 +293,30 @@ export function App() {
             {g.party.map((m) => `${MEMBER_NAME[m.id]} Lv${m.level}`).join(' · ')}
           </p>
           <div className="opts" style={{ marginTop: 16 }}>
-            <button
-              className="opt"
-              onClick={() => {
-                if (!window.confirm('처음부터 다시 할까요? 지금 진행은 지워집니다.')) return;
-                setMenu(false);
-                run(newGame());
-              }}
-            >
-              처음부터 다시
-            </button>
+            {resetAsk ? (
+              <>
+                <p className="gear" style={{ margin: 0 }}>
+                  지금 진행이 지워집니다. 정말 처음부터 할까요?
+                </p>
+                <button
+                  className="opt primary"
+                  onClick={() => {
+                    setResetAsk(false);
+                    setMenu(false);
+                    run(newGame());
+                  }}
+                >
+                  처음부터 다시 하기
+                </button>
+                <button className="opt" onClick={() => setResetAsk(false)}>
+                  그대로 이어 하기
+                </button>
+              </>
+            ) : (
+              <button className="opt" onClick={() => setResetAsk(true)}>
+                처음부터 다시
+              </button>
+            )}
           </div>
         </div>
       )}
