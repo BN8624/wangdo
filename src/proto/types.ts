@@ -18,6 +18,8 @@ export interface Line {
   if?: string;
   /** 이 깃발이 없을 때만 */
   unless?: string;
+  /** 이 줄에서 크게 띄울 물건 그림(public/art/item/<이름>.webp) */
+  img?: string;
 }
 
 export type MemberId = 'me' | 'baekseol' | 'muyeong';

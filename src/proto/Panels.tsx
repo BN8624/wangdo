@@ -102,12 +102,19 @@ export function Dialogue({ lines, speed, auto, portraits, onDone }: { lines: Lin
     }
   }
   const speaking = stand === line.who;
+  // 물건 그림이 나오는 줄에서는 식객 그림 대신 물건을 크게 띄운다
+  const item = line.img;
   const face = portraits && PORTRAIT[line.who] ? null : faceOf(line);
   const name = speakerName(line.who);
   return (
     <>
-      {stand && <div className="scrim" />}
-      {stand && (
+      {(stand || item) && <div className="scrim" />}
+      {item && (
+        <div className="item-card" key={item}>
+          <img src={`art/item/${item}.webp`} alt="" />
+        </div>
+      )}
+      {stand && !item && (
         <div className={`stand ${speaking ? '' : 'idle'}`} key={stand}>
           <img src={PORTRAIT[stand]} alt={speakerName(stand)} />
         </div>
