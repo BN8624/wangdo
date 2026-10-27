@@ -47,11 +47,15 @@ function place(side: 0 | 1, slot: number, n: number, boss: boolean, h: number) {
   const y = Math.round(mid + (slot - (n - 1) / 2) * gap);
   // 우리 편은 왼쪽에서 오른쪽을 보고, 적은 오른쪽에 선다
   if (side === 0) return { x: 14 + (slot % 2) * 12, y };
-  if (boss) return { x: 84, y: mid + 22 };
+  // 대장은 보초들보다 앞(왼쪽)에 서서 겹치지 않게
+  if (boss) return { x: 72, y: mid + 14 };
   return { x: 100 - (slot % 2) * 14, y };
 }
 
 const isChar = (art: string): art is CharName => art in CHARS;
+/** 크게 그리는 대장: 몬스터 대장 그림, 또는 사람 도트를 두 배로 그리는 흑운채 두목 */
+const BIG_CHAR: string[] = ['mokso'];
+const isBig = (art: string) => art === 'boss_gob' || BIG_CHAR.includes(art);
 const isMon = (art: string): art is MonName => art in MONS;
 
 export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Effect, { k: 'battle' }>; speed: number; cutins: boolean; onSpeed: (s: number) => void; onDone: () => void }) {
@@ -82,7 +86,7 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
     units.current = [
       ...allies(),
       ...list.map((init, slot) => {
-        const boss = !!init.boss && init.art === 'boss_gob';
+        const boss = !!init.boss && isBig(init.art);
         return { init, side: 1 as const, slot, hp: init.hp, max: init.hp, alive: true, ...place(1, slot, list.length, boss, hRef.current), flash: 0, lunge: 0, lungeTo: null };
       }),
     ];
@@ -226,7 +230,7 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
   useEffect(() => {
     for (const u of units.current) {
       const n = units.current.filter((x) => x.side === u.side).length;
-      Object.assign(u, place(u.side, u.slot, n, u.init.art === 'boss_gob', h));
+      Object.assign(u, place(u.side, u.slot, n, isBig(u.init.art), h));
     }
   }, [h]);
 
@@ -284,13 +288,15 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
         const art = u.init.art;
         const flashing = u.flash > now - 140 && u.flash < now + 20;
         if (flashing) ctx.globalAlpha = 0.45;
-        if (isChar(art)) drawChar(ctx, art, dir, since < lungeMs ? 4 : Math.floor(now / 400) % 2, x, y);
+        if (isChar(art) && BIG_CHAR.includes(art)) drawChar(ctx, art, dir, since < lungeMs ? 4 : Math.floor(now / 400) % 2, x - 8, y - 16, 2);
+        else if (isChar(art)) drawChar(ctx, art, dir, since < lungeMs ? 4 : Math.floor(now / 400) % 2, x, y);
         else if (isMon(art)) drawMon(ctx, art, dir, Math.floor(now / 220), x, y);
         ctx.globalAlpha = 1;
         if (u.side === 1) {
-          const bw = art === 'boss_gob' ? 30 : 14;
-          const bx = art === 'boss_gob' ? x - 7 : x + 1;
-          const by = art === 'boss_gob' ? y - 36 : y - 7;
+          const big = isBig(art);
+          const bw = big ? 30 : 14;
+          const bx = big ? x - 7 : x + 1;
+          const by = big ? y - 36 : y - 7;
           ctx.fillStyle = '#3a2a30';
           ctx.fillRect(bx, by, bw, 2);
           ctx.fillStyle = '#e0574a';

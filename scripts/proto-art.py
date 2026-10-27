@@ -2,6 +2,8 @@
 
 쓰는 법:
   python3 scripts/proto-art.py "<Ninja Adventure - Asset Pack 폴더>" [--preview 미리보기.png]
+  python3 scripts/proto-art.py --derive [--preview 미리보기.png]
+    원본 묶음 없이, 이미 만든 chars.png·faces.png에서 DERIVED·DERIVED_FACES만 다시 만든다
 
 결과:
   public/proto/tiles.png   타일·도장(집·나무 등)
@@ -149,6 +151,24 @@ FACES = {
 }
 FACE_RECOLOR = {'baekseol': 'baekseol', 'muyeong': 'muyeong', 'worker': 'worker'}
 
+# ── 이미 만든 캐릭터에서 파생 ──
+# 흑운채는 도깨비 유민의 산적 무리다(STORY_BIBLE). 괴물이 아니라 사람 체형 산적에 뿔을 단다.
+# 먹빛 옷(흑운채 = 검은 구름)으로 맞춘다.
+BANDIT_HUNTER = {'#d14b34': '#3b3643', '#8f3e56': '#26222c', '#4a5270': '#2b2f3a', '#548789': '#3f4652'}
+BANDIT_MONK = {'#d14b34': '#3f4652', '#8f3e56': '#2b2f3a', '#e0394c': '#5a6070'}
+# 두목 먹쇠: 붉은 도깨비 살빛, 먹빛 옷, 큰 뿔
+MOKSO = {**BANDIT_MONK, '#ef914f': '#c4553f'}
+DERIVED = {
+    # id: (바탕 캐릭터, 색 바꾸기, 덧그리기)
+    'bandit': ('worker2', BANDIT_HUNTER, 'dhorns'),
+    'bandit2': ('thug', BANDIT_MONK, 'dhorns'),
+    'mokso': ('thug', MOKSO, 'bighorns'),
+}
+DERIVED_FACES = {
+    'bandit': ('worker2', BANDIT_HUNTER, 'horns'),
+    'mokso': ('thug', MOKSO, 'bighorns'),
+}
+
 FX = {'cut': 'FX/Attack/Cut/SpriteSheet.png', 'claw': 'FX/Attack/Claw/SpriteSheet.png'}
 
 
@@ -229,6 +249,66 @@ def overlay(frame, kind, facing):
                 put(px, w, h, hx - 1, yy, OUTLINE)
                 put(px, w, h, hx, yy, ivory)
                 put(px, w, h, hx + 1, yy, OUTLINE)
+    elif kind in ('dhorns', 'bighorns'):
+        # 도깨비 뿔(흑운채). 머리끝 줄은 삐친 머리카락이나 둥근 정수리라 좁으니, 세 줄 아래 머리 폭으로 자리를 잡는다
+        big = kind == 'bighorns'
+        red, ivory = hexrgb('#c8323c'), hexrgb('#efe6d2')
+        row = [x for x in range(w) if px[x, min(h - 1, y0 + 3)][3] > 0]
+        hl, hr = (row[0], row[-1]) if row else (xl, xr)
+        xs = [hl + 3, hr - 3] if facing in (0, 1) else ([hl + 5] if facing == 2 else [hr - 5])
+        tall = 4 if big else 3
+        for k, hx in enumerate(xs):
+            # 앞뒤 모습에서는 끝을 바깥으로 한 칸 젖혀 토끼 귀처럼 보이지 않게 한다
+            out = (-1 if k == 0 else 1) if len(xs) == 2 else 0
+            b = col_top(px, hx, h)
+            for i, yy in enumerate(range(b - tall - 1, b)):
+                cx = hx + (out if i <= 1 else 0)
+                if i == 0:
+                    put(px, w, h, cx, yy, OUTLINE)
+                    continue
+                put(px, w, h, cx - 1, yy, OUTLINE)
+                put(px, w, h, cx, yy, ivory if not big or i <= 2 else red)
+                put(px, w, h, cx + 1, yy, OUTLINE)
+
+
+def face_horns(img, kind):
+    """대화창 얼굴(38×38)의 머리 위에 뿔. 배경색(왼쪽 위 칸)이 아닌 가장 위 줄을 머리끝으로 본다"""
+    px = img.load()
+    w, h = img.size
+    bg = px[0, 0]
+    top = next(y for y in range(h) if any(px[x, y] != bg for x in range(w)))
+    xs = [x for x in range(w) if px[x, top + 2] != bg]
+    xl, xr = xs[0], xs[-1]
+    tall = 6 if kind == 'bighorns' else 4
+    ivory, red = hexrgb('#efe6d2'), hexrgb('#c8323c')
+    for hx in (xl + (xr - xl) // 4, xr - (xr - xl) // 4):
+        b = next(y for y in range(h) if px[hx, y] != bg) + 1
+        put(px, w, h, hx, b - tall - 1, OUTLINE)
+        put(px, w, h, hx + 1, b - tall - 1, OUTLINE)
+        for i, yy in enumerate(range(b - tall, b)):
+            put(px, w, h, hx - 1, yy, OUTLINE)
+            for dx in (0, 1):
+                put(px, w, h, hx + dx, yy, ivory if kind == 'horns' or i < tall // 2 else red)
+            put(px, w, h, hx + 2, yy, OUTLINE)
+
+
+def derive_char(base_block, mapping, ov):
+    """이미 만든 캐릭터 칸(64×100)을 한 칸(16×20)씩 색을 바꾸고 덧그린다"""
+    block = Image.new('RGBA', base_block.size, (0, 0, 0, 0))
+    for r in range(5):
+        for d in range(4):
+            fr = base_block.crop((d * T, r * CH, (d + 1) * T, (r + 1) * CH))
+            recolor(fr, mapping)
+            overlay(fr, ov, d)
+            block.alpha_composite(fr, (d * T, r * CH))
+    return block
+
+
+def derive_face(base_face, mapping, ov):
+    img = base_face.copy()
+    recolor(img, mapping)
+    face_horns(img, ov)
+    return img
 
 
 GAT_DARK = hexrgb('#2b2730')
@@ -361,6 +441,9 @@ def build(src):
                 overlay(fr, ov, d)
                 block.alpha_composite(fr, (d * T, r * CH))
         cp.add(cid, block)
+    blocks = {n: img for n, img, _, _ in cp.items}
+    for cid, (base, mapping, ov) in DERIVED.items():
+        cp.add(cid, derive_char(blocks[base], mapping, ov))
     cp.image().save(os.path.join(OUT, 'chars.png'))
     atlas['chars'] = cp.rects()
 
@@ -380,6 +463,9 @@ def build(src):
         if fid == 'keeper':
             gat_face(img)
         fp.add(fid, img)
+    faces = {n: img for n, img, _, _ in fp.items}
+    for fid, (base, mapping, ov) in DERIVED_FACES.items():
+        fp.add(fid, derive_face(faces[base], mapping, ov))
     fp.image().save(os.path.join(OUT, 'faces.png'))
     atlas['faces'] = fp.rects()
 
@@ -389,6 +475,11 @@ def build(src):
     xp.image().save(os.path.join(OUT, 'fx.png'))
     atlas['fx'] = xp.rects()
 
+    write_atlas(atlas)
+    return atlas
+
+
+def write_atlas(atlas):
     with open(ATLAS_TS, 'w', encoding='utf-8') as f:
         f.write('// 자동 생성: scripts/proto-art.py. 손으로 고치지 않는다.\n')
         f.write('// 그림 좌표표 [x, y, 너비, 높이] (픽셀)\n')
@@ -403,7 +494,40 @@ def build(src):
         f.write('export type CharName = keyof typeof CHARS;\n')
         f.write('export type MonName = keyof typeof MONS;\n')
         f.write('export type FaceName = keyof typeof FACES;\n')
+
+
+def read_atlas():
+    """지금 atlas.ts를 읽어 {묶음: {이름: [x, y, w, h]}}로"""
+    import re
+    atlas, cur = {}, None
+    for line in open(ATLAS_TS, encoding='utf-8'):
+        m = re.match(r'export const (\w+) = \{', line)
+        if m:
+            cur = m.group(1).lower()
+            atlas[cur] = {}
+            continue
+        m = re.match(r'\s+(\w+): (\[[^\]]+\]) as Rect,', line)
+        if m and cur:
+            atlas[cur][m.group(1)] = json.loads(m.group(2))
     return atlas
+
+
+def derive_only():
+    """원본 묶음 없이: 지금 chars.png·faces.png의 바탕 캐릭터에서 파생 캐릭터만 다시 만들어 붙인다.
+    Packer와 같은 순서·자리에 놓으므로 원본 묶음으로 build한 결과와 같다"""
+    atlas = read_atlas()
+    for key, png, width, table in (('chars', 'chars.png', 64 * 6, DERIVED), ('faces', 'faces.png', 38 * 8, DERIVED_FACES)):
+        sheet = Image.open(os.path.join(OUT, png)).convert('RGBA')
+        rects = {n: r for n, r in atlas[key].items() if n not in table}
+        pk = Packer(width)
+        for n, (x, y, w, h) in sorted(rects.items(), key=lambda kv: (kv[1][1], kv[1][0])):
+            pk.add(n, sheet.crop((x, y, x + w, y + h)))
+        made = {n: img for n, img, _, _ in pk.items}
+        for n, (base, mapping, ov) in table.items():
+            pk.add(n, (derive_char if key == 'chars' else derive_face)(made[base], mapping, ov))
+        pk.image().save(os.path.join(OUT, png))
+        atlas[key] = pk.rects()
+    write_atlas(atlas)
 
 
 def preview(path):
@@ -428,7 +552,10 @@ if __name__ == '__main__':
     if not args:
         print(__doc__)
         sys.exit(1)
-    build(args[0])
+    if args[0] == '--derive':
+        derive_only()
+    else:
+        build(args[0])
     if '--preview' in args:
         preview(args[args.index('--preview') + 1])
     print('ok')
