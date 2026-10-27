@@ -12,12 +12,14 @@ const UI_KEY = 'wangdo.proto.ui';
 interface Ui {
   speed: number;
   auto: boolean;
+  /** 대화창 그림: 식객 일러스트(true) 또는 도트 얼굴(false) */
+  portraits: boolean;
 }
 function loadUi(): Ui {
   try {
-    return { speed: 1, auto: false, ...JSON.parse(localStorage.getItem(UI_KEY) ?? '{}') };
+    return { speed: 1, auto: false, portraits: true, ...JSON.parse(localStorage.getItem(UI_KEY) ?? '{}') };
   } catch {
-    return { speed: 1, auto: false };
+    return { speed: 1, auto: false, portraits: true };
   }
 }
 
@@ -187,7 +189,7 @@ export function App() {
     if (!fx) return null;
     switch (fx.k) {
       case 'talk':
-        return <Dialogue key={JSON.stringify(fx.lines).slice(0, 80) + g.pc + (g.reply ? 'r' : '')} lines={fx.lines} speed={ui.speed} auto={ui.auto} onDone={() => advance()} />;
+        return <Dialogue key={JSON.stringify(fx.lines).slice(0, 80) + g.pc + (g.reply ? 'r' : '')} lines={fx.lines} speed={ui.speed} auto={ui.auto} portraits={ui.portraits} onDone={() => advance()} />;
       case 'choice':
         return <Choice key={g.pc + fx.prompt + fx.options.length} fx={fx} g={g} onPick={(i) => advance({ k: 'pick', i })} />;
       case 'gift':
@@ -207,7 +209,7 @@ export function App() {
           />
         );
       case 'join':
-        return <Join who={fx.who} onDone={() => advance()} />;
+        return <Join who={fx.who} portraits={ui.portraits} onDone={() => advance()} />;
       case 'defeat':
         return <Defeat onTrain={() => advance({ k: 'train' })} onRetry={() => advance({ k: 'retry' })} />;
       case 'cutscene':
@@ -275,6 +277,15 @@ export function App() {
             ))}
             <button className={`toggle ${ui.auto ? 'on' : ''}`} onClick={() => setUi({ auto: !ui.auto })}>
               대사 자동 넘김
+            </button>
+          </div>
+          <h3>대화창 그림</h3>
+          <div className="row">
+            <button className={`toggle ${ui.portraits ? 'on' : ''}`} onClick={() => setUi({ portraits: true })}>
+              일러스트
+            </button>
+            <button className={`toggle ${ui.portraits ? '' : 'on'}`} onClick={() => setUi({ portraits: false })}>
+              도트 얼굴
             </button>
           </div>
           <h3>소리</h3>

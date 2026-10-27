@@ -343,6 +343,66 @@ button {
   background: #3a2f22;
 }
 
+/* ── 대화창 위 식객 일러스트 ── */
+.stand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 8%;
+  bottom: 120px;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow: hidden;
+  pointer-events: none;
+  animation: standIn 0.22s ease-out;
+}
+.stand img {
+  height: 132%;
+  max-width: none;
+  filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6));
+  transition: filter 0.2s;
+}
+/* 지문이나 다른 사람 차례: 비치지 않게 밝기만 낮춘다 */
+.stand.idle img {
+  filter: brightness(0.55) saturate(0.8) drop-shadow(0 6px 14px rgba(0, 0, 0, 0.6));
+}
+/* 일러스트 뒤의 도트 맵을 어둡게 가린다 */
+.scrim {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(13, 11, 16, 0.45), rgba(13, 11, 16, 0.85));
+  pointer-events: none;
+  animation: fadeIn 0.2s ease-out;
+}
+@keyframes standIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .stand {
+    animation: none;
+  }
+}
+.join-art {
+  width: 100%;
+  height: 260px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  margin: -6px auto 8px;
+}
+.join-art img {
+  height: 200%;
+  max-width: none;
+}
+
 /* ── 가운데 알림 ── */
 .toast {
   position: absolute;
@@ -367,6 +427,8 @@ button {
 }
 .card {
   width: 100%;
+  min-width: 0;
+  overflow: hidden;
   background: var(--panel-solid);
   border: 2px solid var(--line);
   border-radius: var(--radius);

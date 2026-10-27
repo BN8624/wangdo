@@ -17,6 +17,8 @@ function Sprites() {
 }
 
 initSound();
+// 식객 일러스트는 처음 말할 때 깜빡이지 않게 미리 받아 둔다
+for (const src of ['baekseol', 'muyeong', 'sodam']) new Image().src = `proto/portrait/${src}.webp`;
 const root = createRoot(document.getElementById('root')!);
 loadArt()
   .then(() => root.render(<StrictMode>{location.hash === '#sprites' ? <Sprites /> : <App />}</StrictMode>))

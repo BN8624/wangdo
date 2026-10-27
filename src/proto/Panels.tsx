@@ -15,6 +15,13 @@ export function josa(word: string, withBatchim: string, without: string) {
   return word + (has ? withBatchim : without);
 }
 
+/** 대화창 위에 세우는 식객 일러스트(투명 배경 전신) */
+export const PORTRAIT: Partial<Record<string, string>> = {
+  baekseol: 'proto/portrait/baekseol.webp',
+  muyeong: 'proto/portrait/muyeong.webp',
+  sodam: 'proto/portrait/sodam.webp',
+};
+
 export function speakerName(who: string) {
   if (who === 'narration') return '';
   if (who.startsWith('npc:')) return who.slice(4);
@@ -55,7 +62,7 @@ export function Sprite({ c, scale = 2, className }: { c: CharName; scale?: numbe
 }
 
 /** 대사를 한 줄씩. 누르면 다음 줄, 글자가 아직 나오는 중이면 한 번에 다 보인다 */
-export function Dialogue({ lines, speed, auto, onDone }: { lines: Line[]; speed: number; auto: boolean; onDone: () => void }) {
+export function Dialogue({ lines, speed, auto, portraits, onDone }: { lines: Line[]; speed: number; auto: boolean; portraits: boolean; onDone: () => void }) {
   const [i, setI] = useState(0);
   const [shown, setShown] = useState(0);
   const line = lines[Math.min(i, lines.length - 1)];
@@ -86,17 +93,34 @@ export function Dialogue({ lines, speed, auto, onDone }: { lines: Line[]; speed:
   useEffect(() => {
     setI(0);
   }, [lines]);
-  const face = faceOf(line);
+  // 일러스트: 말하는 식객을 세우고, 지문이나 다른 사람 차례에는 마지막에 말한 식객을 흐리게 남긴다
+  let stand: string | null = null;
+  for (let k = Math.min(i, lines.length - 1); k >= 0 && portraits; k--) {
+    if (PORTRAIT[lines[k].who]) {
+      stand = lines[k].who;
+      break;
+    }
+  }
+  const speaking = stand === line.who;
+  const face = portraits && PORTRAIT[line.who] ? null : faceOf(line);
   const name = speakerName(line.who);
   return (
-    <div className="sheet talk" onClick={next} role="button" aria-label="다음 대사">
-      {face && <Face face={face} />}
-      <div className="talk-body">
-        {name && <div className="name">{name}</div>}
-        <div className={`text ${line.who === 'narration' ? 'narr' : ''}`}>{line.text.slice(0, shown)}</div>
-        <div className="more">{shown < full ? '' : i + 1 < lines.length ? '▼' : '■'}</div>
+    <>
+      {stand && <div className="scrim" />}
+      {stand && (
+        <div className={`stand ${speaking ? '' : 'idle'}`} key={stand}>
+          <img src={PORTRAIT[stand]} alt={speakerName(stand)} />
+        </div>
+      )}
+      <div className="sheet talk" onClick={next} role="button" aria-label="다음 대사">
+        {face && <Face face={face} />}
+        <div className="talk-body">
+          {name && <div className="name">{name}</div>}
+          <div className={`text ${line.who === 'narration' ? 'narr' : ''}`}>{line.text.slice(0, shown)}</div>
+          <div className="more">{shown < full ? '' : i + 1 < lines.length ? '▼' : '■'}</div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
 
@@ -286,14 +310,20 @@ const SKILL_TEXT: Record<MemberId, string> = {
   muyeong: '쇠방망이 내려치기 — 한 명에게 큰 한 방',
 };
 
-export function Join({ who, onDone }: { who: MemberId; onDone: () => void }) {
+export function Join({ who, portraits, onDone }: { who: MemberId; portraits: boolean; onDone: () => void }) {
   useEffect(() => {
     play('promote');
   }, []);
   return (
     <div className="center" onClick={onDone}>
       <div className="card">
-        <Sprite c={who as CharName} scale={6} className="big-sprite" />
+        {portraits && PORTRAIT[who] ? (
+          <div className="join-art">
+            <img src={PORTRAIT[who]} alt={MEMBER_NAME[who]} />
+          </div>
+        ) : (
+          <Sprite c={who as CharName} scale={6} className="big-sprite" />
+        )}
         <h2>{josa(MEMBER_NAME[who], '이', '가')} 동료가 되었다</h2>
         <p>{SKILL_TEXT[who]}</p>
         <button className="opt primary" style={{ width: '100%', marginTop: 10 }}>
