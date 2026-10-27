@@ -123,12 +123,24 @@ describe('대본', () => {
           }
       });
 
-  it('백설 거래·아침 장터·첫 잔 선택이 깃발과 기록으로 남는다', () => {
-    const r = playthrough({ picks: { deal: 1, morning_shop: 0, first_cup: 1 }, collect: ['wages', 'hens'] });
+  it('백설 거래·첫 잔 선택이 깃발과 기록으로 남는다', () => {
+    const r = playthrough({ picks: { deal: 1, first_cup: 1 }, collect: ['wages', 'hens'] });
     expect(r.g.flags).toEqual(expect.arrayContaining(['asked_name', 'first_cup_baekseol', 'paid_wages', 'hens']));
     expect(r.g.log).toContain('첫 잔은 백설에게');
     expect(r.g.party[0].charm).toBe('amulet');
   });
+
+  // 2화(백설 화): 고를 거리마다 백설의 반응이 갈린다
+  for (const pick of [0, 1])
+    it(`백설 화: 떡값·파락호·외상값·거울 선택을 모두 ${pick ? '둘째' : '첫째'}로 골라도 지지 않고 끝까지 가고 깃발이 남는다`, () => {
+      const picks = { rice_cake: pick, rake: pick, tab: pick, mirror: pick };
+      for (const road of [0, 1]) {
+        const r = playthrough({ picks: { ...picks, road }, collect: ['wages'] });
+        expect(r.g.done).toBe(true);
+        expect(r.losses).toBe(0);
+        expect(r.g.flags).toEqual(expect.arrayContaining(pick ? ['bs_haggled', 'left_to_bs', 'me_collected', 'bs_night_alone'] : ['paid_cake', 'stood_for_bs', 'bs_collected', 'bs_night_stay']));
+      }
+    });
 
   it('노름빚을 받아 주면 지름길 첫 패거리가 길을 비켜 준다', () => {
     const withGamble = playthrough({ picks: { road: 0 }, collect: ['hens', 'gamble'] });
@@ -199,7 +211,7 @@ describe('진행기', () => {
   });
 
   it('파티가 세 레벨 이상 높으면 싸우지 않고 이기고, 대장은 예외다', () => {
-    const party = newGame().party.map((m) => ({ ...m, level: 9 }));
+    const party = newGame().party.map((m) => ({ ...m, level: 10 }));
     expect(overwhelms(party, FOES.toll1)).toBe(true);
     expect(overwhelms(party, FOES.keeper)).toBe(false);
     const g = before('toll1');

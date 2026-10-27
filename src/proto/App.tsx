@@ -138,7 +138,7 @@ export function App() {
           <p className="sub">
             빚 받으러 왕까지
             <br />
-            시제품 · 1부 1~2화 (15분 안팎)
+            시제품 · 1부 1~3화 (25분 안팎)
           </p>
           {!adult ? (
             <div className="opts">
@@ -195,7 +195,7 @@ export function App() {
       <div className="app">
         <div className="end">
           <h2>시제품은 여기까지</h2>
-          <p className="gear">1부 2화 '고갯길의 도깨비'까지 왔습니다.</p>
+          <p className="gear">1부 3화 '고갯길의 도깨비'까지 왔습니다.</p>
           <h3 className="name" style={{ marginTop: 16 }}>
             내가 고른 길
           </h3>
