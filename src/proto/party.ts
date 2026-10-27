@@ -35,7 +35,10 @@ export function memberStats(m: Member) {
   };
 }
 
-export function heroUnit(m: Member): UnitInit {
+export const skillOf = (id: MemberId): BattleSkill => (id === 'me' ? ME_SKILL : SKILLS[id]);
+
+/** 기술은 이야기 속에서 얻는다(skills). 막 얻은 기술(fresh)은 첫 차례부터 쓴다 */
+export function heroUnit(m: Member, skills: MemberId[], fresh: MemberId[] = []): UnitInit {
   const st = memberStats(m);
   return {
     id: m.id,
@@ -44,7 +47,7 @@ export function heroUnit(m: Member): UnitInit {
     element: ELEMENT[m.id],
     role: ROLE[m.id],
     ...st,
-    skill: m.id === 'me' ? ME_SKILL : SKILLS[m.id],
+    ...(skills.includes(m.id) ? { skill: skillOf(m.id), skillNow: fresh.includes(m.id) } : {}),
   };
 }
 
@@ -65,8 +68,8 @@ export function foeUnits(g: FoeGroup): UnitInit[][] {
   );
 }
 
-export function battleSetup(party: Member[], g: FoeGroup): CombatSetup {
-  const allies: (UnitInit | null)[] = party.map(heroUnit);
+export function battleSetup(party: Member[], g: FoeGroup, skills: MemberId[], fresh: MemberId[] = []): CombatSetup {
+  const allies: (UnitInit | null)[] = party.map((m) => heroUnit(m, skills, fresh));
   while (allies.length < 5) allies.push(null);
   return { allies, waves: foeUnits(g) };
 }

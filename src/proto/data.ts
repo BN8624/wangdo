@@ -36,21 +36,35 @@ export const FOES: Record<string, FoeGroup> = {
       ],
     ],
   },
+  // 2화(백설 화)
+  parak: {
+    name: '달골 파락호',
+    ground: 'dirt',
+    waves: [
+      [
+        { name: '파락호', char: 'thug', level: 3, role: 'attack', element: 'fire', kind: 'grunt', power: 0.75 },
+        { name: '파락호', char: 'thug', level: 3, role: 'defense', element: 'wood', kind: 'grunt', power: 0.75 },
+        { name: '파락호', char: 'thug', level: 3, role: 'attack', element: 'fire', kind: 'grunt', power: 0.75 },
+      ],
+    ],
+  },
+  drunks: { name: '흑운채 술꾼', ground: 'dirt', waves: [[gob(4), gob2(4)]] },
+  wisps: { name: '도깨비불 떼', ground: 'grass', waves: [[wisp(4), wisp(4), wisp(5)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
   village: { name: '도깨비불', ground: 'grass', waves: [[wisp(1), wisp(2)]] },
-  passTrain: { name: '떠돌이 졸개', ground: 'dirt', waves: [[gob(3), wisp(3)]] },
-  caveTrain: { name: '굴 박쥐', ground: 'cave', waves: [[bat(4), bat(4)]] },
-  toll1: { name: '통행세 패거리', ground: 'dirt', waves: [[gob(4), gob2(4)]] },
-  toll2: { name: '통행세 패거리', ground: 'dirt', waves: [[gob(4), gob(5)]] },
-  toll3: { name: '통행세 패거리', ground: 'dirt', waves: [[gob2(5), gob(5)], [gob(5)]] },
-  cave1: { name: '굴 박쥐 떼', ground: 'cave', waves: [[bat(5), bat(5), bat(6)]] },
-  cave2: { name: '산적굴 보초', ground: 'cave', waves: [[gob(6), bat(6)], [gob2(6), gob(6)]] },
-  guards: { name: '두목의 보초', ground: 'cave', waves: [[gob2(7), gob(7)]] },
+  passTrain: { name: '떠돌이 졸개', ground: 'dirt', waves: [[gob(6), wisp(6)]] },
+  caveTrain: { name: '굴 박쥐', ground: 'cave', waves: [[bat(7), bat(7)]] },
+  toll1: { name: '통행세 패거리', ground: 'dirt', waves: [[gob(7), gob2(7)]] },
+  toll2: { name: '통행세 패거리', ground: 'dirt', waves: [[gob(7), gob(8)]] },
+  toll3: { name: '통행세 패거리', ground: 'dirt', waves: [[gob2(8), gob(8)], [gob(8)]] },
+  cave1: { name: '굴 박쥐 떼', ground: 'cave', waves: [[bat(8), bat(8), bat(9)]] },
+  cave2: { name: '산적굴 보초', ground: 'cave', waves: [[gob(9), bat(9)], [gob2(9), gob(9)]] },
+  guards: { name: '두목의 보초', ground: 'cave', waves: [[gob2(10), gob(10)]] },
   boss: {
     name: '흑운채 두목',
     ground: 'cave',
     boss: true,
-    waves: [[{ name: '흑운채 두목', mon: 'boss_gob', level: 8, role: 'attack', element: 'dark', kind: 'boss', power: 0.9 }]],
+    waves: [[{ name: '흑운채 두목', mon: 'boss_gob', level: 11, role: 'attack', element: 'dark', kind: 'boss', power: 0.9 }]],
   },
   bossFull: {
     name: '흑운채 두목과 보초',
@@ -58,9 +72,9 @@ export const FOES: Record<string, FoeGroup> = {
     boss: true,
     waves: [
       [
-        gob2(7),
-        { name: '흑운채 두목', mon: 'boss_gob', level: 8, role: 'attack', element: 'dark', kind: 'boss', power: 0.9 },
-        gob(7),
+        gob2(10),
+        { name: '흑운채 두목', mon: 'boss_gob', level: 11, role: 'attack', element: 'dark', kind: 'boss', power: 0.9 },
+        gob(10),
       ],
     ],
   },

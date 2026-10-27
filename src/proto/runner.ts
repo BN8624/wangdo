@@ -47,6 +47,8 @@ export type Beat =
   | { t: 'give'; item: string; from: string }
   | { t: 'shop' }
   | { t: 'join'; who: MemberId }
+  /** 이야기 속에서 기술을 얻는다. 다음 전투에서는 첫 차례부터 쓴다 */
+  | { t: 'skill'; who: MemberId; text: string }
   | { t: 'rest'; train: string }
   | { t: 'night'; on: boolean }
   | { t: 'show'; ids: string[] }
@@ -68,7 +70,7 @@ export interface Check {
 }
 
 export interface Game {
-  v: 1;
+  v: 2;
   pc: number;
   stack: number[];
   map: MapId;
@@ -77,6 +79,10 @@ export interface Game {
   /** 따라오는 식객 자리(바로 뒤부터) */
   trail: Pt[];
   party: Member[];
+  /** 이야기에서 얻은 기술 */
+  skills: MemberId[];
+  /** 얻고 아직 전투에서 안 쓴 기술(다음 전투 첫 차례에 쓴다) */
+  fresh: MemberId[];
   coin: number;
   flags: string[];
   bond: Partial<Record<MemberId, number>>;
@@ -114,6 +120,7 @@ export type Effect =
   | { k: 'gift'; title: string; item?: ItemDef; coin: number }
   | { k: 'shop' }
   | { k: 'join'; who: MemberId }
+  | { k: 'skill'; who: MemberId; text: string }
   | { k: 'cutscene'; id: 'debt'; lines: string[] }
   | { k: 'collect'; cap: number; prompt: string; debts: { id: string; text: string; amount: number }[] }
   | { k: 'end' };
@@ -124,7 +131,7 @@ export const SAVE_KEY = 'wangdo.proto';
 
 export function newGame(): Game {
   return {
-    v: 1,
+    v: 2,
     pc: 0,
     stack: [],
     map: 'backhill',
@@ -132,6 +139,8 @@ export function newGame(): Game {
     dir: 1,
     trail: [],
     party: [{ id: 'me', level: 1, exp: 0 }],
+    skills: [],
+    fresh: [],
     coin: 40,
     flags: [],
     bond: {},
@@ -223,7 +232,7 @@ function train(g: Game): { g: Game; text: string } {
   let exp = 0;
   let won = 0;
   for (let i = 0; i < 3; i++) {
-    const { result } = runCombat(battleSetup(cur.party, group), seedOf(cur) + i * 17, true);
+    const { result } = runCombat(battleSetup(cur.party, group, cur.skills), seedOf(cur) + i * 17, true);
     if (result.won) {
       won++;
       exp += groupExp(group);
@@ -317,7 +326,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'battle': {
         const group = FOES[b.foe];
         if (overwhelms(g.party, group)) return { g, fx: { k: 'swift', group, reward: reward(g, group) } };
-        const setup = battleSetup(g.party, group);
+        const setup = battleSetup(g.party, group, g.skills, g.fresh);
         const { events, result } = runCombat(setup, seedOf(g), true);
         return { g, fx: { k: 'battle', group, setup, events, result, reward: result.won ? reward(g, group) : null } };
       }
@@ -340,6 +349,12 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
           continue;
         }
         return { g, fx: { k: 'join', who: b.who } };
+      case 'skill':
+        if (g.skills.includes(b.who)) {
+          g = { ...g, pc: g.pc + 1 };
+          continue;
+        }
+        return { g, fx: { k: 'skill', who: b.who, text: b.text } };
       case 'cutscene':
         return { g, fx: { k: 'cutscene', id: b.id, lines: b.lines } };
       case 'collect':
@@ -402,8 +417,8 @@ function resolve(game: Game, input: Input): Game {
       const group = FOES[b.foe];
       const hide = (x: Game) => ({ ...x, hidden: [...new Set([...x.hidden, ...(b.hide ?? [])])] });
       if (overwhelms(g.party, group)) return hide(applyReward({ ...next, wins: g.wins + 1 }, reward(g, group)));
-      const { result } = runCombat(battleSetup(g.party, group), seedOf(g), true);
-      if (result.won) return hide(applyReward({ ...next, wins: g.wins + 1 }, reward(g, group)));
+      const { result } = runCombat(battleSetup(g.party, group, g.skills, g.fresh), seedOf(g), true);
+      if (result.won) return hide(applyReward({ ...next, wins: g.wins + 1, fresh: [] }, reward(g, group)));
       // 지면 마지막 쉼터로. 얻은 경험치는 남는다
       const c = g.check;
       if (!c) return { ...g, defeat: true, wins: g.wins + 1 };
@@ -417,6 +432,8 @@ function resolve(game: Game, input: Input): Game {
     }
     case 'give':
       return equip(next, b.item, g.party[input.k === 'pick' ? input.i : 0].id);
+    case 'skill':
+      return { ...next, skills: [...g.skills, b.who], fresh: [...g.fresh, b.who] };
     case 'join': {
       const avg = Math.max(1, Math.round(g.party.reduce((s, m) => s + m.level, 0) / g.party.length));
       return { ...next, party: [...g.party, { id: b.who, level: avg, exp: 0 }] };
@@ -450,7 +467,7 @@ export function load(): Game | null {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const g = JSON.parse(raw) as Game;
-    return g.v === 1 ? g : null;
+    return g.v === 2 ? g : null;
   } catch {
     return null;
   }

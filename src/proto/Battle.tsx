@@ -4,6 +4,7 @@ import type { CombatEvent, UnitInit } from '../core/combat';
 import { play } from '../ui/sound';
 import { CHARS, MONS, type CharName, type MonName, type TileName } from './atlas';
 import { MEMBER_NAME } from './data';
+import { CutIn } from './Panels';
 import { drawChar, drawFx, drawMon, drawTile } from './draw';
 import type { Effect } from './runner';
 import type { Dir, MemberId } from './types';
@@ -37,6 +38,8 @@ interface Pop {
 
 const BASE: Record<number, number> = { 1: 900, 2: 450, 4: 225 };
 const DELAY: Partial<Record<CombatEvent['t'], number>> = { wave: 700, skill: 650, hit: 430, heal: 380, shield: 320, buff: 380, stunned: 380, down: 320 };
+/** 우리 편 기술 컷인을 보여 주면 그만큼 더 기다린다 */
+export const CUTIN_MS = 450;
 
 function place(side: 0 | 1, slot: number, n: number, boss: boolean, h: number) {
   const gap = n > 2 ? 24 : 30;
@@ -51,13 +54,16 @@ function place(side: 0 | 1, slot: number, n: number, boss: boolean, h: number) {
 const isChar = (art: string): art is CharName => art in CHARS;
 const isMon = (art: string): art is MonName => art in MONS;
 
-export function Battle({ fx, speed, onSpeed, onDone }: { fx: Extract<Effect, { k: 'battle' }>; speed: number; onSpeed: (s: number) => void; onDone: () => void }) {
+export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Effect, { k: 'battle' }>; speed: number; cutins: boolean; onSpeed: (s: number) => void; onDone: () => void }) {
   const cv = useRef<HTMLCanvasElement>(null);
   const units = useRef<U[]>([]);
   const pops = useRef<Pop[]>([]);
   const fxAt = useRef<{ x: number; y: number; t: number } | null>(null);
   const [tick, setTick] = useState(0);
   const [banner, setBanner] = useState('');
+  const [cut, setCut] = useState<{ who: MemberId; name: string; n: number } | null>(null);
+  const cutinsRef = useRef(cutins);
+  cutinsRef.current = cutins;
   const [round, setRound] = useState(1);
   const [wave, setWave] = useState({ n: 1, of: fx.setup.waves.length });
   const [over, setOver] = useState(false);
@@ -111,7 +117,8 @@ export function Battle({ fx, speed, onSpeed, onDone }: { fx: Extract<Effect, { k
       case 'skill': {
         const u = find(e.side, e.slot);
         if (!quiet) {
-          setBanner(`${u?.init.name ?? ''} · ${e.name}`);
+          if (e.side === 0 && cutinsRef.current && u) setCut({ who: u.init.id as MemberId, name: e.name, n: performance.now() });
+          else setBanner(`${u?.init.name ?? ''} · ${e.name}`);
           play('skill');
         }
         break;
@@ -183,13 +190,19 @@ export function Battle({ fx, speed, onSpeed, onDone }: { fx: Extract<Effect, { k
       idx.current++;
       apply(e, false);
       setTick((t) => t + 1);
-      const d = (DELAY[e.t] ?? 0) / speedRef.current;
+      const d = ((DELAY[e.t] ?? 0) + (e.t === 'skill' && e.side === 0 && cutinsRef.current ? CUTIN_MS : 0)) / speedRef.current;
       timer = window.setTimeout(run, d);
     };
     timer = window.setTimeout(run, 500 / speedRef.current);
     return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fx, over]);
+
+  useEffect(() => {
+    if (!cut) return;
+    const t = setTimeout(() => setCut(null), (650 + CUTIN_MS) / speedRef.current);
+    return () => clearTimeout(t);
+  }, [cut]);
 
   useEffect(() => {
     if (!banner) return;
@@ -322,6 +335,7 @@ export function Battle({ fx, speed, onSpeed, onDone }: { fx: Extract<Effect, { k
       <div className="stage" ref={stage}>
         <canvas ref={cv} width={W * K} height={h * K} />
         <div className="banner">{banner && <span>{banner}</span>}</div>
+        {cut && <CutIn key={cut.n} who={cut.who} name={cut.name} />}
       </div>
       <div className="roster">
         {party.map((u) => (

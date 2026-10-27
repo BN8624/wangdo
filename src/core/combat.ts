@@ -56,6 +56,8 @@ export interface UnitInit {
   skillBoost?: number;
   advBoost?: number;
   boss?: boolean;
+  /** 우리 편: 첫 차례부터 기술을 쓴다(기본은 COMBAT.firstSkillTurn 차례) */
+  skillNow?: boolean;
 }
 
 export interface CombatSetup {
@@ -107,7 +109,7 @@ function makeUnit(init: UnitInit, side: Side, slot: number): Unit {
     slot,
     maxHp: Math.round(init.hp),
     hp: Math.round(init.hp),
-    cd: side === 0 ? COMBAT.firstSkillTurn : COMBAT.foeSkillCd - 1,
+    cd: side === 0 ? (init.skillNow ? 1 : COMBAT.firstSkillTurn) : COMBAT.foeSkillCd - 1,
     shield: 0,
     shieldTurns: 0,
     atkUp: 0,

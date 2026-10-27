@@ -7,6 +7,7 @@ import { MAPS, PROP, STAMP, grid, walkable, type MapId } from '../src/proto/maps
 import { giveExp, overwhelms } from '../src/proto/party';
 import { buy, labelAt, newGame, step, type Game, type Input } from '../src/proto/runner';
 import { SCRIPT } from '../src/proto/story';
+import { CUTIN_MS } from '../src/proto/Battle';
 
 interface Plan {
   picks?: Record<string, number>;
@@ -98,6 +99,10 @@ describe('대본', () => {
     const imgs = new Set(JSON.stringify(SCRIPT).match(/"img":"[^"]+"/g)?.map((m) => m.slice(7, -1)));
     expect(imgs.size).toBeGreaterThan(0);
     for (const n of imgs) expect(existsSync(`public/art/item/${n}.webp`), n).toBe(true);
+    // 장면 그림도 모두 있다
+    const scenes = new Set(JSON.stringify(SCRIPT).match(/"scene":"[^"]+"/g)?.map((m) => m.slice(9, -1)));
+    expect(scenes.size).toBeGreaterThan(0);
+    for (const n of scenes) expect(existsSync(`public/proto/scene/${n}.webp`), n).toBe(true);
   });
 
   const collects = [['wages', 'hens'], ['wages', 'gamble'], ['hens', 'gamble'], ['wages']];
@@ -118,12 +123,24 @@ describe('대본', () => {
           }
       });
 
-  it('백설 거래·아침 장터·첫 잔 선택이 깃발과 기록으로 남는다', () => {
-    const r = playthrough({ picks: { deal: 1, morning_shop: 0, first_cup: 1 }, collect: ['wages', 'hens'] });
+  it('백설 거래·첫 잔 선택이 깃발과 기록으로 남는다', () => {
+    const r = playthrough({ picks: { deal: 1, first_cup: 1 }, collect: ['wages', 'hens'] });
     expect(r.g.flags).toEqual(expect.arrayContaining(['asked_name', 'first_cup_baekseol', 'paid_wages', 'hens']));
     expect(r.g.log).toContain('첫 잔은 백설에게');
     expect(r.g.party[0].charm).toBe('amulet');
   });
+
+  // 2화(백설 화): 고를 거리마다 백설의 반응이 갈린다
+  for (const pick of [0, 1])
+    it(`백설 화: 떡값·파락호·외상값·거울 선택을 모두 ${pick ? '둘째' : '첫째'}로 골라도 지지 않고 끝까지 가고 깃발이 남는다`, () => {
+      const picks = { rice_cake: pick, rake: pick, tab: pick, mirror: pick };
+      for (const road of [0, 1]) {
+        const r = playthrough({ picks: { ...picks, road }, collect: ['wages'] });
+        expect(r.g.done).toBe(true);
+        expect(r.losses).toBe(0);
+        expect(r.g.flags).toEqual(expect.arrayContaining(pick ? ['bs_haggled', 'left_to_bs', 'me_collected', 'bs_night_alone'] : ['paid_cake', 'stood_for_bs', 'bs_collected', 'bs_night_stay']));
+      }
+    });
 
   it('노름빚을 받아 주면 지름길 첫 패거리가 길을 비켜 준다', () => {
     const withGamble = playthrough({ picks: { road: 0 }, collect: ['hens', 'gamble'] });
@@ -142,7 +159,7 @@ describe('지루하지 않게', () => {
       case 'talk':
         return fx.lines.reduce((s, l) => s + 900 + l.text.length * 35, 0);
       case 'battle':
-        return 2000 + fx.events.reduce((s, e) => s + (DELAY[e.t] ?? 0), 0);
+        return 2000 + fx.events.reduce((s, e) => s + (DELAY[e.t] ?? 0) + (e.t === 'skill' && e.side === 0 ? CUTIN_MS : 0), 0);
       case 'cutscene':
         return 1000 + fx.lines.length * 1100;
       default:
@@ -194,7 +211,7 @@ describe('진행기', () => {
   });
 
   it('파티가 세 레벨 이상 높으면 싸우지 않고 이기고, 대장은 예외다', () => {
-    const party = newGame().party.map((m) => ({ ...m, level: 9 }));
+    const party = newGame().party.map((m) => ({ ...m, level: 10 }));
     expect(overwhelms(party, FOES.toll1)).toBe(true);
     expect(overwhelms(party, FOES.keeper)).toBe(false);
     const g = before('toll1');
@@ -207,7 +224,7 @@ describe('진행기', () => {
 
   it('지면 마지막 쉼터로 돌아가고, 경험치는 남으며, 수련으로 세진다', () => {
     const g = before('keeper');
-    const weak: Game = { ...g, party: [{ id: 'me', level: 1, exp: 5 }] };
+    const weak: Game = { ...g, party: [{ id: 'me', level: 2, exp: 5 }] };
     const fought = step(weak);
     expect(fought.fx.k).toBe('battle');
     expect(fought.fx.k === 'battle' && fought.fx.result.won).toBe(false);
@@ -234,6 +251,31 @@ describe('진행기', () => {
     const { party, ups } = giveExp([{ id: 'me', level: 1, exp: 0 }], 30);
     expect(party[0].level).toBe(2);
     expect(ups).toEqual([{ id: 'me', level: 2 }]);
+  });
+
+  it('기술은 이야기에서 얻는다: 첫 전투는 기본 공격만, 백설은 창고지기전 첫 차례에 여우불', () => {
+    const first = step(before('beast'));
+    expect(first.fx.k).toBe('battle');
+    if (first.fx.k !== 'battle') return;
+    expect(first.fx.setup.allies.every((a) => !a?.skill)).toBe(true);
+    expect(first.fx.events.some((e) => e.t === 'skill' && e.side === 0)).toBe(false);
+
+    const kg = before('keeper');
+    expect(kg.skills).toEqual(['baekseol']);
+    const keeper = step(kg);
+    if (keeper.fx.k !== 'battle') throw new Error('창고지기 전투가 아니에요');
+    const bs = keeper.fx.setup.allies.findIndex((a) => a?.id === 'baekseol');
+    const acts = keeper.fx.events.filter((e) => (e.t === 'act' || e.t === 'skill') && e.side === 0 && e.slot === bs);
+    // 백설의 첫 차례 바로 다음 사건이 기술이다
+    expect(acts[0].t).toBe('act');
+    expect(acts[1]).toMatchObject({ t: 'skill', name: '여우불 홀림' });
+    // 이기고 나면 '막 얻은 기술'은 비워진다
+    expect(step(kg, { k: 'ok' }).g.fresh).toEqual([]);
+  });
+
+  it('끝까지 가면 셋 다 기술을 얻는다', () => {
+    const r = playthrough({ collect: ['wages'] });
+    expect([...r.g.skills].sort()).toEqual(['baekseol', 'me', 'muyeong']);
   });
 
   it('저장한 상태를 그대로 불러와 같은 곳부터 이어 간다', () => {
