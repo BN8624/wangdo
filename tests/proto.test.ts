@@ -1,4 +1,5 @@
 // 시제품(자동 진행 도트 RPG): 맵·대본·진행기·밸런스
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CHARS, MONS, TILES } from '../src/proto/atlas';
 import { FOES, ITEMS } from '../src/proto/data';
@@ -93,6 +94,10 @@ describe('대본', () => {
       if (b.t === 'give') expect(ITEMS).toHaveProperty(b.item);
     }
     expect(JSON.stringify(SCRIPT)).not.toMatch(/[一-鿿]/);
+    // 대사에 띄우는 물건 그림이 모두 있다
+    const imgs = new Set(JSON.stringify(SCRIPT).match(/"img":"[^"]+"/g)?.map((m) => m.slice(7, -1)));
+    expect(imgs.size).toBeGreaterThan(0);
+    for (const n of imgs) expect(existsSync(`public/art/item/${n}.webp`), n).toBe(true);
   });
 
   const collects = [['wages', 'hens'], ['wages', 'gamble'], ['hens', 'gamble'], ['wages']];
