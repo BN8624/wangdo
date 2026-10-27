@@ -9,6 +9,15 @@ import { Choice, Collect, DebtScroll, Defeat, Dialogue, Gift, Join, josa, PartyL
 import { buy, load, newGame, save, SAVE_KEY, step, type Effect, type Game, type Input } from './runner';
 
 const UI_KEY = 'wangdo.proto.ui';
+/** 성인 확인(기존 게임과 같은 키: 한 번 확인하면 둘 다 통과) */
+const ADULT_KEY = 'wangdo.adult';
+function adultConfirmed(): boolean {
+  try {
+    return localStorage.getItem(ADULT_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
 interface Ui {
   speed: number;
   auto: boolean;
@@ -32,6 +41,8 @@ export function App() {
   const [fading, setFading] = useState(false);
   const [error, setError] = useState('');
   const [hasSave, setHasSave] = useState(() => !!load());
+  const [adult, setAdult] = useState(adultConfirmed);
+  const [refused, setRefused] = useState(false);
 
   const setUi = (next: Partial<Ui>) =>
     setUiState((cur) => {
@@ -127,16 +138,49 @@ export function App() {
             <br />
             시제품 · 1부 1~2화 (15분 안팎)
           </p>
-          <div className="opts">
-            <button className="opt primary" onClick={() => run(newGame())}>
-              처음부터
-            </button>
-            {hasSave && (
-              <button className="opt" onClick={() => run(load() ?? newGame())}>
-                이어서
+          {!adult ? (
+            <div className="opts">
+              {refused ? (
+                <p className="sub">죄송해요. 이 게임은 성인만 이용할 수 있어요.</p>
+              ) : (
+                <>
+                  <p className="sub" style={{ lineHeight: 1.6 }}>
+                    <span className="adult-mark">19</span>
+                    <br />
+                    성인을 위한 관능적인 장면과 표현이 담겨 있어요.
+                    <br />만 19세 이상만 이용할 수 있어요.
+                  </p>
+                  <button
+                    className="opt primary"
+                    onClick={() => {
+                      try {
+                        localStorage.setItem(ADULT_KEY, '1');
+                      } catch {
+                        /* 저장이 막혀 있으면 다음에 또 묻는다 */
+                      }
+                      setAdult(true);
+                    }}
+                  >
+                    만 19세 이상이에요
+                  </button>
+                  <button className="opt" style={{ textAlign: 'center' }} onClick={() => setRefused(true)}>
+                    아니에요
+                  </button>
+                </>
+              )}
+            </div>
+          ) : (
+            <div className="opts">
+              <button className="opt primary" onClick={() => run(newGame())}>
+                처음부터
               </button>
-            )}
-          </div>
+              {hasSave && (
+                <button className="opt" onClick={() => run(load() ?? newGame())}>
+                  이어서
+                </button>
+              )}
+            </div>
+          )}
           <p className="credit">파티는 이야기를 따라 알아서 걷고 싸웁니다. 갈림길·들를 곳·장비·대사 선택만 고르세요.
             <br />
             그림: Ninja Adventure(pixel-boy, CC0)를 조선풍으로 고쳐 씀</p>

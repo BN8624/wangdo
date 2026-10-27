@@ -613,6 +613,18 @@ button {
   max-width: 280px;
   margin-top: 10px;
 }
+.adult-mark {
+  display: inline-grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  color: var(--accent);
+  font-family: 'Gowun Batang', serif;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
 .title .credit {
   position: absolute;
   bottom: calc(14px + env(safe-area-inset-bottom));
