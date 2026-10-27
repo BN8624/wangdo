@@ -1,4 +1,4 @@
-// 자동 전투 화면(FF식 옆 보기): 계산이 끝난 전투 사건(CombatEvent)을 차례로 재생한다
+// 자동 전투 화면(옆 보기: 우리 편 왼쪽, 적 오른쪽): 계산이 끝난 전투 사건(CombatEvent)을 차례로 재생한다
 import { useEffect, useRef, useState } from 'react';
 import type { CombatEvent, UnitInit } from '../core/combat';
 import { play } from '../ui/sound';
@@ -42,9 +42,10 @@ function place(side: 0 | 1, slot: number, n: number, boss: boolean, h: number) {
   const gap = n > 2 ? 24 : 30;
   const mid = Math.round(h * 0.58);
   const y = Math.round(mid + (slot - (n - 1) / 2) * gap);
-  if (side === 0) return { x: 102 - (slot % 2) * 12, y };
-  if (boss) return { x: 32, y: mid + 22 };
-  return { x: 16 + (slot % 2) * 14, y };
+  // 우리 편은 왼쪽에서 오른쪽을 보고, 적은 오른쪽에 선다
+  if (side === 0) return { x: 14 + (slot % 2) * 12, y };
+  if (boss) return { x: 84, y: mid + 22 };
+  return { x: 100 - (slot % 2) * 14, y };
 }
 
 const isChar = (art: string): art is CharName => art in CHARS;
@@ -266,7 +267,7 @@ export function Battle({ fx, speed, onSpeed, onDone }: { fx: Extract<Effect, { k
         }
         const x = Math.round(u.x + dx);
         const y = Math.round(u.y + dy);
-        const dir: Dir = u.side === 0 ? 2 : 3;
+        const dir: Dir = u.side === 0 ? 3 : 2;
         const art = u.init.art;
         const flashing = u.flash > now - 140 && u.flash < now + 20;
         if (flashing) ctx.globalAlpha = 0.45;
