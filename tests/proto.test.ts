@@ -1,0 +1,239 @@
+// 시제품(자동 진행 도트 RPG): 맵·대본·진행기·밸런스
+import { describe, expect, it } from 'vitest';
+import { CHARS, MONS, TILES } from '../src/proto/atlas';
+import { FOES, ITEMS } from '../src/proto/data';
+import { MAPS, PROP, STAMP, grid, walkable, type MapId } from '../src/proto/maps';
+import { giveExp, overwhelms } from '../src/proto/party';
+import { buy, labelAt, newGame, step, type Game, type Input } from '../src/proto/runner';
+import { SCRIPT } from '../src/proto/story';
+
+interface Plan {
+  picks?: Record<string, number>;
+  visits?: number[];
+  collect: string[];
+}
+
+/** 선택을 정해 두고 끝까지 자동으로 진행한다 */
+function playthrough(plan: Plan) {
+  let r = step(newGame());
+  let battles = 0;
+  let losses = 0;
+  let visitTurn = 0;
+  for (let guard = 0; r.fx.k !== 'end'; guard++) {
+    if (guard > 3000) throw new Error('끝나지 않아요');
+    const { g, fx } = r;
+    let input: Input = { k: 'ok' };
+    if (fx.k === 'choice') {
+      const b = SCRIPT[g.pc];
+      if (b.t === 'visit') {
+        // 남은 선택지 안에서의 번호
+        const want = plan.visits?.[visitTurn++] ?? 0;
+        const done = g.picked[b.id] ?? [];
+        const left = b.options.map((_, i) => i).filter((i) => !done.includes(i));
+        input = { k: 'pick', i: Math.max(0, left.indexOf(want)) };
+      } else if (b.t === 'choice') input = { k: 'pick', i: plan.picks?.[b.id] ?? 0 };
+    } else if (fx.k === 'collect') input = { k: 'collect', ids: plan.collect };
+    else if (fx.k === 'gift') input = { k: 'pick', i: 0 };
+    else if (fx.k === 'defeat') {
+      losses++;
+      input = { k: 'train' };
+    } else if (fx.k === 'battle') battles++;
+    r = step(g, input);
+  }
+  return { g: r.g, battles, losses };
+}
+
+describe('맵', () => {
+  for (const id of Object.keys(MAPS) as MapId[]) {
+    it(`${id}: 직사각형이고 도장이 겹치지 않으며 사람·상자가 설 수 있는 칸에 있다`, () => {
+      const def = MAPS[id];
+      const w = def.rows[0].length;
+      for (const row of def.rows) expect(row.length, row).toBe(w);
+      const taken = new Set<string>();
+      def.rows.forEach((row, y) =>
+        [...row].forEach((c, x) => {
+          const st = STAMP[c];
+          if (!st) return;
+          for (let dy = 0; dy < st.h; dy++)
+            for (let dx = 0; dx < st.w; dx++) {
+              const k = `${x + dx},${y + dy}`;
+              expect(taken.has(k), `${id} ${k} 겹침`).toBe(false);
+              expect(y + dy < def.rows.length && x + dx < w, `${id} ${k} 맵 밖`).toBe(true);
+              if (dx || dy) expect(def.rows[y + dy][x + dx], `${id} ${k}는 비워 둬야 한다`).toBe('.');
+              taken.add(k);
+            }
+        }),
+      );
+      const g = grid(id);
+      for (const a of def.actors) expect(walkable(g, a.at), `${id} ${a.id}`).toBe(true);
+      for (const c of def.chests) expect(def.rows[c.at.y][c.at.x], `${id} ${c.id}`).toMatch(/[.:_]/);
+    });
+  }
+
+  it('맵이 쓰는 그림이 모두 그림 묶음에 있다', () => {
+    for (const s of Object.values(STAMP)) expect(TILES).toHaveProperty(s.tile);
+    for (const p of Object.values(PROP)) expect(TILES).toHaveProperty(p.tile);
+    for (const def of Object.values(MAPS))
+      for (const a of def.actors) {
+        if (a.char) expect(CHARS).toHaveProperty(a.char);
+        if (a.mon) expect(MONS).toHaveProperty(a.mon);
+      }
+    for (const f of Object.values(FOES)) for (const u of f.waves.flat()) expect(u.char ? CHARS : MONS).toHaveProperty((u.char ?? u.mon)!);
+    for (const def of Object.values(MAPS)) for (const c of def.chests) if (c.item) expect(ITEMS).toHaveProperty(c.item);
+  });
+});
+
+describe('대본', () => {
+  it('이름표·대사·장비가 모두 맞고 한자가 없다', () => {
+    for (const b of SCRIPT) {
+      if (b.t === 'goto' || b.t === 'if') labelAt(b.t === 'goto' ? b.label : b.goto);
+      if (b.t === 'choice') for (const o of b.options) if (o.goto) labelAt(o.goto);
+      if (b.t === 'visit') for (const o of b.options) labelAt(o.label);
+      if (b.t === 'battle') expect(FOES).toHaveProperty(b.foe);
+      if (b.t === 'give') expect(ITEMS).toHaveProperty(b.item);
+    }
+    expect(JSON.stringify(SCRIPT)).not.toMatch(/[一-鿿]/);
+  });
+
+  const collects = [['wages', 'hens'], ['wages', 'gamble'], ['hens', 'gamble'], ['wages']];
+  const visits = [
+    [0, 1],
+    [1, 2],
+    [2, 0],
+  ];
+  for (const road of [0, 1])
+    for (const assault of [0, 1])
+      it(`길 ${road ? '돌아가는 길' : '지름길'} · ${assault ? '보초 먼저' : '곧장'}: 들를 곳·받아내기 조합마다 지지 않고 끝까지 간다`, () => {
+        for (const v of visits)
+          for (const c of collects) {
+            const r = playthrough({ picks: { road, assault }, visits: v, collect: c });
+            expect(r.g.done, `${v} ${c}`).toBe(true);
+            expect(r.losses, `${v} ${c}`).toBe(0);
+            expect(r.g.party.map((m) => m.id)).toEqual(['me', 'baekseol', 'muyeong']);
+          }
+      });
+
+  it('백설 거래·아침 장터·첫 잔 선택이 깃발과 기록으로 남는다', () => {
+    const r = playthrough({ picks: { deal: 1, morning_shop: 0, first_cup: 1 }, collect: ['wages', 'hens'] });
+    expect(r.g.flags).toEqual(expect.arrayContaining(['asked_name', 'first_cup_baekseol', 'paid_wages', 'hens']));
+    expect(r.g.log).toContain('첫 잔은 백설에게');
+    expect(r.g.party[0].charm).toBe('amulet');
+  });
+
+  it('노름빚을 받아 주면 지름길 첫 패거리가 길을 비켜 준다', () => {
+    const withGamble = playthrough({ picks: { road: 0 }, collect: ['hens', 'gamble'] });
+    const without = playthrough({ picks: { road: 0 }, collect: ['wages', 'hens'] });
+    expect(withGamble.battles).toBe(without.battles - 1);
+  });
+});
+
+describe('지루하지 않게', () => {
+  /** ×1 속도로 보여 주는 데 걸리는 시간(밀리초) 어림. 화면(Field·Battle·Panels)의 박자와 같게 */
+  const DELAY: Record<string, number> = { wave: 700, skill: 650, hit: 430, heal: 380, shield: 320, buff: 380, stunned: 380, down: 320 };
+  function ms(fx: ReturnType<typeof step>['fx']): number {
+    switch (fx.k) {
+      case 'walk':
+        return Math.max(fx.path.length * 250, fx.say.length * 1900);
+      case 'talk':
+        return fx.lines.reduce((s, l) => s + 900 + l.text.length * 35, 0);
+      case 'battle':
+        return 2000 + fx.events.reduce((s, e) => s + (DELAY[e.t] ?? 0), 0);
+      case 'cutscene':
+        return 1000 + fx.lines.length * 1100;
+      default:
+        return 1300;
+    }
+  }
+
+  it('어느 길로 가도 고를 거리 사이가 ×1 속도로 3분을 넘지 않는다', () => {
+    for (const road of [0, 1]) {
+      let r = step(newGame());
+      let since = 0;
+      let worst = 0;
+      for (let guard = 0; r.fx.k !== 'end' && guard < 3000; guard++) {
+        const fx = r.fx;
+        const decide = fx.k === 'choice' || fx.k === 'collect' || fx.k === 'shop' || fx.k === 'gift';
+        if (decide) {
+          worst = Math.max(worst, since);
+          since = 0;
+        } else since += ms(fx);
+        const b = SCRIPT[r.g.pc];
+        const input: Input =
+          fx.k === 'collect' ? { k: 'collect', ids: ['wages'] } : fx.k === 'choice' ? { k: 'pick', i: b.t === 'choice' && b.id === 'road' ? road : 0 } : fx.k === 'gift' ? { k: 'pick', i: 0 } : { k: 'ok' };
+        r = step(r.g, input);
+      }
+      expect(Math.max(worst, since), `길 ${road}`).toBeLessThan(180_000);
+    }
+  });
+});
+
+describe('진행기', () => {
+  /** 대본에서 처음 나오는 그 적과의 전투 직전까지 간다 */
+  function before(foe: string): Game {
+    let r = step(newGame());
+    for (let guard = 0; guard < 2000; guard++) {
+      const b = SCRIPT[r.g.pc];
+      if (b.t === 'battle' && b.foe === foe && (r.fx.k === 'battle' || r.fx.k === 'swift')) return r.g;
+      const input: Input = r.fx.k === 'collect' ? { k: 'collect', ids: ['wages'] } : r.fx.k === 'choice' || r.fx.k === 'gift' ? { k: 'pick', i: 0 } : { k: 'ok' };
+      r = step(r.g, input);
+    }
+    throw new Error(`${foe} 전투를 못 찾았어요`);
+  }
+
+  it('같은 상태면 전투 결과가 같다', () => {
+    const g = before('keeper');
+    const a = step(g);
+    const b = step(g);
+    expect(a.fx.k).toBe('battle');
+    expect(JSON.stringify(a.fx)).toBe(JSON.stringify(b.fx));
+  });
+
+  it('파티가 세 레벨 이상 높으면 싸우지 않고 이기고, 대장은 예외다', () => {
+    const party = newGame().party.map((m) => ({ ...m, level: 9 }));
+    expect(overwhelms(party, FOES.toll1)).toBe(true);
+    expect(overwhelms(party, FOES.keeper)).toBe(false);
+    const g = before('toll1');
+    const strong = { ...g, party: g.party.map((m) => ({ ...m, level: 12 })) };
+    const r = step(strong);
+    expect(r.fx.k).toBe('swift');
+    const next = step(strong, { k: 'ok' });
+    expect(next.g.pc).toBeGreaterThan(strong.pc);
+  });
+
+  it('지면 마지막 쉼터로 돌아가고, 경험치는 남으며, 수련으로 세진다', () => {
+    const g = before('keeper');
+    const weak: Game = { ...g, party: [{ id: 'me', level: 1, exp: 5 }] };
+    const fought = step(weak);
+    expect(fought.fx.k).toBe('battle');
+    expect(fought.fx.k === 'battle' && fought.fx.result.won).toBe(false);
+    const lost = step(weak, { k: 'ok' });
+    expect(lost.fx.k).toBe('defeat');
+    expect(lost.g.pc).toBe(weak.check!.pc);
+    expect(lost.g.party[0].exp).toBe(5);
+    const trained = step(lost.g, { k: 'train' });
+    expect(trained.fx.k).toBe('talk');
+    const before3 = trained.g.party.reduce((s, m) => s + m.level * 1000 + m.exp, 0);
+    expect(before3).toBeGreaterThan(weak.party.reduce((s, m) => s + m.level * 1000 + m.exp, 0));
+  });
+
+  it('장터: 엽전이 모자라면 못 사고, 사면 그 칸에 낀다', () => {
+    const g = newGame();
+    const poor = buy({ ...g, coin: 10 }, 'oakclub', 'me');
+    expect(poor.party[0].weapon).toBeUndefined();
+    const rich = buy({ ...g, coin: 100 }, 'oakclub', 'me');
+    expect(rich.coin).toBe(100 - ITEMS.oakclub.price);
+    expect(rich.party[0].weapon).toBe('oakclub');
+  });
+
+  it('경험치가 차면 레벨이 오른다', () => {
+    const { party, ups } = giveExp([{ id: 'me', level: 1, exp: 0 }], 30);
+    expect(party[0].level).toBe(2);
+    expect(ups).toEqual([{ id: 'me', level: 2 }]);
+  });
+
+  it('저장한 상태를 그대로 불러와 같은 곳부터 이어 간다', () => {
+    const g = before('beast');
+    const copy = JSON.parse(JSON.stringify(g)) as Game;
+    expect(JSON.stringify(step(copy).fx)).toBe(JSON.stringify(step(g).fx));
+  });
+});

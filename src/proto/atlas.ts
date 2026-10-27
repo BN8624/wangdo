@@ -1,0 +1,108 @@
+// 자동 생성: scripts/proto-art.py. 손으로 고치지 않는다.
+// 그림 좌표표 [x, y, 너비, 높이] (픽셀)
+export type Rect = [number, number, number, number];
+
+export const TILES = {
+  boulder: [96, 64, 32, 32] as Rect,
+  bush: [208, 16, 16, 16] as Rect,
+  bush2: [224, 16, 16, 16] as Rect,
+  cave: [144, 16, 16, 16] as Rect,
+  chest: [240, 112, 16, 16] as Rect,
+  chest_open: [0, 160, 16, 16] as Rect,
+  clover: [16, 32, 16, 16] as Rect,
+  crate: [144, 32, 16, 16] as Rect,
+  d_b: [224, 0, 16, 16] as Rect,
+  d_bl: [208, 0, 16, 16] as Rect,
+  d_br: [240, 0, 16, 16] as Rect,
+  d_c: [176, 0, 16, 16] as Rect,
+  d_c2: [112, 16, 16, 16] as Rect,
+  d_c3: [128, 16, 16, 16] as Rect,
+  d_hl: [48, 16, 16, 16] as Rect,
+  d_hm: [64, 16, 16, 16] as Rect,
+  d_hr: [80, 16, 16, 16] as Rect,
+  d_l: [160, 0, 16, 16] as Rect,
+  d_one: [96, 16, 16, 16] as Rect,
+  d_r: [192, 0, 16, 16] as Rect,
+  d_t: [128, 0, 16, 16] as Rect,
+  d_tl: [112, 0, 16, 16] as Rect,
+  d_tr: [144, 0, 16, 16] as Rect,
+  d_vb: [32, 16, 16, 16] as Rect,
+  d_vm: [16, 16, 16, 16] as Rect,
+  d_vt: [0, 16, 16, 16] as Rect,
+  flower_r: [32, 32, 16, 16] as Rect,
+  flower_w: [48, 32, 16, 16] as Rect,
+  flower_y: [0, 32, 16, 16] as Rect,
+  grass: [0, 0, 16, 16] as Rect,
+  grass2: [16, 0, 16, 16] as Rect,
+  grass3: [32, 0, 16, 16] as Rect,
+  grass4: [48, 0, 16, 16] as Rect,
+  grass5: [64, 0, 16, 16] as Rect,
+  grass6: [80, 0, 16, 16] as Rect,
+  grass7: [96, 0, 16, 16] as Rect,
+  hole: [192, 16, 16, 16] as Rect,
+  house_a: [128, 64, 64, 48] as Rect,
+  house_b: [0, 112, 64, 48] as Rect,
+  house_thatch: [192, 64, 64, 48] as Rect,
+  house_tile: [64, 112, 64, 48] as Rect,
+  jar: [112, 32, 16, 16] as Rect,
+  jar_red: [128, 32, 16, 16] as Rect,
+  jumak: [128, 112, 48, 48] as Rect,
+  leafy: [240, 16, 16, 16] as Rect,
+  rock: [64, 32, 16, 16] as Rect,
+  rock2: [80, 32, 16, 16] as Rect,
+  sack: [160, 32, 16, 16] as Rect,
+  sign: [176, 32, 16, 32] as Rect,
+  stall: [176, 112, 64, 48] as Rect,
+  stone: [96, 32, 16, 16] as Rect,
+  stump: [64, 64, 32, 32] as Rect,
+  tree_dead: [0, 64, 32, 32] as Rect,
+  tree_pine: [224, 32, 32, 32] as Rect,
+  tree_root: [32, 64, 32, 32] as Rect,
+  tree_round: [192, 32, 32, 32] as Rect,
+  wall: [160, 16, 16, 16] as Rect,
+  wall_foot: [176, 16, 16, 16] as Rect,
+} as const;
+
+export const CHARS = {
+  baekseol: [64, 0, 64, 100] as Rect,
+  innkeeper: [320, 0, 64, 100] as Rect,
+  keeper: [192, 0, 64, 100] as Rect,
+  me: [0, 0, 64, 100] as Rect,
+  muyeong: [128, 0, 64, 100] as Rect,
+  thug: [256, 0, 64, 100] as Rect,
+  widow: [0, 100, 64, 100] as Rect,
+  worker: [64, 100, 64, 100] as Rect,
+  worker2: [128, 100, 64, 100] as Rect,
+} as const;
+
+export const MONS = {
+  bat: [256, 0, 64, 64] as Rect,
+  boss_gob: [0, 64, 250, 50] as Rect,
+  gob: [128, 0, 64, 64] as Rect,
+  gob2: [192, 0, 64, 64] as Rect,
+  racoon: [0, 0, 64, 64] as Rect,
+  wisp: [64, 0, 64, 64] as Rect,
+} as const;
+
+export const FACES = {
+  baekseol: [0, 0, 38, 38] as Rect,
+  boss_gob: [0, 38, 38, 38] as Rect,
+  gob: [38, 38, 38, 38] as Rect,
+  innkeeper: [152, 0, 38, 38] as Rect,
+  keeper: [76, 0, 38, 38] as Rect,
+  muyeong: [38, 0, 38, 38] as Rect,
+  thug: [114, 0, 38, 38] as Rect,
+  widow: [190, 0, 38, 38] as Rect,
+  worker: [228, 0, 38, 38] as Rect,
+  worker2: [266, 0, 38, 38] as Rect,
+} as const;
+
+export const FX = {
+  claw: [0, 32, 128, 32] as Rect,
+  cut: [0, 0, 128, 32] as Rect,
+} as const;
+
+export type TileName = keyof typeof TILES;
+export type CharName = keyof typeof CHARS;
+export type MonName = keyof typeof MONS;
+export type FaceName = keyof typeof FACES;

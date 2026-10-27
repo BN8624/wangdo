@@ -20,6 +20,8 @@ function versionFile(): Plugin {
 export default defineConfig({
   base: './',
   plugins: [react(), versionFile()],
+  // 시제품(proto.html)을 기존 게임(index.html)과 함께 빌드한다
+  build: { rollupOptions: { input: { main: 'index.html', proto: 'proto.html' } } },
   define: { __APP_VERSION__: JSON.stringify(pkg.version), __BUILD_ID__: JSON.stringify(BUILD_ID) },
   test: {
     include: ['tests/**/*.test.ts', 'tests/**/*.test.tsx'],

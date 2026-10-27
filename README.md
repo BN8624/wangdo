@@ -22,6 +22,8 @@
 
 설계: `docs/COLLECTION_DESIGN.md` · 설정집: `docs/STORY_BIBLE.md`
 
+**다음 방향(시제품)**: 수집형을 접고 자동 진행 도트 스토리 RPG로 다시 짠다. 기획은 `docs/V3_DIRECTION.md`, 시제품은 `proto.html`(`npm run dev` 뒤 http://localhost:5173/proto.html, 1부 1~2화)이다. 시제품 그림은 Ninja Adventure(CC0)를 `scripts/proto-art.py`로 고친 것이다(`public/proto/CREDITS.md`).
+
 ## 개발
 
 ```bash
