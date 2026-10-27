@@ -330,7 +330,49 @@ const SKILL_TEXT: Record<MemberId, string> = {
   muyeong: '쇠방망이 내려치기 — 한 명에게 큰 한 방',
 };
 
-export function Join({ who, portraits, onDone }: { who: MemberId; portraits: boolean; onDone: () => void }) {
+/** 기술 컷인: 비스듬한 띠 위에 일러스트(주인공은 방망이)와 기술 이름 */
+export function CutIn({ who, name }: { who: MemberId; name: string }) {
+  const art = PORTRAIT[who];
+  return (
+    <div className={`cutin ${who}`}>
+      <div className="cutin-band">
+        {art ? <img className="cutin-art" src={art} alt="" /> : <img className="cutin-item" src="art/item/bangmangi.webp" alt="" />}
+        <div className="cutin-name">
+          <small>{MEMBER_NAME[who]}</small>
+          {name}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** 이야기 속에서 기술을 얻었다 */
+export function SkillGet({ who, text, cutins, onDone }: { who: MemberId; text: string; cutins: boolean; onDone: () => void }) {
+  useEffect(() => {
+    play('promote');
+  }, []);
+  const [name, desc] = SKILL_TEXT[who].split(' — ');
+  return (
+    <>
+      <div className="scrim" />
+      {cutins && <CutIn who={who} name={name} />}
+      <div className="sheet" onClick={onDone} role="button" aria-label="계속">
+        <p className="gear" style={{ margin: '0 0 4px' }}>
+          {text}
+        </p>
+        <p className="prompt" style={{ margin: '0 0 4px' }}>
+          {josa(MEMBER_NAME[who], '이', '가')} 기술을 얻었다 · {name}
+        </p>
+        <p style={{ margin: '0 0 10px' }}>{desc}. 다음 싸움에서는 첫 차례부터 쓴다.</p>
+        <button className="opt primary" style={{ width: '100%' }}>
+          계속
+        </button>
+      </div>
+    </>
+  );
+}
+
+export function Join({ who, portraits, learned, onDone }: { who: MemberId; portraits: boolean; learned: boolean; onDone: () => void }) {
   useEffect(() => {
     play('promote');
   }, []);
@@ -345,7 +387,7 @@ export function Join({ who, portraits, onDone }: { who: MemberId; portraits: boo
           <Sprite c={who as CharName} scale={6} className="big-sprite" />
         )}
         <h2>{josa(MEMBER_NAME[who], '이', '가')} 동료가 되었다</h2>
-        <p>{SKILL_TEXT[who]}</p>
+        <p>{learned ? SKILL_TEXT[who] : '기술은 아직 없다. 이야기 속에서 얻는다.'}</p>
         <button className="opt primary" style={{ width: '100%', marginTop: 10 }}>
           함께 간다
         </button>

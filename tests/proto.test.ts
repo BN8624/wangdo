@@ -7,6 +7,7 @@ import { MAPS, PROP, STAMP, grid, walkable, type MapId } from '../src/proto/maps
 import { giveExp, overwhelms } from '../src/proto/party';
 import { buy, labelAt, newGame, step, type Game, type Input } from '../src/proto/runner';
 import { SCRIPT } from '../src/proto/story';
+import { CUTIN_MS } from '../src/proto/Battle';
 
 interface Plan {
   picks?: Record<string, number>;
@@ -146,7 +147,7 @@ describe('지루하지 않게', () => {
       case 'talk':
         return fx.lines.reduce((s, l) => s + 900 + l.text.length * 35, 0);
       case 'battle':
-        return 2000 + fx.events.reduce((s, e) => s + (DELAY[e.t] ?? 0), 0);
+        return 2000 + fx.events.reduce((s, e) => s + (DELAY[e.t] ?? 0) + (e.t === 'skill' && e.side === 0 ? CUTIN_MS : 0), 0);
       case 'cutscene':
         return 1000 + fx.lines.length * 1100;
       default:
@@ -211,7 +212,7 @@ describe('진행기', () => {
 
   it('지면 마지막 쉼터로 돌아가고, 경험치는 남으며, 수련으로 세진다', () => {
     const g = before('keeper');
-    const weak: Game = { ...g, party: [{ id: 'me', level: 1, exp: 5 }] };
+    const weak: Game = { ...g, party: [{ id: 'me', level: 2, exp: 5 }] };
     const fought = step(weak);
     expect(fought.fx.k).toBe('battle');
     expect(fought.fx.k === 'battle' && fought.fx.result.won).toBe(false);
@@ -238,6 +239,31 @@ describe('진행기', () => {
     const { party, ups } = giveExp([{ id: 'me', level: 1, exp: 0 }], 30);
     expect(party[0].level).toBe(2);
     expect(ups).toEqual([{ id: 'me', level: 2 }]);
+  });
+
+  it('기술은 이야기에서 얻는다: 첫 전투는 기본 공격만, 백설은 창고지기전 첫 차례에 여우불', () => {
+    const first = step(before('beast'));
+    expect(first.fx.k).toBe('battle');
+    if (first.fx.k !== 'battle') return;
+    expect(first.fx.setup.allies.every((a) => !a?.skill)).toBe(true);
+    expect(first.fx.events.some((e) => e.t === 'skill' && e.side === 0)).toBe(false);
+
+    const kg = before('keeper');
+    expect(kg.skills).toEqual(['baekseol']);
+    const keeper = step(kg);
+    if (keeper.fx.k !== 'battle') throw new Error('창고지기 전투가 아니에요');
+    const bs = keeper.fx.setup.allies.findIndex((a) => a?.id === 'baekseol');
+    const acts = keeper.fx.events.filter((e) => (e.t === 'act' || e.t === 'skill') && e.side === 0 && e.slot === bs);
+    // 백설의 첫 차례 바로 다음 사건이 기술이다
+    expect(acts[0].t).toBe('act');
+    expect(acts[1]).toMatchObject({ t: 'skill', name: '여우불 홀림' });
+    // 이기고 나면 '막 얻은 기술'은 비워진다
+    expect(step(kg, { k: 'ok' }).g.fresh).toEqual([]);
+  });
+
+  it('끝까지 가면 셋 다 기술을 얻는다', () => {
+    const r = playthrough({ collect: ['wages'] });
+    expect([...r.g.skills].sort()).toEqual(['baekseol', 'me', 'muyeong']);
   });
 
   it('저장한 상태를 그대로 불러와 같은 곳부터 이어 간다', () => {

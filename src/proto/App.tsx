@@ -5,7 +5,7 @@ import { MEMBER_NAME } from './data';
 import { Battle } from './Battle';
 import { Field } from './Field';
 import { MAPS } from './maps';
-import { Choice, Collect, DebtScroll, Defeat, Dialogue, Gift, Join, josa, PartyList, Shop, Sprite } from './Panels';
+import { Choice, Collect, DebtScroll, Defeat, Dialogue, Gift, Join, josa, PartyList, Shop, SkillGet, Sprite } from './Panels';
 import { buy, load, newGame, save, SAVE_KEY, step, type Effect, type Game, type Input } from './runner';
 
 const UI_KEY = 'wangdo.proto.ui';
@@ -23,12 +23,14 @@ interface Ui {
   auto: boolean;
   /** 대화창 그림: 식객 일러스트(true) 또는 도트 얼굴(false) */
   portraits: boolean;
+  /** 기술을 쓸 때 일러스트 컷인 */
+  cutins: boolean;
 }
 function loadUi(): Ui {
   try {
-    return { speed: 1, auto: false, portraits: true, ...JSON.parse(localStorage.getItem(UI_KEY) ?? '{}') };
+    return { speed: 1, auto: false, portraits: true, cutins: true, ...JSON.parse(localStorage.getItem(UI_KEY) ?? '{}') };
   } catch {
-    return { speed: 1, auto: false, portraits: true };
+    return { speed: 1, auto: false, portraits: true, cutins: true };
   }
 }
 
@@ -253,7 +255,9 @@ export function App() {
           />
         );
       case 'join':
-        return <Join who={fx.who} portraits={ui.portraits} onDone={() => advance()} />;
+        return <Join who={fx.who} portraits={ui.portraits} learned={g.skills.includes(fx.who)} onDone={() => advance()} />;
+      case 'skill':
+        return <SkillGet key={g.pc} who={fx.who} text={fx.text} cutins={ui.cutins} onDone={() => advance()} />;
       case 'defeat':
         return <Defeat onTrain={() => advance({ k: 'train' })} onRetry={() => advance({ k: 'retry' })} />;
       case 'cutscene':
@@ -298,7 +302,7 @@ export function App() {
         </div>
       )}
       {panel}
-      {fx?.k === 'battle' && <Battle key={g.pc + ':' + g.wins} fx={fx} speed={ui.speed} onSpeed={(s) => setUi({ speed: s })} onDone={() => advance()} />}
+      {fx?.k === 'battle' && <Battle key={g.pc + ':' + g.wins} fx={fx} speed={ui.speed} cutins={ui.cutins} onSpeed={(s) => setUi({ speed: s })} onDone={() => advance()} />}
       {fading && <div className="fade" />}
       {!fading && <div className="fade out" key={g.map + (g.night ? 'n' : 'd')} />}
       {menu && (
@@ -330,6 +334,15 @@ export function App() {
             </button>
             <button className={`toggle ${ui.portraits ? '' : 'on'}`} onClick={() => setUi({ portraits: false })}>
               도트 얼굴
+            </button>
+          </div>
+          <h3>기술 컷인</h3>
+          <div className="row">
+            <button className={`toggle ${ui.cutins ? 'on' : ''}`} onClick={() => setUi({ cutins: true })}>
+              켜기
+            </button>
+            <button className={`toggle ${ui.cutins ? '' : 'on'}`} onClick={() => setUi({ cutins: false })}>
+              끄기
             </button>
           </div>
           <h3>소리</h3>
