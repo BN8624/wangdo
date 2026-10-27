@@ -20,6 +20,8 @@ export interface Line {
   unless?: string;
   /** 이 줄에서 크게 띄울 물건 그림(public/art/item/<이름>.webp) */
   img?: string;
+  /** 이 줄부터 화면 위쪽에 띄울 장면 그림(public/proto/scene/<이름>.webp). null이면 거둔다 */
+  scene?: string | null;
 }
 
 export type MemberId = 'me' | 'baekseol' | 'muyeong';

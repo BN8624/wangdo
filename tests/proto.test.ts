@@ -98,6 +98,10 @@ describe('대본', () => {
     const imgs = new Set(JSON.stringify(SCRIPT).match(/"img":"[^"]+"/g)?.map((m) => m.slice(7, -1)));
     expect(imgs.size).toBeGreaterThan(0);
     for (const n of imgs) expect(existsSync(`public/art/item/${n}.webp`), n).toBe(true);
+    // 장면 그림도 모두 있다
+    const scenes = new Set(JSON.stringify(SCRIPT).match(/"scene":"[^"]+"/g)?.map((m) => m.slice(9, -1)));
+    expect(scenes.size).toBeGreaterThan(0);
+    for (const n of scenes) expect(existsSync(`public/proto/scene/${n}.webp`), n).toBe(true);
   });
 
   const collects = [['wages', 'hens'], ['wages', 'gamble'], ['hens', 'gamble'], ['wages']];

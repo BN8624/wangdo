@@ -102,19 +102,32 @@ export function Dialogue({ lines, speed, auto, portraits, onDone }: { lines: Lin
     }
   }
   const speaking = stand === line.who;
+  // 장면 그림: scene을 단 줄부터 그 대사 묶음이 끝날 때까지(또는 null을 만날 때까지) 위쪽에 띄운다. 도트 얼굴을 고르면 끈다
+  let scene: string | null = null;
+  for (let k = Math.min(i, lines.length - 1); k >= 0 && portraits; k--) {
+    if (lines[k].scene !== undefined) {
+      scene = lines[k].scene ?? null;
+      break;
+    }
+  }
   // 물건 그림이 나오는 줄에서는 식객 그림 대신 물건을 크게 띄운다
   const item = line.img;
   const face = portraits && PORTRAIT[line.who] ? null : faceOf(line);
   const name = speakerName(line.who);
   return (
     <>
-      {(stand || item) && <div className="scrim" />}
+      {(stand || item || scene) && <div className="scrim" />}
+      {scene && (
+        <div className="scene" key={scene}>
+          <img src={`proto/scene/${scene}.webp`} alt="" />
+        </div>
+      )}
       {item && (
         <div className="item-card" key={item}>
           <img src={`art/item/${item}.webp`} alt="" />
         </div>
       )}
-      {stand && !item && (
+      {stand && !item && !scene && (
         <div className={`stand ${speaking ? '' : 'idle'}`} key={stand}>
           <img src={PORTRAIT[stand]} alt={speakerName(stand)} />
         </div>

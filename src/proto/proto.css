@@ -390,6 +390,32 @@ button {
     animation: none;
   }
 }
+/* ── 장면 그림: 화면 위쪽을 채우고 대화창은 아래에 ── */
+.scene {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 132px;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  animation: fadeIn 0.35s ease-out;
+}
+.scene img {
+  height: 100%;
+  width: 100%;
+  max-width: 560px;
+  object-fit: cover;
+  object-position: center 30%;
+  -webkit-mask-image: linear-gradient(to bottom, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, #000 82%, transparent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene {
+    animation: none;
+  }
+}
 .join-art {
   width: 100%;
   height: 260px;
