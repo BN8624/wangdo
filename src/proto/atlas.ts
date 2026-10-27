@@ -65,9 +65,12 @@ export const TILES = {
 
 export const CHARS = {
   baekseol: [64, 0, 64, 100] as Rect,
+  bandit: [192, 100, 64, 100] as Rect,
+  bandit2: [256, 100, 64, 100] as Rect,
   innkeeper: [320, 0, 64, 100] as Rect,
   keeper: [192, 0, 64, 100] as Rect,
   me: [0, 0, 64, 100] as Rect,
+  mokso: [320, 100, 64, 100] as Rect,
   muyeong: [128, 0, 64, 100] as Rect,
   thug: [256, 0, 64, 100] as Rect,
   widow: [0, 100, 64, 100] as Rect,
@@ -86,10 +89,12 @@ export const MONS = {
 
 export const FACES = {
   baekseol: [0, 0, 38, 38] as Rect,
+  bandit: [76, 38, 38, 38] as Rect,
   boss_gob: [0, 38, 38, 38] as Rect,
   gob: [38, 38, 38, 38] as Rect,
   innkeeper: [152, 0, 38, 38] as Rect,
   keeper: [76, 0, 38, 38] as Rect,
+  mokso: [114, 38, 38, 38] as Rect,
   muyeong: [38, 0, 38, 38] as Rect,
   thug: [114, 0, 38, 38] as Rect,
   widow: [190, 0, 38, 38] as Rect,

@@ -18,8 +18,9 @@ export const SHOP = ['oakclub', 'ironpin', 'straw', 'cotton'];
 
 const raccoon = (level: number) => ({ name: '뒷산 너구리', mon: 'racoon' as const, level, role: 'attack' as const, element: 'wood' as const, kind: 'grunt' as const, power: 0.75 });
 const wisp = (level: number) => ({ name: '도깨비불', mon: 'wisp' as const, level, role: 'support' as const, element: 'fire' as const, kind: 'grunt' as const, power: 0.8 });
-const gob = (level: number) => ({ name: '흑운채 졸개', mon: 'gob' as const, level, role: 'attack' as const, element: 'dark' as const, kind: 'grunt' as const, power: 0.9 });
-const gob2 = (level: number) => ({ name: '흑운채 졸개', mon: 'gob2' as const, level, role: 'defense' as const, element: 'wood' as const, kind: 'grunt' as const, power: 0.9 });
+// 흑운채: 도깨비 유민의 산적 무리. 사람 체형에 뿔 달린 도트(괴물 아님)
+const gob = (level: number) => ({ name: '흑운채 졸개', char: 'bandit' as const, level, role: 'attack' as const, element: 'dark' as const, kind: 'grunt' as const, power: 0.9 });
+const gob2 = (level: number) => ({ name: '흑운채 졸개', char: 'bandit2' as const, level, role: 'defense' as const, element: 'wood' as const, kind: 'grunt' as const, power: 0.9 });
 const bat = (level: number) => ({ name: '굴 박쥐', mon: 'bat' as const, level, role: 'attack' as const, element: 'dark' as const, kind: 'grunt' as const, power: 0.8 });
 
 export const FOES: Record<string, FoeGroup> = {
@@ -64,7 +65,7 @@ export const FOES: Record<string, FoeGroup> = {
     name: '흑운채 두목',
     ground: 'cave',
     boss: true,
-    waves: [[{ name: '흑운채 두목', mon: 'boss_gob', level: 11, role: 'attack', element: 'dark', kind: 'boss', power: 0.9 }]],
+    waves: [[{ name: '흑운채 두목', char: 'mokso', level: 11, role: 'attack', element: 'dark', kind: 'boss', power: 0.9 }]],
   },
   bossFull: {
     name: '흑운채 두목과 보초',
@@ -73,7 +74,7 @@ export const FOES: Record<string, FoeGroup> = {
     waves: [
       [
         gob2(10),
-        { name: '흑운채 두목', mon: 'boss_gob', level: 11, role: 'attack', element: 'dark', kind: 'boss', power: 0.9 },
+        { name: '흑운채 두목', char: 'mokso', level: 11, role: 'attack', element: 'dark', kind: 'boss', power: 0.9 },
         gob(10),
       ],
     ],
