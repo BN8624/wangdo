@@ -144,10 +144,29 @@ export function mapCanvas(id: MapId): HTMLCanvasElement {
         if (c === ':') drawTile(ctx, dirtAt(isDirt, x, y), dx, dy);
       }
     }
-  // deco 층: tiles.png의 16×16 칸을 그대로
-  for (const d of MAPS[id].deco) blit(ctx, 'tiles', [0, 0, 0, 0], d.sx, d.sy, T, T, d.x * T, d.y * T);
+  // deco 층: tiles.png의 16×16 칸을 그대로. 사람을 덮는 칸(above)은 aboveCanvas가 따로 굽는다
+  for (const d of MAPS[id].deco) if (!d.above) blit(ctx, 'tiles', [0, 0, 0, 0], d.sx, d.sy, T, T, d.x * T, d.y * T);
   mapCache.set(id, cv);
   return cv;
 }
+
+const aboveCache = new Map<MapId, HTMLCanvasElement>();
+
+/** 나무·지붕 윗줄처럼 사람 위에 그리는 칸만 한 장에 굽는다 */
+export function aboveCanvas(id: MapId): HTMLCanvasElement {
+  const hit = aboveCache.get(id);
+  if (hit) return hit;
+  const def = MAPS[id];
+  const cv = document.createElement('canvas');
+  cv.width = def.w * T;
+  cv.height = def.h * T;
+  const ctx = cv.getContext('2d')!;
+  ctx.imageSmoothingEnabled = false;
+  for (const d of def.deco) if (d.above) blit(ctx, 'tiles', [0, 0, 0, 0], d.sx, d.sy, T, T, d.x * T, d.y * T);
+  aboveCache.set(id, cv);
+  return cv;
+}
+
+
 
 export const isCave = (id: MapId) => !!MAPS[id].cave;

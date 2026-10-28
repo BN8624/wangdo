@@ -289,7 +289,10 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
     bars.zIndex = 1e6;
     const cutFx = new Sprite();
     cutFx.zIndex = 1e6 + 1;
-    world.addChild(bg, bars, cutFx);
+    // 발밑 그림자: 배경 위, 사람 아래
+    const shadows = new Graphics();
+    shadows.zIndex = -5e5;
+    world.addChild(bg, shadows, bars, cutFx);
     // 숫자는 확대하지 않은 화면 층에 그려야 번지지 않는다
     const texts = new Container();
     const sprites = new Map<U, Sprite>();
@@ -307,6 +310,7 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
       }
       const lungeMs = BASE[2] / speedRef.current;
       bars.clear();
+      shadows.clear();
       for (const u of units.current) {
         let sp = sprites.get(u);
         if (!sp) {
@@ -329,6 +333,11 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
         const dir: Dir = u.side === 0 ? 3 : 2;
         const art = u.init.art;
         sp.alpha = u.flash > now - 140 && u.flash < now + 20 ? 0.45 : 1;
+        // 날아다니는 것(도깨비불·박쥐)은 그림자 없이. 크게 그리는 대장은 그림자도 크게
+        if (art !== 'wisp' && art !== 'bat') {
+          const wide = isBig(art);
+          shadows.ellipse(x + T / 2, y + T - 1 + (wide ? 2 : 0), wide ? 14 : 5, wide ? 3 : 2).fill({ color: 0x000000, alpha: 0.3 });
+        }
         sp.zIndex = u.y;
         sp.scale.set(1);
         if (isChar(art)) {
