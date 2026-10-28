@@ -1,7 +1,7 @@
 // 시제품(자동 진행 도트 RPG): 맵·대본·진행기·밸런스
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CHARS, MONS } from '../src/proto/atlas';
+import { CHARS, MONS, TILES } from '../src/proto/atlas';
 import { FOES, ITEMS } from '../src/proto/data';
 import { MAPS, grid, walkable, type MapId } from '../src/proto/maps';
 import { giveExp, overwhelms } from '../src/proto/party';
@@ -75,7 +75,9 @@ describe('맵(Tiled)', () => {
       }
     for (const f of Object.values(FOES)) for (const u of f.waves.flat()) expect(u.char ? CHARS : MONS).toHaveProperty((u.char ?? u.mon)!);
     for (const def of Object.values(MAPS)) for (const c of def.chests) if (c.item) expect(ITEMS).toHaveProperty(c.item);
-    for (const def of Object.values(MAPS)) for (const d of def.deco) expect(d.sx < 256 && d.sy < 176, `${def.id} ${d.sx},${d.sy}`).toBe(true);
+    // 장식 칸이 tiles.png 안에 있다(시트 크기는 그림 좌표표에서)
+    const sheetH = Math.max(...Object.values(TILES).map((r) => r[1] + r[3]));
+    for (const def of Object.values(MAPS)) for (const d of def.deco) expect(d.sx < 256 && d.sy + 16 <= sheetH, `${def.id} ${d.sx},${d.sy}`).toBe(true);
   });
 
   it('대본이 쓰는 이름 지점이 그 맵에 모두 있다', () => {

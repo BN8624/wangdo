@@ -100,6 +100,58 @@ TILES = {
 }
 
 # 초가처럼 보이게: 주황 지붕을 볏짚 색으로
+# ── 조선풍 소품(2026-10-28): 기존 타일 뒤에 붙인다(Tiled가 tiles.png 안의 자리로 기억하므로 앞 타일을 옮기지 않는다) ──
+# 이름 → (원본 파일, 칸 x, 칸 y, 너비 칸, 높이 칸, 색 바꾸기)
+FENCE = {'#a3754e': '#9a8a66', '#965340': '#76674b', '#ffad5d': '#c9b98e', '#e66a3a': '#8b7a56'}  # 싸리 울타리: 마른 싸리 빛
+STONE = {'#c8966b': '#8f8b84', '#d2b37d': '#a9a49b', '#eecf9b': '#c4beb2', '#a3754e': '#6f6b66'}  # 돌담: 잿빛 막돌
+POSTS = {'#e46d3a': '#a3754e'}  # 빨랫줄 기둥: 주황 → 나무 빛
+LAUNDRY = {**POSTS, '#79b8ce': '#4a5a8a', '#548789': '#38466e', '#e0394c': '#ece6d6'}  # 쪽빛 저고리와 흰 무명
+EXTRA_TILES = {
+    'fence': ('Backgrounds/Tilesets/TilesetHouse.png', 11, 5, 1, 1, FENCE),
+    'stonewall': ('Backgrounds/Tilesets/TilesetHouse.png', 11, 9, 1, 1, STONE),
+    'clothesline': ('Backgrounds/Tilesets/TilesetElement.png', 11, 2, 3, 2, POSTS),
+    'laundry': ('Backgrounds/Tilesets/TilesetElement.png', 14, 2, 2, 2, LAUNDRY),
+    'straw': ('Backgrounds/Tilesets/TilesetElement.png', 12, 4, 1, 1, None),
+}
+# Tiled deco.tsj에 적을 속성: 칸마다 solid(막힘)·above(사람을 덮음). 줄 단위(위→아래)
+EXTRA_PROPS = {
+    'fence': ['solid'], 'stonewall': ['solid'], 'clothesline': ['above', 'solid'], 'laundry': ['above', 'solid'], 'straw': ['solid'],
+    'sotdae': ['above', 'above', 'solid'],
+}
+
+
+def sotdae():
+    """솟대(16×48): 긴 장대 끝에 나무 새 한 마리"""
+    img = Image.new('RGBA', (16, 48), (0, 0, 0, 0))
+    px = img.load()
+    pole, pole_hi, wood, wood_hi, beak = hexrgb('#7a5a3c'), hexrgb('#a3754e'), hexrgb('#d9c9a6'), hexrgb('#f1e6cc'), hexrgb('#e6a23a')
+    for y in range(12, 47):
+        put(px, 16, 48, 6, y, OUTLINE)
+        put(px, 16, 48, 7, y, pole_hi)
+        put(px, 16, 48, 8, y, pole)
+        put(px, 16, 48, 9, y, OUTLINE)
+    for x in range(6, 10):
+        put(px, 16, 48, x, 47, OUTLINE)
+    # 새: 장대 꼭대기에 옆으로 앉은 나무 오리(머리는 오른쪽, 꼬리는 왼쪽으로 들림)
+    bird = [
+        '..........oo...',
+        '.........owho..',
+        'o........owwob.',
+        'ow.......owwo..',
+        'owwoooooowwo...',
+        '.owwwwwhhwwo...',
+        '.owwwwwwwwwo...',
+        '..owwwwwwwo....',
+        '...oooooooo....',
+    ]
+    for j, row in enumerate(bird):
+        for i, c in enumerate(row):
+            if c == '.':
+                continue
+            put(px, 16, 48, i, 3 + j, {'o': OUTLINE, 'h': wood_hi, 'w': wood, 'b': beak}[c])
+    return img
+
+
 THATCH = {'#e66a3a': '#b8955a', '#ffad5d': '#d9c08a', '#f38c4c': '#c9a86c'}
 # 기와처럼 보이게: 붉은 지붕을 먹빛 회색으로
 GIWA = {'#e0394c': '#5b6475', '#e66a3a': '#47505f', '#e38967': '#7a8496', '#ff8b62': '#8e98aa'}
@@ -426,8 +478,12 @@ def build(src):
     chest = load(src, 'Items/Treasure/LittleTreasureChest.png')
     tp.add('chest', chest.crop((0, 0, 16, 16)))
     tp.add('chest_open', chest.crop((16, 0, 32, 16)))
+    for name, (rel, cx, cy, cw, ch, mapping) in EXTRA_TILES.items():
+        tp.add(name, recolor(load(src, rel).crop((cx * T, cy * T, (cx + cw) * T, (cy + ch) * T)), mapping))
+    tp.add('sotdae', sotdae())
     tp.image().save(os.path.join(OUT, 'tiles.png'))
     atlas['tiles'] = tp.rects()
+    sync_deco_tsj(atlas['tiles'])
 
     cp = Packer(64 * 6)
     for cid, (folder, mapping, ov) in CHARS.items():
@@ -497,6 +553,33 @@ def write_atlas(atlas):
         f.write('export type CharName = keyof typeof CHARS;\n')
         f.write('export type MonName = keyof typeof MONS;\n')
         f.write('export type FaceName = keyof typeof FACES;\n')
+
+
+DECO_TSJ = os.path.join(ROOT, 'src', 'proto', 'maps', 'deco.tsj')
+
+
+def sync_deco_tsj(tiles):
+    """Tiled 장식 타일셋(deco.tsj)을 tiles.png 크기에 맞추고, 소품 칸에 이름·solid·above를 적는다"""
+    im = Image.open(os.path.join(OUT, 'tiles.png'))
+    ts = json.load(open(DECO_TSJ, encoding='utf-8'))
+    cols = im.width // T
+    ts['imagewidth'], ts['imageheight'] = im.width, im.height
+    ts['columns'], ts['tilecount'] = cols, cols * (im.height // T)
+    have = {t['id']: t for t in ts['tiles']}
+    for name, rows in EXTRA_PROPS.items():
+        x, y, w, h = tiles[name]
+        for r in range(h // T):
+            for c in range(w // T):
+                tid = (y // T + r) * cols + x // T + c
+                kind = rows[min(r, len(rows) - 1)]
+                have[tid] = {'id': tid, 'properties': [
+                    {'name': 'name', 'type': 'string', 'value': name},
+                    {'name': 'solid', 'type': 'bool', 'value': kind == 'solid'},
+                    {'name': 'above', 'type': 'bool', 'value': kind == 'above'},
+                ]}
+    ts['tiles'] = [have[k] for k in sorted(have)]
+    with open(DECO_TSJ, 'w', encoding='utf-8') as f:
+        f.write(json.dumps(ts, ensure_ascii=False, indent=1) + '\n')
 
 
 def read_atlas():
