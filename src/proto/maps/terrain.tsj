@@ -1,0 +1,117 @@
+{
+ "type": "tileset",
+ "version": "1.10",
+ "tiledversion": "1.11.2",
+ "name": "terrain",
+ "tilewidth": 16,
+ "tileheight": 16,
+ "tilecount": 5,
+ "columns": 5,
+ "image": "terrain.png",
+ "imagewidth": 80,
+ "imageheight": 16,
+ "margin": 0,
+ "spacing": 0,
+ "tiles": [
+  {
+   "id": 0,
+   "properties": [
+    {
+     "name": "ground",
+     "type": "string",
+     "value": "."
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "value": "풀"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 1,
+   "properties": [
+    {
+     "name": "ground",
+     "type": "string",
+     "value": ":"
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "value": "흙길"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 2,
+   "properties": [
+    {
+     "name": "ground",
+     "type": "string",
+     "value": "_"
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "value": "동굴 바닥"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 3,
+   "properties": [
+    {
+     "name": "ground",
+     "type": "string",
+     "value": "#"
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "value": "동굴 벽"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 4,
+   "properties": [
+    {
+     "name": "ground",
+     "type": "string",
+     "value": " "
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "value": "어둠"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  }
+ ]
+}

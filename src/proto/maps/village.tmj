@@ -1,0 +1,628 @@
+{
+ "type": "map",
+ "version": "1.10",
+ "tiledversion": "1.11.2",
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "infinite": false,
+ "compressionlevel": -1,
+ "width": 20,
+ "height": 26,
+ "tilewidth": 16,
+ "tileheight": 16,
+ "nextlayerid": 4,
+ "nextobjectid": 23,
+ "properties": [
+  {
+   "name": "name",
+   "type": "string",
+   "value": "달골"
+  },
+  {
+   "name": "bgm",
+   "type": "string",
+   "value": "home"
+  }
+ ],
+ "tilesets": [
+  {
+   "firstgid": 1,
+   "source": "terrain.tsj"
+  },
+  {
+   "firstgid": 6,
+   "source": "deco.tsj"
+  }
+ ],
+ "layers": [
+  {
+   "id": 1,
+   "name": "terrain",
+   "type": "tilelayer",
+   "width": 20,
+   "height": 26,
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "data": [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1
+   ]
+  },
+  {
+   "id": 2,
+   "name": "deco",
+   "type": "tilelayer",
+   "width": 20,
+   "height": 26,
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "data": [
+    52, 53, 52, 53, 52, 53, 52, 53, 0, 0, 0, 0, 52, 53, 52, 53, 52, 53, 52, 53,
+    68, 69, 68, 69, 68, 69, 68, 69, 0, 0, 0, 0, 68, 69, 68, 69, 68, 69, 68, 69,
+    52, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 52, 53,
+    68, 69, 122, 123, 124, 125, 0, 0, 0, 0, 0, 0, 0, 0, 82, 83, 84, 85, 68, 69,
+    0, 0, 138, 139, 140, 141, 0, 0, 0, 0, 0, 0, 0, 0, 98, 99, 100, 101, 0, 0,
+    0, 0, 154, 155, 156, 157, 0, 0, 0, 0, 0, 0, 0, 0, 114, 115, 116, 117, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35,
+    0, 38, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 39, 0, 0,
+    0, 0, 78, 79, 80, 81, 0, 0, 0, 0, 0, 0, 0, 0, 129, 130, 131, 132, 0, 0,
+    0, 0, 94, 95, 96, 97, 0, 0, 0, 0, 0, 0, 0, 0, 145, 146, 147, 148, 0, 0,
+    0, 0, 110, 111, 112, 113, 0, 0, 0, 0, 0, 0, 0, 0, 161, 162, 163, 164, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    52, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 52, 53,
+    68, 69, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 68, 69,
+    0, 0, 126, 127, 128, 0, 0, 0, 0, 0, 0, 0, 0, 0, 118, 119, 120, 121, 0, 0,
+    0, 0, 142, 143, 144, 0, 0, 0, 0, 0, 0, 0, 0, 0, 134, 135, 136, 137, 0, 0,
+    0, 0, 158, 159, 160, 0, 46, 45, 0, 0, 0, 0, 0, 0, 150, 151, 152, 153, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35,
+    52, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 52, 53,
+    68, 69, 38, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 41, 0, 68, 69,
+    52, 53, 50, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, 51, 52, 53, 0,
+    68, 69, 66, 67, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 66, 67, 68, 69, 0,
+    52, 53, 52, 53, 52, 53, 52, 53, 0, 0, 0, 0, 0, 52, 53, 52, 53, 52, 53, 0,
+    68, 69, 68, 69, 68, 69, 68, 69, 0, 0, 0, 0, 0, 68, 69, 68, 69, 68, 69, 0
+   ]
+  },
+  {
+   "id": 3,
+   "name": "objects",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "objects": [
+    {
+     "id": 1,
+     "name": "innkeeper",
+     "type": "actor",
+     "point": true,
+     "x": 88,
+     "y": 312,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "innkeeper"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "widow",
+     "type": "actor",
+     "point": true,
+     "x": 104,
+     "y": 216,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "widow"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "name": "worker",
+     "type": "actor",
+     "point": true,
+     "x": 200,
+     "y": 136,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "worker"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "name": "worker2",
+     "type": "actor",
+     "point": true,
+     "x": 216,
+     "y": 136,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "worker2"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      }
+     ]
+    },
+    {
+     "id": 5,
+     "name": "keeper",
+     "type": "actor",
+     "point": true,
+     "x": 200,
+     "y": 312,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "keeper"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 6,
+     "name": "thug1",
+     "type": "actor",
+     "point": true,
+     "x": 184,
+     "y": 296,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 7,
+     "name": "thug2",
+     "type": "actor",
+     "point": true,
+     "x": 184,
+     "y": 328,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 8,
+     "name": "parak1",
+     "type": "actor",
+     "point": true,
+     "x": 216,
+     "y": 216,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 9,
+     "name": "parak2",
+     "type": "actor",
+     "point": true,
+     "x": 264,
+     "y": 216,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 10,
+     "name": "parak3",
+     "type": "actor",
+     "point": true,
+     "x": 280,
+     "y": 216,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 11,
+     "name": "drunk1",
+     "type": "actor",
+     "point": true,
+     "x": 40,
+     "y": 312,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "bandit"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 12,
+     "name": "drunk2",
+     "type": "actor",
+     "point": true,
+     "x": 72,
+     "y": 312,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "bandit2"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 13,
+     "name": "wisp1",
+     "type": "actor",
+     "point": true,
+     "x": 216,
+     "y": 328,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "mon",
+       "type": "string",
+       "value": "wisp"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 14,
+     "name": "wisp2",
+     "type": "actor",
+     "point": true,
+     "x": 264,
+     "y": 328,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "mon",
+       "type": "string",
+       "value": "wisp"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 15,
+     "name": "wisp3",
+     "type": "actor",
+     "point": true,
+     "x": 280,
+     "y": 328,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "mon",
+       "type": "string",
+       "value": "wisp"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 16,
+     "name": "남쪽 어귀",
+     "type": "point",
+     "point": true,
+     "x": 152,
+     "y": 408,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 17,
+     "name": "마을 한가운데",
+     "type": "point",
+     "point": true,
+     "x": 152,
+     "y": 200,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 18,
+     "name": "주막 앞",
+     "type": "point",
+     "point": true,
+     "x": 56,
+     "y": 296,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 19,
+     "name": "장터",
+     "type": "point",
+     "point": true,
+     "x": 248,
+     "y": 200,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 20,
+     "name": "과부댁",
+     "type": "point",
+     "point": true,
+     "x": 104,
+     "y": 200,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 21,
+     "name": "오두막",
+     "type": "point",
+     "point": true,
+     "x": 248,
+     "y": 296,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 22,
+     "name": "고갯길 어귀",
+     "type": "point",
+     "point": true,
+     "x": 152,
+     "y": 24,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    }
+   ]
+  }
+ ]
+}

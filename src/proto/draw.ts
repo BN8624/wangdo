@@ -144,9 +144,8 @@ export function mapCanvas(id: MapId): HTMLCanvasElement {
         if (c === ':') drawTile(ctx, dirtAt(isDirt, x, y), dx, dy);
       }
     }
-  for (const p of g.props) drawTile(ctx, p.tile, p.x * T, p.y * T);
-  // 아래쪽 도장이 위쪽 도장을 덮도록 y 순서로
-  for (const s of [...g.stamps].sort((a, b) => a.y + a.h - (b.y + b.h))) drawTile(ctx, s.tile, s.x * T, s.y * T);
+  // deco 층: tiles.png의 16×16 칸을 그대로
+  for (const d of MAPS[id].deco) blit(ctx, 'tiles', [0, 0, 0, 0], d.sx, d.sy, T, T, d.x * T, d.y * T);
   mapCache.set(id, cv);
   return cv;
 }

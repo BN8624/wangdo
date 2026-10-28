@@ -12,12 +12,12 @@ const npc = (name: string, face: Line['face'], text: string, extra: Partial<Line
 
 export const SCRIPT: Beat[] = [
   // ── 1화: 뒷산 ──
-  { t: 'map', map: 'backhill', at: [5, 23], dir: 1 },
+  { t: 'map', map: 'backhill', at: '마을길', dir: 1 },
   { t: 'goal', text: '뒷산 늙은 소나무로' },
   { t: 'talk', lines: [n('달골 뒷산. 송 대감네 장작 서른 단을 대 주고도, 석 달째 나뭇값을 못 받은 날이었다.')] },
   {
     t: 'walk',
-    to: [8, 4],
+    to: '늙은 소나무',
     face: 1,
     say: [me('이 소나무만은 안 베려 했는데.'), me('쌀독이 비었으니 별수 없지.')],
   },
@@ -80,7 +80,7 @@ export const SCRIPT: Beat[] = [
   { t: 'show', ids: ['racoon1', 'racoon2'] },
   {
     t: 'walk',
-    to: [6, 13],
+    to: '덤불 앞',
     face: 0,
     say: [bs('방망이 처음 휘두른 사람치곤 폼은 나쁘지 않던데요.'), me('폼만 있소.'), bs('어머, 저기 덤불이 움직여요.')],
   },
@@ -92,12 +92,12 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'battle', foe: 'beast', hide: ['racoon1', 'racoon2'] },
-  { t: 'walk', to: [5, 23], say: [bs('마을까지는 금방이죠?'), me('내리막이니 금방이오. 올라올 땐 한참이었지만.')] },
+  { t: 'walk', to: '마을길', say: [bs('마을까지는 금방이죠?'), me('내리막이니 금방이오. 올라올 땐 한참이었지만.')] },
 
   // ── 달골 ──
-  { t: 'map', map: 'village', at: [9, 25], dir: 1 },
+  { t: 'map', map: 'village', at: '남쪽 어귀', dir: 1 },
   { t: 'goal', text: '해 지기 전 마을 둘러보기' },
-  { t: 'walk', to: [9, 12], say: [bs('마을이 조용하네요.'), bs('해 지기 전에 두 군데만 들러 봐요.')] },
+  { t: 'walk', to: '마을 한가운데', say: [bs('마을이 조용하네요.'), bs('해 지기 전에 두 군데만 들러 봐요.')] },
   {
     t: 'visit',
     id: 'village',
@@ -112,7 +112,7 @@ export const SCRIPT: Beat[] = [
   { t: 'goto', label: 'evening' },
 
   { t: 'label', name: 'v_jumak' },
-  { t: 'walk', to: [3, 18], face: 1 },
+  { t: 'walk', to: '주막 앞', face: 1 },
   {
     t: 'talk',
     lines: [
@@ -125,18 +125,18 @@ export const SCRIPT: Beat[] = [
   },
   { t: 'coin', n: 30 },
   { t: 'flag', set: 'heard_gamble' },
-  { t: 'walk', to: [9, 12] },
+  { t: 'walk', to: '마을 한가운데' },
   { t: 'ret' },
 
   { t: 'label', name: 'v_market' },
-  { t: 'walk', to: [15, 12], face: 1 },
+  { t: 'walk', to: '장터', face: 1 },
   { t: 'talk', lines: [n('장터 노점. 대장간에서 막 나온 몽둥이와 비녀, 짚신이 걸려 있었다.'), bs('엽전은 있을 때 써야 쓸모가 있어요, 나리.')] },
   { t: 'shop' },
-  { t: 'walk', to: [9, 12] },
+  { t: 'walk', to: '마을 한가운데' },
   { t: 'ret' },
 
   { t: 'label', name: 'v_widow' },
-  { t: 'walk', to: [6, 12], face: 0 },
+  { t: 'walk', to: '과부댁', face: 0 },
   {
     t: 'talk',
     lines: [
@@ -147,13 +147,13 @@ export const SCRIPT: Beat[] = [
   },
   { t: 'flag', set: 'met_widow' },
   { t: 'give', item: 'cotton', from: '과부댁이 무명 띠를 주었다' },
-  { t: 'walk', to: [9, 12] },
+  { t: 'walk', to: '마을 한가운데' },
   { t: 'ret' },
 
   // ── 밤: 오두막 ──
   { t: 'label', name: 'evening' },
   { t: 'goal', text: '오두막에서 하룻밤' },
-  { t: 'walk', to: [15, 18], face: 1, say: [bs('나리 집이 저 초가예요?'), me('방 하나, 이불 하나. 손님 받을 집은 아니오.')] },
+  { t: 'walk', to: '오두막', face: 1, say: [bs('나리 집이 저 초가예요?'), me('방 하나, 이불 하나. 손님 받을 집은 아니오.')] },
   { t: 'rest', train: 'village' },
   { t: 'night', on: true },
   {
@@ -306,7 +306,7 @@ export const SCRIPT: Beat[] = [
   { t: 'rest', train: 'village' },
 
   // 아침: 장터
-  { t: 'walk', to: [15, 12], face: 1, say: [bs('저건 뭐예요? 저 하얗고 말랑한 거.'), me('떡이오.'), bs('떡! 이야기로만 들었어요.')] },
+  { t: 'walk', to: '장터', face: 1, say: [bs('저건 뭐예요? 저 하얗고 말랑한 거.'), me('떡이오.'), bs('떡! 이야기로만 들었어요.')] },
   {
     t: 'talk',
     lines: [
@@ -409,7 +409,7 @@ export const SCRIPT: Beat[] = [
 
   // 낮: 주막 외상값
   { t: 'goal', text: '주막 외상값 받아 주기' },
-  { t: 'walk', to: [3, 18], face: 1, say: [bs('장터 다음엔 어디 가요?'), me('주막. 영감이 일감이 있다고 했소.')] },
+  { t: 'walk', to: '주막 앞', face: 1, say: [bs('장터 다음엔 어디 가요?'), me('주막. 영감이 일감이 있다고 했소.')] },
   { t: 'show', ids: ['drunk1', 'drunk2'] },
   {
     t: 'talk',
@@ -470,7 +470,7 @@ export const SCRIPT: Beat[] = [
 
   // 밤: 거울
   { t: 'goal', text: '오두막에서 둘째 밤' },
-  { t: 'walk', to: [15, 18], face: 1, say: [bs('해가 지니까 장터가 금방 조용해지네요.'), me('사람은 밤에 자니까.'), bs('여우는 밤에 깨는데.')] },
+  { t: 'walk', to: '오두막', face: 1, say: [bs('해가 지니까 장터가 금방 조용해지네요.'), me('사람은 밤에 자니까.'), bs('여우는 밤에 깨는데.')] },
   { t: 'rest', train: 'village' },
   { t: 'night', on: true },
   { t: 'show', ids: ['wisp1', 'wisp2', 'wisp3'] },
@@ -545,13 +545,13 @@ export const SCRIPT: Beat[] = [
       bs('나리 방망이는 빚만 받잖아요. 그쪽 건 머리를 깨고요.'),
     ],
   },
-  { t: 'walk', to: [9, 1], say: [bs('고개 너머엔 흑운채 산채가 있어요.'), me('도깨비 산채라. 나무하러도 안 가던 곳이오.')] },
+  { t: 'walk', to: '고갯길 어귀', say: [bs('고개 너머엔 흑운채 산채가 있어요.'), me('도깨비 산채라. 나무하러도 안 가던 곳이오.')] },
 
   // ── 3화: 고갯길 ──
-  { t: 'map', map: 'pass', at: [8, 29], dir: 1 },
+  { t: 'map', map: 'pass', at: '고개 아래', dir: 1 },
   { t: 'goal', text: '고갯마루 넘기' },
   { t: 'rest', train: 'passTrain' },
-  { t: 'walk', to: [8, 18], say: [bs('길이 둘로 갈리네요.'), bs('왼쪽엔 패거리가 진을 쳤고, 오른쪽은 돌아가는 길이에요.')] },
+  { t: 'walk', to: '갈림길', say: [bs('길이 둘로 갈리네요.'), bs('왼쪽엔 패거리가 진을 쳤고, 오른쪽은 돌아가는 길이에요.')] },
   {
     t: 'choice',
     id: 'road',
@@ -563,7 +563,7 @@ export const SCRIPT: Beat[] = [
   },
 
   { t: 'label', name: 'road_short' },
-  { t: 'walk', to: [3, 16], face: 1 },
+  { t: 'walk', to: '지름길 패거리', face: 1 },
   { t: 'if', flag: 'paid_gamble', goto: 'short_fight', not: true },
   {
     t: 'talk',
@@ -580,21 +580,21 @@ export const SCRIPT: Beat[] = [
   { t: 'talk', lines: [npc('흑운채 졸개', 'bandit', '짐 하나에 열 닢! 못 내겠으면 짐을 두고 가!')] },
   { t: 'battle', foe: 'toll1', hide: ['toll_a'] },
   { t: 'label', name: 'short_chest' },
-  { t: 'walk', to: [4, 14], face: 3 },
+  { t: 'walk', to: '왼쪽 상자', face: 3 },
   { t: 'chest', id: 'pass_left' },
-  { t: 'walk', to: [4, 13], face: 1 },
+  { t: 'walk', to: '지름길 둘째', face: 1 },
   { t: 'battle', foe: 'toll2', hide: ['toll_b'] },
-  { t: 'walk', to: [3, 10], face: 1, say: [bs('하나 더 있어요.')] },
+  { t: 'walk', to: '지름길 셋째', face: 1, say: [bs('하나 더 있어요.')] },
   { t: 'battle', foe: 'toll3', hide: ['toll_c'] },
-  { t: 'walk', to: [3, 7] },
+  { t: 'walk', to: '지름길 끝' },
   { t: 'goto', label: 'ridge' },
 
   { t: 'label', name: 'road_long' },
-  { t: 'walk', to: [14, 17] },
+  { t: 'walk', to: '돌아가는 길' },
   { t: 'show', ids: ['muyeong_far'] },
   {
     t: 'walk',
-    to: [14, 16],
+    to: '바위 옆',
     face: 3,
     say: [bs('저기, 바위 옆에 누가 있어요.')],
   },
@@ -608,16 +608,16 @@ export const SCRIPT: Beat[] = [
   },
   { t: 'flag', set: 'saw_muyeong' },
   { t: 'hide', ids: ['muyeong_far'] },
-  { t: 'walk', to: [13, 13], face: 1 },
+  { t: 'walk', to: '돌아가는 길 패거리', face: 1 },
   { t: 'battle', foe: 'toll1', hide: ['toll_r'] },
-  { t: 'walk', to: [14, 10], face: 3 },
+  { t: 'walk', to: '오른쪽 상자', face: 3 },
   { t: 'chest', id: 'pass_right' },
-  { t: 'walk', to: [14, 7] },
+  { t: 'walk', to: '돌아가는 길 끝' },
 
   // ── 고갯마루: 무영 ──
   { t: 'label', name: 'ridge' },
   { t: 'show', ids: ['muyeong'] },
-  { t: 'walk', to: [8, 7], face: 1 },
+  { t: 'walk', to: '고갯마루', face: 1 },
   {
     t: 'talk',
     lines: [
@@ -645,24 +645,24 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'hide', ids: ['muyeong'] },
-  { t: 'walk', to: [8, 1], face: 1, say: [bs('산적굴이라니, 어두운 데는 질색인데.'), me('여우는 굴에 살지 않소?'), bs('그건 옛날 여우고요.')] },
+  { t: 'walk', to: '산적굴 입구', face: 1, say: [bs('산적굴이라니, 어두운 데는 질색인데.'), me('여우는 굴에 살지 않소?'), bs('그건 옛날 여우고요.')] },
 
   // ── 산적굴 ──
-  { t: 'map', map: 'cave1', at: [6, 16], dir: 1 },
+  { t: 'map', map: 'cave1', at: '굴 입구', dir: 1 },
   { t: 'goal', text: '산적굴 깊은 곳으로' },
   { t: 'rest', train: 'caveTrain' },
-  { t: 'walk', to: [6, 11], face: 1, say: [bs('무슨 소리 들리지 않아요? 퍼덕퍼덕……')] },
+  { t: 'walk', to: '박쥐 굴', face: 1, say: [bs('무슨 소리 들리지 않아요? 퍼덕퍼덕……')] },
   { t: 'battle', foe: 'cave1', hide: ['bat1', 'bat2'] },
-  { t: 'walk', to: [12, 9], face: 3 },
+  { t: 'walk', to: '굴 상자', face: 3 },
   { t: 'chest', id: 'cave_chest' },
-  { t: 'walk', to: [7, 2], face: 1, say: [me('아래로 내려가는 굴이 있소.')] },
-  { t: 'map', map: 'cave2', at: [7, 13], dir: 1 },
+  { t: 'walk', to: '아랫굴로', face: 1, say: [me('아래로 내려가는 굴이 있소.')] },
+  { t: 'map', map: 'cave2', at: '아랫굴 입구', dir: 1 },
   { t: 'rest', train: 'caveTrain' },
-  { t: 'walk', to: [7, 10], face: 1 },
+  { t: 'walk', to: '보초 앞', face: 1 },
   { t: 'talk', lines: [npc('흑운채 졸개', 'bandit', '누구냐! 여긴 두목님 굴이다!')] },
   { t: 'battle', foe: 'cave2', hide: ['sentry1', 'sentry2'] },
   { t: 'show', ids: ['muyeong_c'] },
-  { t: 'walk', to: [8, 7], face: 1 },
+  { t: 'walk', to: '두목 방 앞', face: 1 },
   {
     t: 'talk',
     lines: [
@@ -692,12 +692,12 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'label', name: 'boss_full' },
-  { t: 'walk', to: [8, 5], face: 1 },
+  { t: 'walk', to: '두목 방', face: 1 },
   { t: 'talk', lines: [npc('흑운채 두목', 'mokso', '무영아, 뭐 하느냐! 저놈들 다리부터 부러뜨려라!'), mu('…….')] },
   { t: 'battle', foe: 'bossFull', hide: ['guard1', 'guard2'] },
   { t: 'goto', label: 'boss_after' },
   { t: 'label', name: 'boss_split' },
-  { t: 'walk', to: [8, 5], face: 1, say: [bs('쉿.')] },
+  { t: 'walk', to: '두목 방', face: 1, say: [bs('쉿.')] },
   { t: 'battle', foe: 'guards', hide: ['guard1', 'guard2'] },
   { t: 'talk', lines: [npc('흑운채 두목', 'mokso', '무영아, 뭐 하느냐! 저놈들 다리부터 부러뜨려라!'), mu('…….')] },
   { t: 'battle', foe: 'boss' },
@@ -729,7 +729,7 @@ export const SCRIPT: Beat[] = [
   { t: 'hide', ids: ['boss', 'keeper2'] },
   { t: 'coin', n: 100 },
   { t: 'night', on: true },
-  { t: 'map', map: 'pass', at: [8, 25], dir: 1 },
+  { t: 'map', map: 'pass', at: '고개 아래 주막', dir: 1 },
   { t: 'goal', text: '고개 아래 주막에서' },
   {
     t: 'talk',
