@@ -7,6 +7,7 @@ import { MEMBER_NAME } from './data';
 import { CutIn } from './Panels';
 import { Application, Container, Graphics, Sprite, Text } from 'pixi.js';
 import { CH, T, drawTile } from './draw';
+import { softTexture } from './light';
 import { canvasTexture, charTex, cut as cutTex, monTex } from './pixi';
 import type { Effect } from './runner';
 import type { Dir, MemberId } from './types';
@@ -29,6 +30,17 @@ interface U {
   lunge: number;
   lungeTo: { x: number; y: number } | null;
 }
+type BurstKind = 'foxfire' | 'dust' | 'ink' | 'red';
+interface Burst {
+  kind: BurstKind;
+  x: number;
+  y: number;
+  t: number;
+  seed: number;
+}
+/** 효과가 피었다 지는 시간(×1 속도) */
+const BURST_MS: Record<BurstKind, number> = { foxfire: 700, dust: 600, ink: 1000, red: 450 };
+
 interface Pop {
   x: number;
   y: number;
@@ -97,6 +109,12 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
   const units = useRef<U[]>([]);
   const pops = useRef<Pop[]>([]);
   const fxAt = useRef<{ x: number; y: number; t: number } | null>(null);
+  /** 화면 흔들림(도트 단위 세기, 끝나는 시각)과 치명타 번쩍임 */
+  const shake = useRef({ mag: 0, until: 0, flash: 0 });
+  /** 기술 효과: 맞은 자리에서 잠깐 피었다 진다 */
+  const bursts = useRef<Burst[]>([]);
+  /** 방금 쓴 기술(다음 맞음·버프가 이 기술의 것) */
+  const lastSkill = useRef<{ side: 0 | 1; kind: string; art: string } | null>(null);
   const [tick, setTick] = useState(0);
   const [banner, setBanner] = useState('');
   const [cut, setCut] = useState<{ who: MemberId; name: string; n: number } | null>(null);
@@ -154,6 +172,7 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
         break;
       case 'skill': {
         const u = find(e.side, e.slot);
+        lastSkill.current = u ? { side: e.side, kind: e.kind, art: u.init.art } : null;
         if (!quiet) {
           if (e.side === 0 && cutinsRef.current && u) setCut({ who: u.init.id as MemberId, name: e.name, n: performance.now() });
           else setBanner(`${u?.init.name ?? ''} · ${e.name}`);
@@ -173,6 +192,14 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
           }
           t.flash = now + 120;
           fxAt.current = { x: t.x - 8, y: t.y - 12, t: now + 120 };
+          // 흔들림: 치명타·기술일수록 세게
+          const sk = e.skill ? lastSkill.current : null;
+          const mag = sk?.kind === 'strike' && sk.side === 0 ? 3 : e.crit ? 2.5 : e.skill ? 1.6 : 0.8;
+          shake.current = { mag, until: now + (e.crit || sk ? 260 : 140) / speedRef.current, flash: e.crit ? now : shake.current.flash };
+          if (sk) {
+            const kind: BurstKind = sk.side === 1 ? 'red' : sk.art === 'baekseol' ? 'foxfire' : sk.kind === 'strike' ? 'dust' : 'red';
+            bursts.current.push({ kind, x: t.x + T / 2, y: t.y + T / 2, t: now, seed: Math.random() * 10 });
+          }
           setTimeout(() => {
             pop(t, String(e.dmg), e.crit ? '#ffe066' : '#ffffff', e.crit);
           }, 120 / speedRef.current);
@@ -195,7 +222,21 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
         if (!quiet) pop(find(e.side, e.slot), '보호막', '#8fc4ff');
         break;
       case 'buff':
-        if (!quiet) for (const s of e.slots) pop(find(e.side, s), e.kind === 'atkUp' ? '공격↑' : e.kind === 'atkDown' ? '공격↓' : '기절', '#f2c66d');
+        if (!quiet) {
+          for (const s of e.slots) pop(find(e.side, s), e.kind === 'atkUp' ? '공격↑' : e.kind === 'atkDown' ? '공격↓' : '기절', '#f2c66d');
+          // 빚 독촉: 기가 꺾인 적마다 먹빛 '빚' 글자
+          if (e.kind === 'atkDown' && lastSkill.current?.art === 'me')
+            for (const s of e.slots) {
+              const t = find(e.side, s);
+              if (t) bursts.current.push({ kind: 'ink', x: t.x + T / 2, y: t.y - 22, t: now, seed: s });
+            }
+          // 여우불에 홀려 기절: 푸른 불꽃
+          if (e.kind === 'stun' && lastSkill.current?.art === 'baekseol')
+            for (const s of e.slots) {
+              const t = find(e.side, s);
+              if (t) bursts.current.push({ kind: 'foxfire', x: t.x + T / 2, y: t.y + T / 2, t: now, seed: s + 3 });
+            }
+        }
         break;
       case 'stunned':
         if (!quiet) pop(find(e.side, e.slot), '기절 중', '#c9bda6');
@@ -293,11 +334,101 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
     const shadows = new Graphics();
     shadows.zIndex = -5e5;
     world.addChild(bg, shadows, bars, cutFx);
+    // 기술 효과(맞은 자리의 불꽃·먼지)
+    const fxLayer = new Container();
+    fxLayer.zIndex = 1e6 + 2;
+    const dustRings = new Graphics();
+    fxLayer.addChild(dustRings);
+    world.addChild(fxLayer);
     // 숫자는 확대하지 않은 화면 층에 그려야 번지지 않는다
     const texts = new Container();
+    const flash = new Graphics();
+    const inkTexts = new Map<Burst, Text>();
     const sprites = new Map<U, Sprite>();
     const popTexts = new Map<Pop, Text>();
     let bgKey = '';
+
+    const glowPool: Sprite[] = [];
+    const sparkPool: Graphics[] = [];
+    const drawBursts = (now: number) => {
+      const sp = speedRef.current;
+      bursts.current = bursts.current.filter((b) => now - b.t < BURST_MS[b.kind] / sp);
+      let g = 0;
+      let p = 0;
+      const glow = () => {
+        let s = glowPool[g++];
+        if (!s) {
+          s = new Sprite(softTexture());
+          s.anchor.set(0.5);
+          s.blendMode = 'add';
+          glowPool.push(s);
+          fxLayer.addChild(s);
+        }
+        s.visible = true;
+        return s;
+      };
+      const spark = () => {
+        let s = sparkPool[p++];
+        if (!s) {
+          s = new Graphics().rect(-0.5, -0.5, 1, 1).fill(0xffffff);
+          sparkPool.push(s);
+          fxLayer.addChild(s);
+        }
+        s.visible = true;
+        return s;
+      };
+      dustRings.clear();
+      for (const b of bursts.current) {
+        const k = (now - b.t) / (BURST_MS[b.kind] / sp);
+        if (b.kind === 'foxfire' || b.kind === 'red') {
+          const s = glow();
+          s.tint = b.kind === 'foxfire' ? 0x5aa0ff : 0xff4a3a;
+          s.position.set(b.x, b.y);
+          s.width = s.height = 10 + 26 * Math.sqrt(k);
+          s.alpha = 0.9 * (1 - k);
+          if (b.kind === 'foxfire')
+            for (let i = 0; i < 6; i++) {
+              const a = b.seed + i * 1.05;
+              const q = spark();
+              q.tint = i % 2 ? 0xbfe3ff : 0x6ab0ff;
+              q.position.set(b.x + Math.cos(a) * 9 * k, b.y - 16 * k + Math.sin(a) * 4 * k);
+              q.alpha = 1 - k;
+            }
+        } else if (b.kind === 'dust') {
+          // 쇠방망이: 땅에 퍼지는 먼지 고리와 튀는 흙
+          dustRings.ellipse(b.x, b.y + 6, 4 + 18 * k, 1.5 + 5 * k).stroke({ color: 0xc9a77a, width: 1.5, alpha: 0.9 * (1 - k) });
+          for (let i = 0; i < 8; i++) {
+            const a = (i / 8) * Math.PI * 2 + b.seed;
+            const q = spark();
+            q.tint = 0xb08a5a;
+            q.position.set(b.x + Math.cos(a) * 16 * k, b.y + 6 + Math.sin(a) * 5 * k - 10 * k * (1 - k) * 2);
+            q.alpha = 1 - k;
+          }
+        }
+      }
+      for (let i = g; i < glowPool.length; i++) glowPool[i].visible = false;
+      for (let i = p; i < sparkPool.length; i++) sparkPool[i].visible = false;
+      // 빚 독촉의 먹빛 '빚'
+      for (const [b, t] of inkTexts)
+        if (!bursts.current.includes(b)) {
+          t.destroy();
+          inkTexts.delete(b);
+        }
+      for (const b of bursts.current) {
+        if (b.kind !== 'ink') continue;
+        let t = inkTexts.get(b);
+        if (!t) {
+          t = new Text({ text: '빚', style: { fontFamily: '"Gowun Batang", serif', fontWeight: '700', fontSize: 12 * K, fill: '#16121a', stroke: { color: '#e8c873', width: 1.5 * K } } });
+          t.anchor.set(0.5);
+          inkTexts.set(b, t);
+          texts.addChild(t);
+        }
+        const k = (now - b.t) / (BURST_MS.ink / sp);
+        t.alpha = k < 0.15 ? k / 0.15 : 1 - (k - 0.15) / 0.85;
+        t.scale.set(1 + 0.25 * (1 - Math.min(1, k * 4)));
+        t.position.set(b.x * K, (b.y - 12 * k) * K);
+      }
+    };
 
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
@@ -309,6 +440,15 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
         bg.texture = canvasTexture(`battle:${key}`, battleBackground(fx.group.ground, H));
       }
       const lungeMs = BASE[2] / speedRef.current;
+      // 흔들림: 끝날수록 잦아든다
+      const sh = shake.current;
+      const left = sh.until - now;
+      const amp = left > 0 ? sh.mag * Math.min(1, left / (180 / speedRef.current)) : 0;
+      world.position.set(Math.round((Math.random() * 2 - 1) * amp * K), Math.round((Math.random() * 2 - 1) * amp * K));
+      const flashAge = now - sh.flash;
+      flash.clear();
+      if (flashAge >= 0 && flashAge < 120) flash.rect(0, 0, W * K, H * K).fill({ color: 0xffffff, alpha: 0.28 * (1 - flashAge / 120) });
+      drawBursts(now);
       bars.clear();
       shadows.clear();
       for (const u of units.current) {
@@ -400,7 +540,7 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
         app.destroy(true, { children: true });
         return;
       }
-      app.stage.addChild(world, texts);
+      app.stage.addChild(world, texts, flash);
       host.prepend(app.canvas);
       raf = requestAnimationFrame(draw);
     });
