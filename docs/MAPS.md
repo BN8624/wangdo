@@ -18,6 +18,7 @@
    - `actor`: 사람·짐승. 이름 = 대본에서 쓰는 id. 속성 `char` 또는 `mon`, `dir`(0 아래 1 위 2 왼 3 오른), `hidden`(대본에서 보여 줄 때까지 숨김)
    - `chest`: 상자. 속성 `item`, `coin`
    - `point`: 대본이 쓰는 이름 지점. 예: 장터, 주막 앞, 고갯마루
+   - `light`: 밤·동굴에서 어둠을 밝히는 불빛. 속성 `kind`(lamp 등잔·torch 횃불), `radius`(칸). 인물에는 속성 `light`(torch·wisp)를 주면 그 사람을 따라 불빛이 난다
 
 맵 속성: `name`(화면에 띄울 이름), `bgm`(story·home·battle), `cave`(동굴 맵).
 

@@ -1,7 +1,7 @@
 // 시제품 맵: Tiled(https://www.mapeditor.org)로 그린 src/proto/maps/<id>.tmj를 읽는다. 한 칸이 16×16이다.
 //  층: terrain(땅: 풀·흙길·동굴 바닥·동굴 벽·어둠. 실제 그림은 이웃을 보고 코드가 고른다)
 //      deco(집·나무·소품. tiles.png를 16칸 격자로 쓴 deco.tsj, 막히는 칸은 타일 속성 solid)
-//      objects(점 오브젝트. type: actor 사람·짐승 / chest 상자 / point 대본이 쓰는 이름 지점)
+//      objects(점 오브젝트. type: actor 사람·짐승 / chest 상자 / point 대본이 쓰는 이름 지점 / light 등잔·횃불)
 //  맵 속성: name(화면에 띄울 이름), bgm, cave(동굴 맵)
 import type { Actor, Dir, Pt } from './types';
 import terrainTsj from './maps/terrain.tsj?raw';
@@ -31,6 +31,18 @@ export interface DecoCell {
   solid: boolean;
 }
 
+/** 밤·동굴에서 어둠을 밝히는 불빛 종류 */
+export type LightKind = 'lamp' | 'torch' | 'wisp' | 'foxfire' | 'lantern';
+
+/** 맵에 놓인 불빛. x·y는 칸 단위(소수 가능), radius도 칸 */
+export interface LightDef {
+  name: string;
+  x: number;
+  y: number;
+  radius: number;
+  kind: LightKind;
+}
+
 export interface MapDef {
   id: MapId;
   name: string;
@@ -41,8 +53,9 @@ export interface MapDef {
   deco: DecoCell[];
   /** 굴처럼 바닥이 기본으로 동굴인 맵 */
   cave?: boolean;
-  actors: (Actor & { hidden?: boolean })[];
+  actors: (Actor & { hidden?: boolean; light?: LightKind })[];
   chests: ChestDef[];
+  lights: LightDef[];
   /** 대본이 쓰는 이름 지점 */
   points: Record<string, Pt>;
   bgm: 'story' | 'home' | 'battle';
@@ -117,14 +130,23 @@ export function parseTiled(id: MapId, raw: string): MapDef {
   const actors: MapDef['actors'] = [];
   const chests: ChestDef[] = [];
   const points: Record<string, Pt> = {};
+  const lights: LightDef[] = [];
   for (const o of objs.objects) {
     const p = propsOf(o.properties);
     if (o.type === 'actor')
-      actors.push({ id: o.name, at: cell(o), dir: Number(p.dir ?? 0) as Dir, ...(p.char ? { char: p.char as Actor['char'] } : { mon: p.mon as Actor['mon'] }), hidden: !!p.hidden });
+      actors.push({
+        id: o.name,
+        at: cell(o),
+        dir: Number(p.dir ?? 0) as Dir,
+        ...(p.char ? { char: p.char as Actor['char'] } : { mon: p.mon as Actor['mon'] }),
+        hidden: !!p.hidden,
+        ...(p.light ? { light: p.light as LightKind } : {}),
+      });
+    else if (o.type === 'light') lights.push({ name: o.name, x: o.x / 16, y: o.y / 16, radius: Number(p.radius ?? 2.5), kind: (p.kind ?? 'lamp') as LightKind });
     else if (o.type === 'chest') chests.push({ id: o.name, at: cell(o), ...(p.item ? { item: String(p.item) } : {}), ...(p.coin ? { coin: Number(p.coin) } : {}) });
     else if (o.type === 'point') points[o.name] = cell(o);
   }
-  return { id, name: String(props.name ?? id), bgm: (props.bgm ?? 'story') as MapDef['bgm'], cave: !!props.cave, w: m.width, h: m.height, ground, deco: cells, actors, chests, points };
+  return { id, name: String(props.name ?? id), bgm: (props.bgm ?? 'story') as MapDef['bgm'], cave: !!props.cave, w: m.width, h: m.height, ground, deco: cells, actors, chests, lights, points };
 }
 
 export const MAPS = Object.fromEntries((Object.keys(RAW) as MapId[]).map((id) => [id, parseTiled(id, RAW[id])])) as Record<MapId, MapDef>;

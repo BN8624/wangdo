@@ -55,6 +55,7 @@ describe('맵(Tiled)', () => {
         for (const c of row) expect('.:_# ').toContain(c);
       }
       for (const d of def.deco) expect(d.x < def.w && d.y < def.h, `${id} 장식 ${d.x},${d.y}`).toBe(true);
+      for (const l of def.lights) expect(l.x >= 0 && l.y >= 0 && l.x <= def.w && l.y <= def.h && l.radius > 0, `${id} 불빛 ${l.name}`).toBe(true);
       const g = grid(id);
       for (const a of def.actors) expect(walkable(g, a.at), `${id} ${a.id}`).toBe(true);
       for (const [name, p] of Object.entries(def.points)) expect(walkable(g, p), `${id} 지점 ${name}`).toBe(true);
