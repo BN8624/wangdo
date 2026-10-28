@@ -96,6 +96,8 @@
 
 ## 기존 코드에서
 
+2026-10-28에 예전 게임을 내리고 정리했다. 첫 주소(`/`)가 v3이고, `proto.html`은 첫 주소로 넘긴다. 예전 게임의 마지막 상태는 `v2-final` 브랜치에 있다. 아래 표의 '걷어낸다' 쪽은 모두 지웠다(1부 원고 `content/`는 남김).
+
 | 살린다 | 시제품 확인 뒤 걷어낸다 |
 |---|---|
 | `src/core/combat.ts`, `units.ts`의 `foeUnit`·`levelMult`, `data/balance.ts`·`skills.ts`·`roster.ts`, `save.ts`·`backup.ts`·`sound.ts`, 1부 원고(`content/story/s1`), 배포 설정 | `gacha.ts`, `idle.ts`, `campaign.ts`, `GachaView`, `StageFlow`, `HomeView`, 수련장, 관직 자동 상승, 정무, 식객 13명(보류), 기존 AI 일러스트(보관) |

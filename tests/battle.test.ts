@@ -1,7 +1,6 @@
 // 턴제 자동 전투: 같은 씨앗이면 같은 전투, 속도 순서, 상성, 기술 쿨타임·효과, 웨이브와 별, 수동 모드
 import { describe, expect, it } from 'vitest';
 import { COMBAT, Combat, runCombat, type CombatSetup, type SkillKind, type UnitInit } from '../src/core/combat';
-import { ALLY_LINES } from '../src/data/battle-lines';
 import { ELEMENT, advantage } from '../src/data/roster';
 import { SKILLS } from '../src/data/skills';
 import { YOKAI } from '../src/data/yokai';
@@ -121,7 +120,6 @@ describe('턴제 자동 전투', () => {
     for (const y of YOKAI) {
       expect(SKILLS[y.id], y.id).toBeDefined();
       expect(ELEMENT[y.id], y.id).toBeDefined();
-      expect(ALLY_LINES[y.id]?.attack.length, y.id).toBeGreaterThan(0);
       kinds.add(SKILLS[y.id].kind);
     }
     expect(kinds.size).toBe(6);

@@ -9,16 +9,9 @@
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test": "vitest run",
-    "simulate": "tsx scripts/simulate.ts",
-    "art:prompts": "tsx scripts/art-prompts.ts",
-    "art:generate": "tsx scripts/gen-art.ts",
-    "story:next": "tsx scripts/story-next.ts",
-    "story:index": "tsx scripts/story-index.ts",
-    "predev": "tsx scripts/story-index.ts",
-    "prebuild": "tsx scripts/story-index.ts",
-    "pretest": "tsx scripts/story-index.ts",
-    "presimulate": "tsx scripts/story-index.ts",
-    "pretypecheck": "tsx scripts/story-index.ts"
+    "art:v3": "tsx scripts/v3-art.ts",
+    "pixel:derive": "python3 scripts/proto-art.py --derive",
+    "pixel:pack": "node scripts/fetch-ninja-pack.cjs"
   },
   "dependencies": {
     "pixi.js": "8.22.0",
