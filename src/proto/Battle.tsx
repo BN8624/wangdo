@@ -2,10 +2,12 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CombatEvent, UnitInit } from '../core/combat';
 import { play } from '../ui/sound';
-import { CHARS, MONS, type CharName, type MonName, type TileName } from './atlas';
+import { CHARS, FX, MONS, type CharName, type MonName, type TileName } from './atlas';
 import { MEMBER_NAME } from './data';
 import { CutIn } from './Panels';
-import { drawChar, drawFx, drawMon, drawTile } from './draw';
+import { Application, Container, Graphics, Sprite, Text } from 'pixi.js';
+import { CH, T, drawTile } from './draw';
+import { canvasTexture, charTex, cut as cutTex, monTex } from './pixi';
 import type { Effect } from './runner';
 import type { Dir, MemberId } from './types';
 
@@ -52,6 +54,39 @@ function place(side: 0 | 1, slot: number, n: number, boss: boolean, h: number) {
   return { x: 100 - (slot % 2) * 14, y };
 }
 
+/** 전투 배경: 바닥 타일, 위쪽 바위벽 또는 나무 줄, 위아래 그늘. 도트 크기 그대로 한 장에 굽는다 */
+const bgCache = new Map<string, HTMLCanvasElement>();
+function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
+  const key = `${ground}:${H}`;
+  const hit = bgCache.get(key);
+  if (hit) return hit;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext('2d')!;
+  ctx.imageSmoothingEnabled = false;
+  const floor: TileName = ground === 'cave' ? 'cave' : ground === 'dirt' ? 'd_c' : 'grass';
+  for (let y = 0; y < H; y += 16) for (let x = 0; x < W; x += 16) drawTile(ctx, floor, x, y);
+  if (ground === 'cave') {
+    for (let x = 0; x < W; x += 16) {
+      drawTile(ctx, 'wall', x, 0);
+      drawTile(ctx, 'wall', x, 16);
+      drawTile(ctx, 'wall_foot', x, 32);
+    }
+  } else {
+    for (let x = -8; x < W; x += 30) drawTile(ctx, (x / 2) % 3 === 0 ? 'tree_round' : 'tree_pine', x, 0);
+    for (let x = 6; x < W; x += 44) drawTile(ctx, 'bush', x, 30);
+  }
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, 'rgba(10,8,14,0.7)');
+  grad.addColorStop(0.32, 'rgba(10,8,14,0.1)');
+  grad.addColorStop(1, 'rgba(10,8,14,0.35)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  bgCache.set(key, c);
+  return c;
+}
+
 const isChar = (art: string): art is CharName => art in CHARS;
 /** 크게 그리는 대장: 몬스터 대장 그림, 또는 사람 도트를 두 배로 그리는 흑운채 두목 */
 const BIG_CHAR: string[] = ['mokso'];
@@ -59,7 +94,6 @@ const isBig = (art: string) => art === 'boss_gob' || BIG_CHAR.includes(art);
 const isMon = (art: string): art is MonName => art in MONS;
 
 export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Effect, { k: 'battle' }>; speed: number; cutins: boolean; onSpeed: (s: number) => void; onDone: () => void }) {
-  const cv = useRef<HTMLCanvasElement>(null);
   const units = useRef<U[]>([]);
   const pops = useRef<Pop[]>([]);
   const fxAt = useRef<{ x: number; y: number; t: number } | null>(null);
@@ -240,39 +274,47 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
     setTick((t) => t + 1);
   };
 
-  // 그리기
+  // 그리기(PixiJS): 배경은 한 장으로 굽고, 사람·체력·효과·숫자만 매 프레임 고친다
   useEffect(() => {
+    const host = stage.current;
+    if (!host) return;
     let raf = 0;
-    const floor: TileName = fx.group.ground === 'cave' ? 'cave' : fx.group.ground === 'dirt' ? 'd_c' : 'grass';
+    let dead = false;
+    const app = new Application();
+    const world = new Container({ sortableChildren: true });
+    world.scale.set(K);
+    const bg = new Sprite();
+    bg.zIndex = -1e6;
+    const bars = new Graphics();
+    bars.zIndex = 1e6;
+    const cutFx = new Sprite();
+    cutFx.zIndex = 1e6 + 1;
+    world.addChild(bg, bars, cutFx);
+    // 숫자는 확대하지 않은 화면 층에 그려야 번지지 않는다
+    const texts = new Container();
+    const sprites = new Map<U, Sprite>();
+    const popTexts = new Map<Pop, Text>();
+    let bgKey = '';
+
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
-      const c = cv.current;
-      if (!c) return;
-      const ctx = c.getContext('2d')!;
-      ctx.imageSmoothingEnabled = false;
-      ctx.setTransform(K, 0, 0, K, 0, 0);
       const H = hRef.current;
-      for (let y = 0; y < H; y += 16) for (let x = 0; x < W; x += 16) drawTile(ctx, floor, x, y);
-      // 위쪽 배경: 굴이면 바위벽, 아니면 나무 줄
-      if (fx.group.ground === 'cave') {
-        for (let x = 0; x < W; x += 16) {
-          drawTile(ctx, 'wall', x, 0);
-          drawTile(ctx, 'wall', x, 16);
-          drawTile(ctx, 'wall_foot', x, 32);
-        }
-      } else {
-        for (let x = -8; x < W; x += 30) drawTile(ctx, (x / 2) % 3 === 0 ? 'tree_round' : 'tree_pine', x, 0);
-        for (let x = 6; x < W; x += 44) drawTile(ctx, 'bush', x, 30);
+      if (app.renderer.width !== W * K || app.renderer.height !== H * K) app.renderer.resize(W * K, H * K);
+      const key = `${fx.group.ground}:${H}`;
+      if (bgKey !== key) {
+        bgKey = key;
+        bg.texture = canvasTexture(`battle:${key}`, battleBackground(fx.group.ground, H));
       }
-      const grad = ctx.createLinearGradient(0, 0, 0, H);
-      grad.addColorStop(0, 'rgba(10,8,14,0.7)');
-      grad.addColorStop(0.32, 'rgba(10,8,14,0.1)');
-      grad.addColorStop(1, 'rgba(10,8,14,0.35)');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, W, H);
       const lungeMs = BASE[2] / speedRef.current;
-      const list = [...units.current].sort((a, b) => a.y - b.y);
-      for (const u of list) {
+      bars.clear();
+      for (const u of units.current) {
+        let sp = sprites.get(u);
+        if (!sp) {
+          sp = new Sprite();
+          sprites.set(u, sp);
+          world.addChild(sp);
+        }
+        sp.visible = u.alive;
         if (!u.alive) continue;
         let dx = 0;
         let dy = 0;
@@ -286,44 +328,78 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
         const y = Math.round(u.y + dy);
         const dir: Dir = u.side === 0 ? 3 : 2;
         const art = u.init.art;
-        const flashing = u.flash > now - 140 && u.flash < now + 20;
-        if (flashing) ctx.globalAlpha = 0.45;
-        if (isChar(art) && BIG_CHAR.includes(art)) drawChar(ctx, art, dir, since < lungeMs ? 4 : Math.floor(now / 400) % 2, x - 8, y - 16, 2);
-        else if (isChar(art)) drawChar(ctx, art, dir, since < lungeMs ? 4 : Math.floor(now / 400) % 2, x, y);
-        else if (isMon(art)) drawMon(ctx, art, dir, Math.floor(now / 220), x, y);
-        ctx.globalAlpha = 1;
+        sp.alpha = u.flash > now - 140 && u.flash < now + 20 ? 0.45 : 1;
+        sp.zIndex = u.y;
+        sp.scale.set(1);
+        if (isChar(art)) {
+          const big = BIG_CHAR.includes(art);
+          sp.texture = charTex(art, dir, since < lungeMs ? 4 : Math.floor(now / 400) % 2);
+          if (big) {
+            sp.scale.set(2);
+            sp.position.set(x - 8, y - 16 - (CH - T) * 2);
+          } else sp.position.set(x, y - (CH - T));
+        } else if (isMon(art)) {
+          const tex = monTex(art, dir, Math.floor(now / 220));
+          const boss = tex.frame.width > T;
+          sp.texture = tex;
+          sp.position.set(x + (boss ? T / 2 - 25 : 0), y + (boss ? T - 50 : 0));
+        }
         if (u.side === 1) {
           const big = isBig(art);
           const bw = big ? 30 : 14;
           const bx = big ? x - 7 : x + 1;
           const by = big ? y - 36 : y - 7;
-          ctx.fillStyle = '#3a2a30';
-          ctx.fillRect(bx, by, bw, 2);
-          ctx.fillStyle = '#e0574a';
-          ctx.fillRect(bx, by, Math.max(0, Math.round((bw * u.hp) / u.max)), 2);
+          bars.rect(bx, by, bw, 2).fill(0x3a2a30);
+          const left = Math.max(0, Math.round((bw * u.hp) / u.max));
+          if (left) bars.rect(bx, by, left, 2).fill(0xe0574a);
         }
       }
       const f = fxAt.current;
-      if (f) {
-        const k = (now - f.t) / (60 / speedRef.current);
-        if (k >= 0 && k < 4) drawFx(ctx, 'cut', Math.floor(k), f.x, f.y);
+      const k = f ? (now - f.t) / (60 / speedRef.current) : -1;
+      cutFx.visible = !!f && k >= 0 && k < 4;
+      if (f && cutFx.visible) {
+        cutFx.texture = cutTex('fx', FX.cut[0] + Math.floor(k) * 32, FX.cut[1], 32, 32);
+        cutFx.position.set(f.x, f.y);
       }
-      ctx.textAlign = 'center';
       pops.current = pops.current.filter((p) => now - p.t < 900);
+      for (const [p, t] of popTexts)
+        if (!pops.current.includes(p)) {
+          t.destroy();
+          popTexts.delete(p);
+        }
       for (const p of pops.current) {
+        let t = popTexts.get(p);
+        if (!t) {
+          t = new Text({
+            text: p.text,
+            style: { fontFamily: '"Gowun Batang", serif', fontSize: (p.big ? 9 : 7) * K, fill: p.color, stroke: { color: 'rgba(0,0,0,0.8)', width: 2 * K }, align: 'center' },
+          });
+          // 캔버스 글자처럼 가운데 정렬, 글자 바닥선이 그 자리에
+          t.anchor.set(0.5, 0.8);
+          popTexts.set(p, t);
+          texts.addChild(t);
+        }
         const age = (now - p.t) / 900;
-        ctx.font = `${p.big ? 9 : 7}px "Gowun Batang", serif`;
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = 'rgba(0,0,0,0.8)';
-        ctx.globalAlpha = 1 - age * age;
-        ctx.strokeText(p.text, p.x, p.y - age * 10);
-        ctx.fillStyle = p.color;
-        ctx.fillText(p.text, p.x, p.y - age * 10);
-        ctx.globalAlpha = 1;
+        t.alpha = 1 - age * age;
+        t.position.set(p.x * K, (p.y - age * 10) * K);
       }
+      app.render();
     };
-    raf = requestAnimationFrame(draw);
-    return () => cancelAnimationFrame(raf);
+
+    app.init({ background: '#0d0b10', antialias: false, resolution: 1, autoStart: false, width: W * K, height: hRef.current * K, preference: 'webgl' }).then(() => {
+      if (dead) {
+        app.destroy(true, { children: true });
+        return;
+      }
+      app.stage.addChild(world, texts);
+      host.prepend(app.canvas);
+      raf = requestAnimationFrame(draw);
+    });
+    return () => {
+      dead = true;
+      cancelAnimationFrame(raf);
+      if (app.renderer) app.destroy(true, { children: true });
+    };
   }, [fx]);
 
   const party = allies();
@@ -339,7 +415,6 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
         </span>
       </div>
       <div className="stage" ref={stage}>
-        <canvas ref={cv} width={W * K} height={h * K} />
         <div className="banner">{banner && <span>{banner}</span>}</div>
         {cut && <CutIn key={cut.n} who={cut.who} name={cut.name} />}
       </div>
