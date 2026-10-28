@@ -23,11 +23,28 @@ export interface V3Art {
   transparent?: boolean;
   width: number;
   height: number;
+  /** 이 그림(저장소 경로)을 고친다. scene은 고칠 내용 */
+  edit?: string;
 }
 
 const SCENE = { width: 900, height: 1350 };
 
+/** 이미 넣은 장면 그림에서 주인공 손·소매·든 물건만 지운다(사용자 결정 2026-10-28: 장면 그림에 주인공 손은 넣지 않는다) */
+const noHands = (id: string, what: string, who: Who[]): V3Art => ({
+  id: `nohands-${id}`,
+  who,
+  ...SCENE,
+  out: `public/proto/scene/${id}.webp`,
+  edit: `public/proto/scene/${id}.webp`,
+  scene: `${what}을(를) 완전히 지우고, 그 자리를 주변 배경·옷자락·바닥으로 자연스럽게 이어 채운다. 인물의 얼굴, 몸, 자세, 옷, 소품, 조명, 구도는 그대로 둔다.`,
+});
+
 export const V3_ART: V3Art[] = [
+  noHands('e1-tree', "화면 왼쪽 아래의 '나'의 손과 소매, 손에 쥔 빨간 술 달린 시커먼 방망이", ['백설']),
+  noHands('e1-coins', "화면 아래의 '나'의 손과 소매, 손에 쥔 빨간 술 달린 시커먼 방망이", ['백설']),
+  noHands('e2-mirror', "화면 왼쪽 아래에서 백설의 어깨로 다가가는 '나'의 손과 베옷 소매", ['백설']),
+  noHands('e2-walk-bs', "화면 왼쪽 아래의 '나'의 손과 소매. 백설은 그대로 화면 쪽으로 손을 내밀어 이끄는 자세로 둔다", ['백설']),
+  noHands('e3-firstcup', "화면 아래의 술병을 든 '나'의 손과 소매. 술병은 술상 위에 놓인 것으로 남긴다", ['백설', '무영']),
   {
     id: 'e1-foxfire',
     who: ['백설'],
@@ -103,6 +120,15 @@ export function v3Prompt(a: V3Art): string {
 }
 
 function instructions(a: V3Art): string {
+  if (a.edit)
+    return [
+      `Use your built-in image generation tool to EDIT the first attached image (keep its ${a.width}x${a.height} portrait framing).`,
+      ...a.who.map((w, i) => `Reference ${i + 2}: the character ${w}, for identity only.`),
+      `PARTIAL EDIT ONLY (Korean): ${a.scene}`,
+      'Keep every unmentioned face, anatomy, pose, outfit, prop, composition, color and lighting unchanged. Do not reinterpret or redraw the whole picture.',
+      'No text, letters, signatures, watermarks or borders anywhere in the image.',
+      'Save exactly one generated image as out.png in the current working directory. Do not write code or create other files.',
+    ].join('\n\n');
   return [
     `Use your built-in image generation tool to create exactly one image, ${a.width}x${a.height} aspect (${a.width > a.height ? 'landscape' : 'portrait'}).`,
     ...a.who.map((w, i) => `Reference ${i + 1}: the character ${w}. Preserve this character's face, hair, costume, colors and accessories, and match its art style exactly.`),
@@ -121,7 +147,7 @@ function draw(a: V3Art) {
   try {
     execFileSync(
       process.env.CODEX_BIN ?? 'codex',
-      ['exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', work, ...a.who.flatMap((w) => ['-i', join(ROOT, REF[w])]), '--', instructions(a)],
+      ['exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', work, ...(a.edit ? ['-i', join(ROOT, a.edit)] : []), ...a.who.flatMap((w) => ['-i', join(ROOT, REF[w])]), '--', instructions(a)],
       { stdio: ['ignore', 'ignore', 'inherit'], timeout: 15 * 60_000 },
     );
     const png = join(work, 'out.png');
