@@ -25,7 +25,7 @@ const LOOK: Record<LightKind, { color: number; glow: number; flicker: number; pu
 
 /** 가운데가 가장 진하고 가장자리로 갈수록 사라지는 흰 원 */
 let soft: Texture | null = null;
-function softTexture() {
+export function softTexture() {
   if (soft) return soft;
   const size = 128;
   const cv = document.createElement('canvas');
