@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-    <meta name="theme-color" content="#fbf6f0" />
-    <meta name="description" content="떼인 빚을 받아내는 도깨비 방망이를 주운 나무꾼이 요괴 식객들과 함께 해랑국의 왕좌까지. 조선풍 판타지 방치형 육성 게임(성인 대상)." />
+    <meta name="theme-color" content="#0d0b10" />
+    <meta name="description" content="떼인 빚을 받아내는 도깨비 방망이를 주운 나무꾼이 식객들과 이야기를 따라 걷고 싸우는 조선풍 판타지 도트 RPG(성인 대상). 시제품 1부 1~3화." />
     <meta name="rating" content="adult" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="왕도 — 빚 받으러 왕까지" />
-    <meta property="og:description" content="도깨비 방망이를 주운 나무꾼과 요괴 식객들의 조선풍 판타지 육성 이야기. 성인 대상." />
+    <meta property="og:description" content="도깨비 방망이를 주운 나무꾼과 식객들의 조선풍 판타지 도트 RPG. 성인 대상." />
     <meta property="og:image" content="https://bn8624.github.io/wangdo/og.jpg" />
     <meta property="og:url" content="https://bn8624.github.io/wangdo/" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -22,11 +22,14 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Nanum+Brush+Script&family=Song+Myung&display=swap" rel="stylesheet" />
-    <!-- 토벌 결과 낙관에 쓰는 굵은 명조. 낙관 글자만 받아 온다 -->
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@900&text=%ED%86%A0%EB%B2%8C%EC%99%84%EB%A3%8C%ED%87%B4%EA%B0%81&display=swap" rel="stylesheet" />
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module" src="/src/proto/main.tsx"></script>
+    <script>
+      // 예전 게임이 남긴 서비스 워커가 있으면 걷어 낸다(sw.js가 캐시를 지우고 스스로 해제한다)
+      if ('serviceWorker' in navigator)
+        navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.update()));
+    </script>
   </body>
 </html>

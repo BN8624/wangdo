@@ -1,4 +1,4 @@
-// 밸런스 수치 모음. 숫자를 바꾼 뒤에는 `npm run simulate`와 `npm test`로 진행 속도를 꼭 확인한다.
+// 밸런스 수치 모음(전투 능력치·성장 배율). 바꾼 뒤에는 `npm test`로 시제품이 지지 않고 끝까지 가는지 확인한다.
 // 설계: docs/COLLECTION_DESIGN.md
 export const BALANCE = {
   start: { coin: 2000, jade: 2000, exp: 600, fame: 0 },
