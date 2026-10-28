@@ -330,13 +330,22 @@ const SKILL_TEXT: Record<MemberId, string> = {
   muyeong: '쇠방망이 내려치기 — 한 명에게 큰 한 방',
 };
 
+/** 컷인 전용 상반신(투명 배경, 가로 3:2). 없으면 대화창 전신을 잘라 쓴다 */
+const CUTIN_ART: Partial<Record<MemberId, string>> = { baekseol: 'proto/cutin/baekseol.webp', muyeong: 'proto/cutin/muyeong.webp' };
+
 /** 기술 컷인: 비스듬한 띠 위에 일러스트(주인공은 방망이)와 기술 이름 */
 export function CutIn({ who, name }: { who: MemberId; name: string }) {
   const art = PORTRAIT[who];
   return (
     <div className={`cutin ${who}`}>
       <div className="cutin-band">
-        {art ? <img className="cutin-art" src={art} alt="" /> : <img className="cutin-item" src="art/item/bangmangi.webp" alt="" />}
+        {CUTIN_ART[who] ? (
+          <img className="cutin-art wide" src={CUTIN_ART[who]} alt="" />
+        ) : art ? (
+          <img className="cutin-art" src={art} alt="" />
+        ) : (
+          <img className="cutin-item" src="art/item/bangmangi.webp" alt="" />
+        )}
         <div className="cutin-name">
           <small>{MEMBER_NAME[who]}</small>
           {name}

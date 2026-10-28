@@ -20,7 +20,7 @@
 
 캐릭터 칸은 귀·뿔을 그릴 자리를 위해 원본 16×16 위에 4픽셀을 더한 16×20이다. 그 밖의 타일·몬스터·대장·얼굴 그림·효과는 원본 그대로다. 예전에 흑운채로 쓰던 외눈 괴물(Cyclope·DemonCyclop) 그림은 묶음에 남아 있지만 쓰지 않는다.
 
-원본 묶음은 저장소에 넣지 않는다. 다시 만들려면 묶음을 받아 `python3 scripts/proto-art.py "<묶음 폴더>"`를 실행한다. 흑운채처럼 이미 만든 캐릭터에서 파생한 것만 고칠 때는 묶음 없이 `python3 scripts/proto-art.py --derive`로 된다.
+원본 묶음은 저장소에 넣지 않는다(약 94MB). 묶음은 `node scripts/fetch-ninja-pack.cjs <zip 경로>`로 가입 없이 받는다. 다시 만들려면 묶음을 받아 `python3 scripts/proto-art.py "<묶음 폴더>"`를 실행한다. 흑운채처럼 이미 만든 캐릭터에서 파생한 것만 고칠 때는 묶음 없이 `python3 scripts/proto-art.py --derive`로 된다.
 
 ## 식객 일러스트
 

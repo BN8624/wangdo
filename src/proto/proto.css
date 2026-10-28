@@ -782,6 +782,11 @@ button {
   transform: skewY(6deg);
   animation: cutArt 1.1s ease-out both;
 }
+.cutin-art.wide {
+  left: -2%;
+  top: -12%;
+  height: 135%;
+}
 .cutin-item {
   position: absolute;
   left: 4%;
