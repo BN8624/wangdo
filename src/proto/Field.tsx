@@ -36,6 +36,9 @@ const SKY = {
 /** 사람이 든 불빛 반지름(칸) */
 const CARRY = { night: 2.8, cave: 4.5, torch: 2.6, wisp: 1.8, foxfire: 1.5 };
 
+/** 서 있을 때 숨 쉬듯 1도트 오르내림(사람마다 박자를 어긋나게) */
+const breath = (now: number, seed: number) => (Math.floor(now / 650 + seed) % 2 === 0 ? 0 : 1);
+
 const lerp = (a: Pt, b: Pt, t: number): Pt => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
 
 function along(track: Pt[], i: number): { p: Pt; dir: Dir | null } {
@@ -197,7 +200,7 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       for (const a of actorsRef.current) {
         if (a.char) {
           shadow(a.at.x * T, a.at.y * T);
-          put(`actor:${a.id}`, charTex(a.char, a.dir, 0), a.at.x * T, a.at.y * T - (CH - T), order(a.at.y));
+          put(`actor:${a.id}`, charTex(a.char, a.dir, 0), a.at.x * T, a.at.y * T - (CH - T) + breath(now, a.at.x * 3 + a.at.y), order(a.at.y));
         } else if (a.mon) {
           const tex = monTex(a.mon, a.dir, f);
           // 대장(50×50)은 발밑 칸 가운데에 맞춘다
@@ -210,7 +213,7 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       pos.forEach((q, k) => {
         const row = q.moving ? Math.floor((now / (TILE_MS / 2 / live.current.speed)) % 4) : 0;
         shadow(q.p.x * T, q.p.y * T);
-        put(`party:${k}`, charTex(members[k], q.dir, row), q.p.x * T, q.p.y * T - (CH - T), order(q.p.y + 0.01 * (members.length - k)));
+        put(`party:${k}`, charTex(members[k], q.dir, row), q.p.x * T, q.p.y * T - (CH - T) + (q.moving ? 0 : breath(now, k * 2.7)), order(q.p.y + 0.01 * (members.length - k)));
       });
       for (const [key, sp] of sprites) if (!seen.has(key)) sp.visible = false;
 
@@ -233,6 +236,10 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
         }
       }
       lighting.update(app.renderer, cw, chh, now, sky, lamps);
+      // 흙길을 걷는 동안 이끄는 사람 발밑에 먼지
+      const lp = pos[0];
+      const onDirt = gr.ground[Math.round(lp.p.y)]?.[Math.round(lp.p.x)] === ':';
+      if (lp.moving && onDirt) particles.footstep(lp.p.x * T + T / 2, lp.p.y * T + T - 2, now);
       particles.update(now, MAPS[game.map], game.night, { x: camX, y: camY, w: vw, h: vh }, s, (x, y) => [(x - camX) * s, (y - camY) * s]);
 
       app.render();

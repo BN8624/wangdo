@@ -3,7 +3,7 @@
 import { Graphics } from 'pixi.js';
 import type { MapDef } from './maps';
 
-type Kind = 'leaf' | 'dust' | 'smoke' | 'firefly';
+type Kind = 'leaf' | 'dust' | 'smoke' | 'firefly' | 'step';
 interface P {
   kind: Kind;
   x: number;
@@ -24,6 +24,7 @@ const RATE: Record<Kind, { perSec: number; max: number }> = {
   dust: { perSec: 3, max: 26 },
   smoke: { perSec: 2.2, max: 40 },
   firefly: { perSec: 2.4, max: 18 },
+  step: { perSec: 0, max: 12 },
 };
 
 export class Particles {
@@ -35,6 +36,16 @@ export class Particles {
   private last = 0;
   private map = '';
   private acc: Partial<Record<string, number>> = {};
+  private lastStep = 0;
+
+  /** 걷는 발밑 먼지(맵 좌표). 너무 잦지 않게 */
+  footstep(x: number, y: number, now: number) {
+    if (now - this.lastStep < 180) return;
+    this.lastStep = now;
+    if (this.list.filter((p) => p.kind === 'step').length >= RATE.step.max) return;
+    for (const dir of [-1, 1])
+      this.list.push({ kind: 'step', x: x + dir * 2, y, vx: dir * (3 + Math.random() * 3), vy: -2 - Math.random() * 2, age: 0, life: 0.45, seed: 0, color: 0xc9a77a });
+  }
 
   private spawn(kind: Kind, n: number, make: () => P) {
     const key = kind;
@@ -92,6 +103,8 @@ export class Particles {
         // 팔랑일 때 가로·세로가 번갈아 보인다
         const flat = Math.sin(t * 6 + p.seed) > 0;
         this.world.rect(Math.round(p.x), Math.round(p.y), flat ? 2 : 1, flat ? 1 : 2).fill({ color: p.color, alpha: k > 0.85 ? (1 - k) / 0.15 : 1 });
+      } else if (p.kind === 'step') {
+        this.world.rect(Math.round(p.x), Math.round(p.y), 1, 1).fill({ color: p.color, alpha: 0.8 * (1 - k) });
       } else if (p.kind === 'dust') {
         this.world.rect(Math.round(p.x), Math.round(p.y), 1, 1).fill({ color: p.color, alpha: 0.45 * Math.sin(Math.PI * k) });
       } else if (p.kind === 'smoke') {
