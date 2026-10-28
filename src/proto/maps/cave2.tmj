@@ -27,6 +27,11 @@
    "name": "cave",
    "type": "bool",
    "value": true
+  },
+  {
+   "name": "ambient",
+   "type": "string",
+   "value": "dust"
   }
  ],
  "tilesets": [

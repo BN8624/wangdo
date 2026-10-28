@@ -2,8 +2,8 @@
 //  층: terrain(땅: 풀·흙길·동굴 바닥·동굴 벽·어둠. 실제 그림은 이웃을 보고 코드가 고른다)
 //      deco(집·나무·소품. tiles.png를 16칸 격자로 쓴 deco.tsj, 막히는 칸은 타일 속성 solid,
 //           나무·지붕 윗줄처럼 지나가는 사람을 덮는 칸은 above)
-//      objects(점 오브젝트. type: actor 사람·짐승 / chest 상자 / point 대본이 쓰는 이름 지점 / light 등잔·횃불)
-//  맵 속성: name(화면에 띄울 이름), bgm, cave(동굴 맵)
+//      objects(점 오브젝트. type: actor 사람·짐승 / chest 상자 / point 대본이 쓰는 이름 지점 / light 등잔·횃불 / smoke 굴뚝 연기)
+//  맵 속성: name(화면에 띄울 이름), bgm, cave(동굴 맵), ambient(떠다니는 것: leaves 낙엽·dust 먼지·none)
 import type { Actor, Dir, Pt } from './types';
 import terrainTsj from './maps/terrain.tsj?raw';
 import decoTsj from './maps/deco.tsj?raw';
@@ -59,6 +59,10 @@ export interface MapDef {
   actors: (Actor & { hidden?: boolean; light?: LightKind })[];
   chests: ChestDef[];
   lights: LightDef[];
+  /** 굴뚝 연기가 오르는 자리(칸 단위) */
+  smoke: Pt[];
+  /** 떠다니는 것. 밤의 반딧불은 바깥 맵 어디에나 */
+  ambient: 'leaves' | 'dust' | 'none';
   /** 대본이 쓰는 이름 지점 */
   points: Record<string, Pt>;
   bgm: 'story' | 'home' | 'battle';
@@ -134,6 +138,7 @@ export function parseTiled(id: MapId, raw: string): MapDef {
   const chests: ChestDef[] = [];
   const points: Record<string, Pt> = {};
   const lights: LightDef[] = [];
+  const smoke: Pt[] = [];
   for (const o of objs.objects) {
     const p = propsOf(o.properties);
     if (o.type === 'actor')
@@ -148,8 +153,9 @@ export function parseTiled(id: MapId, raw: string): MapDef {
     else if (o.type === 'light') lights.push({ name: o.name, x: o.x / 16, y: o.y / 16, radius: Number(p.radius ?? 2.5), kind: (p.kind ?? 'lamp') as LightKind });
     else if (o.type === 'chest') chests.push({ id: o.name, at: cell(o), ...(p.item ? { item: String(p.item) } : {}), ...(p.coin ? { coin: Number(p.coin) } : {}) });
     else if (o.type === 'point') points[o.name] = cell(o);
+    else if (o.type === 'smoke') smoke.push({ x: o.x / 16, y: o.y / 16 });
   }
-  return { id, name: String(props.name ?? id), bgm: (props.bgm ?? 'story') as MapDef['bgm'], cave: !!props.cave, w: m.width, h: m.height, ground, deco: cells, actors, chests, lights, points };
+  return { id, name: String(props.name ?? id), bgm: (props.bgm ?? 'story') as MapDef['bgm'], cave: !!props.cave, w: m.width, h: m.height, ground, deco: cells, actors, chests, lights, smoke, ambient: (props.ambient ?? 'none') as MapDef['ambient'], points };
 }
 
 export const MAPS = Object.fromEntries((Object.keys(RAW) as MapId[]).map((id) => [id, parseTiled(id, RAW[id])])) as Record<MapId, MapDef>;

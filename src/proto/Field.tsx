@@ -3,6 +3,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { CharName } from './atlas';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { Lighting, type Lamp } from './light';
+import { Particles } from './particles';
 import { CH, T, aboveCanvas, isCave, mapCanvas } from './draw';
 import { canvasTexture, charTex, monTex, tileTex } from './pixi';
 import { MAPS, dirTo, grid } from './maps';
@@ -99,9 +100,12 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
     const screen = new Container();
     const sprites = new Map<string, Sprite>();
     let shownMap = '';
-    // 밤·동굴 조명
+    // 밤·동굴 조명, 그 위로 반딧불
     const lighting = new Lighting();
-    screen.addChild(lighting.view);
+    const particles = new Particles();
+    particles.world.zIndex = 1e9 + 1;
+    world.addChild(particles.world);
+    screen.addChild(lighting.view, particles.glow);
 
     const spriteOf = (key: string) => {
       let sp = sprites.get(key);
@@ -229,6 +233,7 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
         }
       }
       lighting.update(app.renderer, cw, chh, now, sky, lamps);
+      particles.update(now, MAPS[game.map], game.night, { x: camX, y: camY, w: vw, h: vh }, s, (x, y) => [(x - camX) * s, (y - camY) * s]);
 
       app.render();
 

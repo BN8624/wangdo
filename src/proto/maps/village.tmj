@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 4,
- "nextobjectid": 29,
+ "nextobjectid": 34,
  "properties": [
   {
    "name": "name",
@@ -22,6 +22,11 @@
    "name": "bgm",
    "type": "string",
    "value": "home"
+  },
+  {
+   "name": "ambient",
+   "type": "string",
+   "value": "none"
   }
  ],
  "tilesets": [
@@ -795,6 +800,66 @@
        "value": 2.2
       }
      ]
+    },
+    {
+     "id": 29,
+     "name": "기와집 굴뚝",
+     "type": "smoke",
+     "point": true,
+     "x": 80.0,
+     "y": 54.4,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 30,
+     "name": "초가 굴뚝",
+     "type": "smoke",
+     "point": true,
+     "x": 80.0,
+     "y": 150.4,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 31,
+     "name": "창고 굴뚝",
+     "type": "smoke",
+     "point": true,
+     "x": 272.0,
+     "y": 54.4,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 32,
+     "name": "오두막 굴뚝",
+     "type": "smoke",
+     "point": true,
+     "x": 272.0,
+     "y": 246.4,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 33,
+     "name": "주막 굴뚝",
+     "type": "smoke",
+     "point": true,
+     "x": 67.2,
+     "y": 244.8,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
     }
    ]
   }

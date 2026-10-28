@@ -22,6 +22,11 @@
    "name": "bgm",
    "type": "string",
    "value": "story"
+  },
+  {
+   "name": "ambient",
+   "type": "string",
+   "value": "leaves"
   }
  ],
  "tilesets": [
