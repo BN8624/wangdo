@@ -1,7 +1,8 @@
 // 맵 화면: 미리 구운 맵 위에 사람·짐승·상자·파티를 그리고, 걷기 Effect를 움직임으로 보여 준다
 import { useEffect, useMemo, useRef } from 'react';
 import type { CharName } from './atlas';
-import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { Application, Container, Sprite, Texture } from 'pixi.js';
+import { Lighting, type Lamp } from './light';
 import { CH, T, isCave, mapCanvas } from './draw';
 import { canvasTexture, charTex, monTex, tileTex } from './pixi';
 import { MAPS, dirTo, grid } from './maps';
@@ -25,26 +26,14 @@ interface Walk {
   done: boolean;
 }
 
-/** 동굴에서 밝은 반지름(도트): 안쪽은 그대로, 바깥으로 갈수록 어두워진다 */
-const VIGNETTE_INNER = 40;
-const VIGNETTE_OUTER = 120;
-let vignetteTex: Texture | null = null;
-function vignetteTexture() {
-  if (vignetteTex) return vignetteTex;
-  const size = 256;
-  const cv = document.createElement('canvas');
-  cv.width = cv.height = size;
-  const ctx = cv.getContext('2d')!;
-  const r = size / 2;
-  const grad = ctx.createRadialGradient(r, r, (r * VIGNETTE_INNER) / VIGNETTE_OUTER, r, r, r);
-  grad.addColorStop(0, 'rgba(8,6,12,0)');
-  grad.addColorStop(1, 'rgba(8,6,12,0.88)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, 0, size, size);
-  vignetteTex = canvasTexture('vignette', cv);
-  vignetteTex.source.scaleMode = 'linear';
-  return vignetteTex;
-}
+/** 밤·동굴의 하늘빛: base는 어디나, dark는 불빛이 뚫는 어둠 */
+const SKY = {
+  day: { base: 0, dark: 0, color: 0 },
+  night: { base: 0.3, dark: 0.62, color: 0x0b0e2a },
+  cave: { base: 0.12, dark: 0.84, color: 0x08060c },
+};
+/** 사람이 든 불빛 반지름(칸) */
+const CARRY = { night: 2.8, cave: 4.5, torch: 2.6, wisp: 1.8, foxfire: 1.5 };
 
 const lerp = (a: Pt, b: Pt, t: number): Pt => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
 
@@ -104,12 +93,9 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
     const screen = new Container();
     const sprites = new Map<string, Sprite>();
     let shownMap = '';
-    // 동굴: 이끄는 사람 둘레만 밝게(반지름 40~120 도트 사이에서 어두워짐)
-    const vignette = new Sprite(vignetteTexture());
-    vignette.anchor.set(0.5);
-    const vignetteEdge = new Graphics();
-    const nightTint = new Graphics();
-    screen.addChild(vignetteEdge, vignette, nightTint);
+    // 밤·동굴 조명
+    const lighting = new Lighting();
+    screen.addChild(lighting.view);
 
     const spriteOf = (key: string) => {
       let sp = sprites.get(key);
@@ -209,26 +195,25 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       });
       for (const [key, sp] of sprites) if (!seen.has(key)) sp.visible = false;
 
-      // 화면 덮개: 동굴 어둠, 밤빛
+      // 밤·동굴 조명: 맵의 등잔, 횃불 든 사람·도깨비불, 이끄는 사람의 등불, 여우불을 되찾은 백설
       const cave = isCave(game.map);
-      vignette.visible = cave;
-      vignetteEdge.clear();
-      if (cave) {
-        const cx = (lead.x * T + T / 2 - camX) * s;
-        const cy = (lead.y * T + T / 2 - camY) * s;
-        const r = VIGNETTE_OUTER * s;
-        vignette.position.set(cx, cy);
-        vignette.width = vignette.height = r * 2;
-        // 원 바깥은 가장 어두운 빛으로 채운다
-        const dark = { color: 0x08060c, alpha: 0.88 };
-        vignetteEdge
-          .rect(0, 0, cw, Math.max(0, cy - r)).fill(dark)
-          .rect(0, cy + r, cw, Math.max(0, chh - cy - r)).fill(dark)
-          .rect(0, cy - r, Math.max(0, cx - r), r * 2).fill(dark)
-          .rect(cx + r, cy - r, Math.max(0, cw - cx - r), r * 2).fill(dark);
+      const sky = cave ? SKY.cave : game.night ? SKY.night : SKY.day;
+      const lamps: Lamp[] = [];
+      if (sky.dark) {
+        const sx = (wx: number) => (wx - camX) * s;
+        const sy = (wy: number) => (wy - camY) * s;
+        MAPS[game.map].lights.forEach((l, i) => lamps.push({ x: sx(l.x * T), y: sy(l.y * T), r: l.radius * T * s, kind: l.kind, seed: i * 1.7 }));
+        actorsRef.current.forEach((a, i) => {
+          if (a.light) lamps.push({ x: sx(a.at.x * T + T / 2), y: sy(a.at.y * T + T / 4), r: CARRY[a.light === 'wisp' ? 'wisp' : 'torch'] * T * s, kind: a.light, seed: 10 + i * 2.3 });
+        });
+        lamps.push({ x: sx(lead.x * T + T / 2), y: sy(lead.y * T + T / 2), r: (cave ? CARRY.cave : CARRY.night) * T * s, kind: 'lantern', seed: 99 });
+        const bs = members.indexOf('baekseol');
+        if (bs >= 0 && game.skills.includes('baekseol')) {
+          const q = pos[bs].p;
+          lamps.push({ x: sx(q.x * T + T / 2), y: sy(q.y * T), r: CARRY.foxfire * T * s, kind: 'foxfire', seed: 42 });
+        }
       }
-      nightTint.clear();
-      if (game.night) nightTint.rect(0, 0, cw, chh).fill({ color: 0x141a46, alpha: 0.45 });
+      lighting.update(app.renderer, cw, chh, now, sky, lamps);
 
       app.render();
 

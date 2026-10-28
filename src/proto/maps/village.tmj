@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 4,
- "nextobjectid": 23,
+ "nextobjectid": 29,
  "properties": [
   {
    "name": "name",
@@ -245,6 +245,11 @@
        "name": "hidden",
        "type": "bool",
        "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
       }
      ]
     },
@@ -274,6 +279,11 @@
        "name": "hidden",
        "type": "bool",
        "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
       }
      ]
     },
@@ -303,6 +313,11 @@
        "name": "hidden",
        "type": "bool",
        "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
       }
      ]
     },
@@ -477,6 +492,11 @@
        "name": "hidden",
        "type": "bool",
        "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "wisp"
       }
      ]
     },
@@ -506,6 +526,11 @@
        "name": "hidden",
        "type": "bool",
        "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "wisp"
       }
      ]
     },
@@ -535,6 +560,11 @@
        "name": "hidden",
        "type": "bool",
        "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "wisp"
       }
      ]
     },
@@ -621,6 +651,150 @@
      "height": 0,
      "rotation": 0,
      "visible": true
+    },
+    {
+     "id": 23,
+     "name": "주막 등잔",
+     "type": "light",
+     "point": true,
+     "x": 56.0,
+     "y": 281.6,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 3.2
+      }
+     ]
+    },
+    {
+     "id": 24,
+     "name": "오두막 등잔",
+     "type": "light",
+     "point": true,
+     "x": 249.6,
+     "y": 281.6,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 2.6
+      }
+     ]
+    },
+    {
+     "id": 25,
+     "name": "장터 등잔",
+     "type": "light",
+     "point": true,
+     "x": 243.2,
+     "y": 185.6,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 2.6
+      }
+     ]
+    },
+    {
+     "id": 26,
+     "name": "기와집 등잔",
+     "type": "light",
+     "point": true,
+     "x": 57.6,
+     "y": 89.6,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 2.4
+      }
+     ]
+    },
+    {
+     "id": 27,
+     "name": "초가 등잔",
+     "type": "light",
+     "point": true,
+     "x": 57.6,
+     "y": 185.6,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 2.2
+      }
+     ]
+    },
+    {
+     "id": 28,
+     "name": "창고 등잔",
+     "type": "light",
+     "point": true,
+     "x": 249.6,
+     "y": 89.6,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 2.2
+      }
+     ]
     }
    ]
   }
