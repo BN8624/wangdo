@@ -15,6 +15,9 @@
 | 창고지기 | Actor/Character/Noble | 페도라를 갓(얇고 넓은 챙, 높은 원통 몸통, 갓끈)으로 다시 그림. 대화창 얼굴도 같이 |
 | 초가 | Backgrounds/Tilesets/TilesetHouse (0,0)·(8,0) | 주황 지붕을 볏짚 색으로 |
 | 기와집 | Backgrounds/Tilesets/TilesetHouse (12,0) | 붉은 지붕을 먹빛 회색으로 |
+| 싸리 울타리·돌담 | Backgrounds/Tilesets/TilesetHouse (11,5)·(11,9) | 나무 울타리를 마른 싸리 빛으로, 베이지 담을 잿빛 막돌로 |
+| 빨랫줄·빨래·볏단 | Backgrounds/Tilesets/TilesetElement (11,2)·(14,2)·(12,4) | 기둥을 나무 빛으로, 옷을 쪽빛 저고리와 흰 무명으로 |
+| 솟대 | (직접 그림) | 장대 끝 나무 오리. `scripts/proto-art.py`의 `sotdae()` |
 | 흑운채 졸개 둘 | Actor/Character/Hunter · Monk2 | 옷과 머리를 먹빛으로, 도깨비 뿔 둘 덧그림(사람 체형 산적). 대화창 얼굴도 같이 |
 | 흑운채 두목 먹쇠 | Actor/Character/Monk2 | 붉은 도깨비 살빛, 먹빛 옷, 큰 뿔. 전투에서는 두 배로 그린다 |
 
