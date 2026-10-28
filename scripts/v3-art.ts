@@ -34,7 +34,7 @@ export const V3_ART: V3Art[] = [
     ...SCENE,
     out: 'public/proto/scene/e1-foxfire.webp',
     scene:
-      "[이번 장면] 1화 밤, 초가 오두막 안. 발길질에 문짝이 뜯겨 나간 문간에 횃불 불빛과 몽둥이 든 사내들의 그림자. 바닥에는 방금 방망이가 받아낸 엽전들이 굴러다닌다. 백설은 이불 위에서 몸을 반쯤 일으킨 채, 제 손끝에 화르르 피어난 푸른 여우불 한 송이를 놀란 눈으로 내려다본다. 기쁨과 놀라움이 섞인 얼굴, 꼬리 끝이 곤두섬. 앞쪽에 빨간 술이 달린 시커먼 방망이를 쥔 '나'의 손. 1인칭 시점, 세로 2:3.",
+      "[이번 장면] 1화 밤, 초가 오두막 안. 발길질에 문짝이 뜯겨 나간 문간에 횃불 불빛과 몽둥이 든 사내들의 그림자. 바닥에는 방금 방망이가 받아낸 엽전들이 굴러다닌다. 백설은 이불 위에서 몸을 반쯤 일으킨 채, 제 손끝에 화르르 피어난 푸른 여우불 한 송이를 놀란 눈으로 내려다본다. 기쁨과 놀라움이 섞인 얼굴, 꼬리 끝이 곤두섬. '나'의 손이나 방망이는 그리지 않는다. 1인칭 시점, 세로 2:3.",
   },
   {
     id: 'e2-market',
@@ -42,7 +42,7 @@ export const V3_ART: V3Art[] = [
     ...SCENE,
     out: 'public/proto/scene/e2-market.webp',
     scene:
-      "[이번 장면] 2화 아침, 시골 장터. 떡판 앞에 쪼그려 앉은 백설이 인절미를 입에 문 채 '나'를 올려다보며 장난스럽게 웃는다. 입가에 콩고물. 한 손바닥 위에서 엽전이 나뭇잎으로 도로 바뀌며 팔랑 떨어진다. 뒤로 짚신·몽둥이를 건 노점, 차일, 장 보는 사람들은 흐릿하게. 밝은 아침 햇살. 앞쪽에 '나'의 베옷 소매와 엽전을 쥔 손. 1인칭 시점, 세로 2:3.",
+      "[이번 장면] 2화 아침, 시골 장터. 떡판 앞에 쪼그려 앉은 백설이 인절미를 입에 문 채 '나'를 올려다보며 장난스럽게 웃는다. 입가에 콩고물. 한 손바닥 위에서 엽전이 나뭇잎으로 도로 바뀌며 팔랑 떨어진다. 뒤로 짚신·몽둥이를 건 노점, 차일, 장 보는 사람들은 흐릿하게. 밝은 아침 햇살. 아직 아무도 값을 치르지 않았다. '나'의 손이나 엽전 꾸러미는 그리지 않는다. 1인칭 시점, 세로 2:3.",
   },
   {
     id: 'e2-mirror',
@@ -109,6 +109,7 @@ function instructions(a: V3Art): string {
     `PROMPT (Korean):\n${v3Prompt(a)}`,
     a.transparent ? 'Output must have a real transparent alpha background, not a checkerboard or painted background.' : 'Output must use an opaque background.',
     'No text, letters, signatures, watermarks or borders anywhere in the image.',
+    "Do not draw the viewer's (the protagonist's) hands, arms, sleeves, body or anything they hold, unless the scene line explicitly asks for '나'의 손.",
     'Save exactly one generated image as out.png in the current working directory. Do not write code or create other files.',
   ].join('\n\n');
 }
