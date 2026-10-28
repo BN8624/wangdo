@@ -1,6 +1,7 @@
 // 시제품 맵: Tiled(https://www.mapeditor.org)로 그린 src/proto/maps/<id>.tmj를 읽는다. 한 칸이 16×16이다.
 //  층: terrain(땅: 풀·흙길·동굴 바닥·동굴 벽·어둠. 실제 그림은 이웃을 보고 코드가 고른다)
-//      deco(집·나무·소품. tiles.png를 16칸 격자로 쓴 deco.tsj, 막히는 칸은 타일 속성 solid)
+//      deco(집·나무·소품. tiles.png를 16칸 격자로 쓴 deco.tsj, 막히는 칸은 타일 속성 solid,
+//           나무·지붕 윗줄처럼 지나가는 사람을 덮는 칸은 above)
 //      objects(점 오브젝트. type: actor 사람·짐승 / chest 상자 / point 대본이 쓰는 이름 지점 / light 등잔·횃불)
 //  맵 속성: name(화면에 띄울 이름), bgm, cave(동굴 맵)
 import type { Actor, Dir, Pt } from './types';
@@ -29,6 +30,8 @@ export interface DecoCell {
   sx: number;
   sy: number;
   solid: boolean;
+  /** 사람 위에 그린다(그 뒤로 지나가면 가려진다) */
+  above: boolean;
 }
 
 /** 밤·동굴에서 어둠을 밝히는 불빛 종류 */
@@ -124,7 +127,7 @@ export function parseTiled(id: MapId, raw: string): MapDef {
   deco.data.forEach((gid, i) => {
     if (!gid) return;
     const t = lookup(gid);
-    cells.push({ x: i % m.width, y: Math.floor(i / m.width), sx: (t.local % t.ts.columns) * 16, sy: Math.floor(t.local / t.ts.columns) * 16, solid: !!tileProps(t.ts, t.local).solid });
+    cells.push({ x: i % m.width, y: Math.floor(i / m.width), sx: (t.local % t.ts.columns) * 16, sy: Math.floor(t.local / t.ts.columns) * 16, solid: !!tileProps(t.ts, t.local).solid, above: !!tileProps(t.ts, t.local).above });
   });
   const cell = (o: TiledObject): Pt => ({ x: Math.floor(o.x / 16), y: Math.floor(o.y / 16) });
   const actors: MapDef['actors'] = [];

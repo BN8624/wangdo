@@ -1,9 +1,9 @@
 // 맵 화면: 미리 구운 맵 위에 사람·짐승·상자·파티를 그리고, 걷기 Effect를 움직임으로 보여 준다
 import { useEffect, useMemo, useRef } from 'react';
 import type { CharName } from './atlas';
-import { Application, Container, Sprite, Texture } from 'pixi.js';
+import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { Lighting, type Lamp } from './light';
-import { CH, T, isCave, mapCanvas } from './draw';
+import { CH, T, aboveCanvas, isCave, mapCanvas } from './draw';
 import { canvasTexture, charTex, monTex, tileTex } from './pixi';
 import { MAPS, dirTo, grid } from './maps';
 import { actorsOn, type Effect, type Game } from './runner';
@@ -89,7 +89,13 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
     const world = new Container({ sortableChildren: true });
     const mapSprite = new Sprite();
     mapSprite.zIndex = -1e6;
-    world.addChild(mapSprite);
+    // 발밑 그림자: 맵 위, 사람 아래
+    const shadows = new Graphics();
+    shadows.zIndex = -5e5;
+    // 나무·지붕 윗줄: 사람 위
+    const aboveSprite = new Sprite();
+    aboveSprite.zIndex = 1e9;
+    world.addChild(mapSprite, shadows, aboveSprite);
     const screen = new Container();
     const sprites = new Map<string, Sprite>();
     let shownMap = '';
@@ -165,10 +171,14 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       if (shownMap !== game.map) {
         shownMap = game.map;
         mapSprite.texture = canvasTexture(game.map, mapCanvas(game.map));
+        aboveSprite.texture = canvasTexture(`${game.map}:above`, aboveCanvas(game.map));
       }
 
       // 사람·짐승·상자·파티: 발밑 y 순서(zIndex)로
       const seen = new Set<string>();
+      shadows.clear();
+      /** 발밑 칸(x, y: 도트 좌표, 칸 왼쪽 위)에 납작한 그림자 */
+      const shadow = (x: number, y: number, rx = 5) => shadows.ellipse(x + T / 2, y + T - 1.5, rx, 2).fill({ color: 0x000000, alpha: 0.28 });
       const put = (key: string, tex: Texture, x: number, y: number, z: number) => {
         const sp = spriteOf(key);
         sp.texture = tex;
@@ -181,16 +191,21 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       for (const ch of MAPS[game.map].chests) put(`chest:${ch.id}`, tileTex(game.opened.includes(ch.id) ? 'chest_open' : 'chest'), ch.at.x * T, ch.at.y * T, order(ch.at.y));
       const f = Math.floor(now / 260);
       for (const a of actorsRef.current) {
-        if (a.char) put(`actor:${a.id}`, charTex(a.char, a.dir, 0), a.at.x * T, a.at.y * T - (CH - T), order(a.at.y));
-        else if (a.mon) {
+        if (a.char) {
+          shadow(a.at.x * T, a.at.y * T);
+          put(`actor:${a.id}`, charTex(a.char, a.dir, 0), a.at.x * T, a.at.y * T - (CH - T), order(a.at.y));
+        } else if (a.mon) {
           const tex = monTex(a.mon, a.dir, f);
           // 대장(50×50)은 발밑 칸 가운데에 맞춘다
           const big = tex.frame.width > T;
+          // 도깨비불은 떠 있으니 그림자 없이
+          if (a.mon !== 'wisp') shadow(a.at.x * T, a.at.y * T, big ? 14 : 5);
           put(`actor:${a.id}`, tex, a.at.x * T + (big ? T / 2 - 25 : 0), a.at.y * T + (big ? T - 50 : 0), order(a.at.y));
         }
       }
       pos.forEach((q, k) => {
         const row = q.moving ? Math.floor((now / (TILE_MS / 2 / live.current.speed)) % 4) : 0;
+        shadow(q.p.x * T, q.p.y * T);
         put(`party:${k}`, charTex(members[k], q.dir, row), q.p.x * T, q.p.y * T - (CH - T), order(q.p.y + 0.01 * (members.length - k)));
       });
       for (const [key, sp] of sprites) if (!seen.has(key)) sp.visible = false;
