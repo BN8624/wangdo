@@ -1,7 +1,9 @@
 // 맵 화면: 미리 구운 맵 위에 사람·짐승·상자·파티를 그리고, 걷기 Effect를 움직임으로 보여 준다
 import { useEffect, useMemo, useRef } from 'react';
 import type { CharName } from './atlas';
-import { CH, T, drawChar, drawMon, drawTile, isCave, mapCanvas } from './draw';
+import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { CH, T, isCave, mapCanvas } from './draw';
+import { canvasTexture, charTex, monTex, tileTex } from './pixi';
 import { MAPS, dirTo, grid } from './maps';
 import { actorsOn, type Effect, type Game } from './runner';
 import type { Dir, Line, Pt } from './types';
@@ -23,6 +25,27 @@ interface Walk {
   done: boolean;
 }
 
+/** 동굴에서 밝은 반지름(도트): 안쪽은 그대로, 바깥으로 갈수록 어두워진다 */
+const VIGNETTE_INNER = 40;
+const VIGNETTE_OUTER = 120;
+let vignetteTex: Texture | null = null;
+function vignetteTexture() {
+  if (vignetteTex) return vignetteTex;
+  const size = 256;
+  const cv = document.createElement('canvas');
+  cv.width = cv.height = size;
+  const ctx = cv.getContext('2d')!;
+  const r = size / 2;
+  const grad = ctx.createRadialGradient(r, r, (r * VIGNETTE_INNER) / VIGNETTE_OUTER, r, r, r);
+  grad.addColorStop(0, 'rgba(8,6,12,0)');
+  grad.addColorStop(1, 'rgba(8,6,12,0.88)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  vignetteTex = canvasTexture('vignette', cv);
+  vignetteTex.source.scaleMode = 'linear';
+  return vignetteTex;
+}
+
 const lerp = (a: Pt, b: Pt, t: number): Pt => ({ x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t });
 
 function along(track: Pt[], i: number): { p: Pt; dir: Dir | null } {
@@ -34,7 +57,6 @@ function along(track: Pt[], i: number): { p: Pt; dir: Dir | null } {
 
 export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; speed: number; onWalked: () => void }) {
   const wrap = useRef<HTMLDivElement>(null);
-  const cv = useRef<HTMLCanvasElement>(null);
   const bubble = useRef<HTMLDivElement>(null);
   const walk = useRef<Walk | null>(null);
   const live = useRef({ g, speed, onWalked });
@@ -68,23 +90,45 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fx]);
 
+  // PixiJS 무대. 한 번 만들고, 매 프레임 사람·카메라만 고친다
   useEffect(() => {
+    const box = wrap.current;
+    if (!box) return;
     let raf = 0;
+    let dead = false;
+    const app = new Application();
+    const world = new Container({ sortableChildren: true });
+    const mapSprite = new Sprite();
+    mapSprite.zIndex = -1e6;
+    world.addChild(mapSprite);
+    const screen = new Container();
+    const sprites = new Map<string, Sprite>();
+    let shownMap = '';
+    // 동굴: 이끄는 사람 둘레만 밝게(반지름 40~120 도트 사이에서 어두워짐)
+    const vignette = new Sprite(vignetteTexture());
+    vignette.anchor.set(0.5);
+    const vignetteEdge = new Graphics();
+    const nightTint = new Graphics();
+    screen.addChild(vignetteEdge, vignette, nightTint);
+
+    const spriteOf = (key: string) => {
+      let sp = sprites.get(key);
+      if (!sp) {
+        sp = new Sprite();
+        sprites.set(key, sp);
+        world.addChild(sp);
+      }
+      return sp;
+    };
+
     const frame = (now: number) => {
       raf = requestAnimationFrame(frame);
-      const canvas = cv.current;
-      const box = wrap.current;
-      if (!canvas || !box) return;
       const dpr = window.devicePixelRatio || 1;
-      const cw = box.clientWidth;
-      const chh = box.clientHeight;
-      if (canvas.width !== Math.round(cw * dpr) || canvas.height !== Math.round(chh * dpr)) {
-        canvas.width = Math.round(cw * dpr);
-        canvas.height = Math.round(chh * dpr);
-      }
+      const cw = Math.round(box.clientWidth * dpr);
+      const chh = Math.round(box.clientHeight * dpr);
+      if (!cw || !chh) return;
+      if (app.renderer.width !== cw || app.renderer.height !== chh) app.renderer.resize(cw, chh);
       const s = Math.max(1, Math.round(ZOOM * dpr));
-      const ctx = canvas.getContext('2d')!;
-      ctx.imageSmoothingEnabled = false;
       const { g: game } = live.current;
       const gr = grid(game.map);
 
@@ -119,8 +163,8 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       }
 
       // 카메라: 이끄는 사람을 가운데보다 조금 위에
-      const vw = canvas.width / s;
-      const vh = canvas.height / s;
+      const vw = cw / s;
+      const vh = chh / s;
       const mw = gr.w * T;
       const mh = gr.h * T;
       const lead = pos[0].p;
@@ -129,46 +173,64 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       const fitY = (target: number) => Math.max(Math.min(0, mh - vh), Math.min(mh - vh * 0.72, target - vh * 0.38));
       const camX = Math.round(fitX(lead.x * T + T / 2) * s) / s;
       const camY = Math.round(fitY(lead.y * T + T / 2) * s) / s;
+      world.scale.set(s);
+      world.position.set(-camX * s, -camY * s);
 
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.fillStyle = '#0d0b10';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.setTransform(s, 0, 0, s, -camX * s, -camY * s);
-      ctx.drawImage(mapCanvas(game.map), 0, 0);
-
-      // 사람·짐승·상자·파티를 발밑 y 순서로
-      type Draw = { y: number; fn: () => void };
-      const list: Draw[] = [];
-      for (const ch of MAPS[game.map].chests) {
-        list.push({ y: ch.at.y, fn: () => drawTile(ctx, game.opened.includes(ch.id) ? 'chest_open' : 'chest', ch.at.x * T, ch.at.y * T) });
+      if (shownMap !== game.map) {
+        shownMap = game.map;
+        mapSprite.texture = canvasTexture(game.map, mapCanvas(game.map));
       }
+
+      // 사람·짐승·상자·파티: 발밑 y 순서(zIndex)로
+      const seen = new Set<string>();
+      const put = (key: string, tex: Texture, x: number, y: number, z: number) => {
+        const sp = spriteOf(key);
+        sp.texture = tex;
+        sp.position.set(x, y);
+        sp.zIndex = z;
+        sp.visible = true;
+        seen.add(key);
+      };
+      const order = (y: number) => y * 1000;
+      for (const ch of MAPS[game.map].chests) put(`chest:${ch.id}`, tileTex(game.opened.includes(ch.id) ? 'chest_open' : 'chest'), ch.at.x * T, ch.at.y * T, order(ch.at.y));
+      const f = Math.floor(now / 260);
       for (const a of actorsRef.current) {
-        const f = Math.floor(now / 260);
-        list.push({
-          y: a.at.y,
-          fn: () => (a.char ? drawChar(ctx, a.char, a.dir, 0, a.at.x * T, a.at.y * T) : a.mon && drawMon(ctx, a.mon, a.dir, f, a.at.x * T, a.at.y * T)),
-        });
+        if (a.char) put(`actor:${a.id}`, charTex(a.char, a.dir, 0), a.at.x * T, a.at.y * T - (CH - T), order(a.at.y));
+        else if (a.mon) {
+          const tex = monTex(a.mon, a.dir, f);
+          // 대장(50×50)은 발밑 칸 가운데에 맞춘다
+          const big = tex.frame.width > T;
+          put(`actor:${a.id}`, tex, a.at.x * T + (big ? T / 2 - 25 : 0), a.at.y * T + (big ? T - 50 : 0), order(a.at.y));
+        }
       }
       pos.forEach((q, k) => {
         const row = q.moving ? Math.floor((now / (TILE_MS / 2 / live.current.speed)) % 4) : 0;
-        list.push({ y: q.p.y + 0.01 * (members.length - k), fn: () => drawChar(ctx, members[k], q.dir, row, q.p.x * T, q.p.y * T) });
+        put(`party:${k}`, charTex(members[k], q.dir, row), q.p.x * T, q.p.y * T - (CH - T), order(q.p.y + 0.01 * (members.length - k)));
       });
-      list.sort((a, b) => a.y - b.y).forEach((d) => d.fn());
+      for (const [key, sp] of sprites) if (!seen.has(key)) sp.visible = false;
 
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      if (isCave(game.map)) {
+      // 화면 덮개: 동굴 어둠, 밤빛
+      const cave = isCave(game.map);
+      vignette.visible = cave;
+      vignetteEdge.clear();
+      if (cave) {
         const cx = (lead.x * T + T / 2 - camX) * s;
         const cy = (lead.y * T + T / 2 - camY) * s;
-        const grad = ctx.createRadialGradient(cx, cy, 40 * s, cx, cy, 120 * s);
-        grad.addColorStop(0, 'rgba(8,6,12,0)');
-        grad.addColorStop(1, 'rgba(8,6,12,0.88)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        const r = VIGNETTE_OUTER * s;
+        vignette.position.set(cx, cy);
+        vignette.width = vignette.height = r * 2;
+        // 원 바깥은 가장 어두운 빛으로 채운다
+        const dark = { color: 0x08060c, alpha: 0.88 };
+        vignetteEdge
+          .rect(0, 0, cw, Math.max(0, cy - r)).fill(dark)
+          .rect(0, cy + r, cw, Math.max(0, chh - cy - r)).fill(dark)
+          .rect(0, cy - r, Math.max(0, cx - r), r * 2).fill(dark)
+          .rect(cx + r, cy - r, Math.max(0, cw - cx - r), r * 2).fill(dark);
       }
-      if (game.night) {
-        ctx.fillStyle = 'rgba(20,26,70,0.45)';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-      }
+      nightTint.clear();
+      if (game.night) nightTint.rect(0, 0, cw, chh).fill({ color: 0x141a46, alpha: 0.45 });
+
+      app.render();
 
       // 걷는 동안의 말풍선
       const b = bubble.current;
@@ -191,13 +253,28 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
         }
       }
     };
-    raf = requestAnimationFrame(frame);
-    return () => cancelAnimationFrame(raf);
+
+    app
+      .init({ background: '#0d0b10', antialias: false, resolution: 1, autoStart: false, width: 1, height: 1, preference: 'webgl' })
+      .then(() => {
+        if (dead) {
+          app.destroy(true, { children: true });
+          return;
+        }
+        app.stage.addChild(world, screen);
+        app.canvas.className = 'field-canvas';
+        box.prepend(app.canvas);
+        raf = requestAnimationFrame(frame);
+      });
+    return () => {
+      dead = true;
+      cancelAnimationFrame(raf);
+      if (app.renderer) app.destroy(true, { children: true });
+    };
   }, []);
 
   return (
     <div className="field" ref={wrap}>
-      <canvas ref={cv} className="field-canvas" />
       <div className="bubble" ref={bubble} />
     </div>
   );
