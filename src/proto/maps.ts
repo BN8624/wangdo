@@ -1,14 +1,19 @@
-// 시제품 맵. 글자 한 칸이 16×16 타일 한 칸이다.
-//  땅: . 풀 · : 흙길 · _ 동굴 바닥 · # 동굴 벽 · (빈칸) 어둠
-//  도장(대문자, 왼쪽 위 칸에 적고 나머지 칸은 . 으로 비워 둔다):
-//    P 소나무 R 둥근 나무 D 마른 나무 O 늙은 나무 S 그루터기 B 바위 (2×2)
-//    H·G 초가 K 기와집 W 흙벽 창고 M 장터 노점 (4×3) · J 주막 (3×3)
-//  한 칸 소품(소문자): b·v 덤불 l 잎 f·r·w 꽃 c 토끼풀 o·q·n 돌 j·k 장독 x 궤짝 y 자루 h 굴 구멍
-//  막히는 칸: 도장 전부, 덤불·돌·장독·궤짝·자루, 동굴 벽, 어둠
-import type { TileName } from './atlas';
+// 시제품 맵: Tiled(https://www.mapeditor.org)로 그린 src/proto/maps/<id>.tmj를 읽는다. 한 칸이 16×16이다.
+//  층: terrain(땅: 풀·흙길·동굴 바닥·동굴 벽·어둠. 실제 그림은 이웃을 보고 코드가 고른다)
+//      deco(집·나무·소품. tiles.png를 16칸 격자로 쓴 deco.tsj, 막히는 칸은 타일 속성 solid)
+//      objects(점 오브젝트. type: actor 사람·짐승 / chest 상자 / point 대본이 쓰는 이름 지점)
+//  맵 속성: name(화면에 띄울 이름), bgm, cave(동굴 맵)
 import type { Actor, Dir, Pt } from './types';
+import terrainTsj from './maps/terrain.tsj?raw';
+import decoTsj from './maps/deco.tsj?raw';
+import backhill from './maps/backhill.tmj?raw';
+import village from './maps/village.tmj?raw';
+import pass from './maps/pass.tmj?raw';
+import cave1 from './maps/cave1.tmj?raw';
+import cave2 from './maps/cave2.tmj?raw';
 
 export type MapId = 'backhill' | 'village' | 'pass' | 'cave1' | 'cave2';
+const RAW: Record<MapId, string> = { backhill, village, pass, cave1, cave2 };
 
 export interface ChestDef {
   id: string;
@@ -17,263 +22,120 @@ export interface ChestDef {
   coin?: number;
 }
 
+/** deco 층의 한 칸: tiles.png에서 (sx, sy)의 16×16 */
+export interface DecoCell {
+  x: number;
+  y: number;
+  sx: number;
+  sy: number;
+  solid: boolean;
+}
+
 export interface MapDef {
   id: MapId;
   name: string;
-  rows: string[];
+  w: number;
+  h: number;
+  /** 땅 글자: . 풀 · : 흙길 · _ 동굴 바닥 · # 동굴 벽 · (빈칸) 어둠 */
+  ground: string[][];
+  deco: DecoCell[];
   /** 굴처럼 바닥이 기본으로 동굴인 맵 */
   cave?: boolean;
   actors: (Actor & { hidden?: boolean })[];
   chests: ChestDef[];
+  /** 대본이 쓰는 이름 지점 */
+  points: Record<string, Pt>;
   bgm: 'story' | 'home' | 'battle';
 }
 
-export const STAMP: Record<string, { tile: TileName; w: number; h: number }> = {
-  P: { tile: 'tree_pine', w: 2, h: 2 },
-  R: { tile: 'tree_round', w: 2, h: 2 },
-  D: { tile: 'tree_dead', w: 2, h: 2 },
-  O: { tile: 'tree_root', w: 2, h: 2 },
-  S: { tile: 'stump', w: 2, h: 2 },
-  B: { tile: 'boulder', w: 2, h: 2 },
-  H: { tile: 'house_a', w: 4, h: 3 },
-  G: { tile: 'house_b', w: 4, h: 3 },
-  K: { tile: 'house_tile', w: 4, h: 3 },
-  W: { tile: 'house_thatch', w: 4, h: 3 },
-  M: { tile: 'stall', w: 4, h: 3 },
-  J: { tile: 'jumak', w: 3, h: 3 },
-};
+interface TiledProp {
+  name: string;
+  value: string | number | boolean;
+}
+interface TiledTileset {
+  columns: number;
+  tilecount: number;
+  tiles?: { id: number; properties?: TiledProp[] }[];
+}
+interface TiledObject {
+  name: string;
+  type: string;
+  x: number;
+  y: number;
+  properties?: TiledProp[];
+}
+interface TiledMap {
+  width: number;
+  height: number;
+  properties?: TiledProp[];
+  tilesets: { firstgid: number; source: string }[];
+  layers: ({ type: 'tilelayer'; name: string; data: number[] } | { type: 'objectgroup'; name: string; objects: TiledObject[] })[];
+}
 
-export const PROP: Record<string, { tile: TileName; solid: boolean }> = {
-  b: { tile: 'bush', solid: true },
-  v: { tile: 'bush2', solid: true },
-  l: { tile: 'leafy', solid: false },
-  f: { tile: 'flower_y', solid: false },
-  r: { tile: 'flower_r', solid: false },
-  w: { tile: 'flower_w', solid: false },
-  c: { tile: 'clover', solid: false },
-  o: { tile: 'rock', solid: true },
-  q: { tile: 'rock2', solid: true },
-  n: { tile: 'stone', solid: true },
-  j: { tile: 'jar', solid: true },
-  k: { tile: 'jar_red', solid: true },
-  x: { tile: 'crate', solid: true },
-  y: { tile: 'sack', solid: true },
-  h: { tile: 'hole', solid: false },
-};
+const propsOf = (list: TiledProp[] = []) => Object.fromEntries(list.map((p) => [p.name, p.value]));
+const TILESETS: Record<string, TiledTileset> = { 'terrain.tsj': JSON.parse(terrainTsj), 'deco.tsj': JSON.parse(decoTsj) };
+const tileProps = (ts: TiledTileset, id: number) => propsOf(ts.tiles?.find((t) => t.id === id)?.properties);
+/** Tiled가 gid 위쪽 비트에 담는 뒤집기 표시 */
+const GID_MASK = 0x1fffffff;
 
-const a = (id: string, at: [number, number], dir: Dir, look: Pick<Actor, 'char' | 'mon'>, hidden = false) => ({
-  id,
-  at: { x: at[0], y: at[1] },
-  dir,
-  ...look,
-  hidden,
-});
+/** Tiled 맵 한 장을 MapDef로 */
+export function parseTiled(id: MapId, raw: string): MapDef {
+  const m = JSON.parse(raw) as TiledMap;
+  const sets = m.tilesets.map((t) => ({ firstgid: t.firstgid, name: t.source, ts: TILESETS[t.source] })).sort((a, b) => b.firstgid - a.firstgid);
+  const lookup = (gid: number) => {
+    const g = gid & GID_MASK;
+    const set = sets.find((s) => g >= s.firstgid);
+    if (!set?.ts) throw new Error(`${id}: 모르는 타일 ${gid}`);
+    return { set: set.name, ts: set.ts, local: g - set.firstgid };
+  };
+  const layer = (name: string) => {
+    const l = m.layers.find((x) => x.name === name);
+    if (!l) throw new Error(`${id}: ${name} 층이 없어요`);
+    return l;
+  };
+  const props = propsOf(m.properties);
+  const terrain = layer('terrain');
+  const deco = layer('deco');
+  const objs = layer('objects');
+  if (terrain.type !== 'tilelayer' || deco.type !== 'tilelayer' || objs.type !== 'objectgroup') throw new Error(`${id}: 층 종류가 달라요`);
+  const ground: string[][] = [];
+  for (let y = 0; y < m.height; y++) {
+    const row: string[] = [];
+    for (let x = 0; x < m.width; x++) {
+      const t = lookup(terrain.data[y * m.width + x]);
+      row.push(String(tileProps(t.ts, t.local).ground ?? (props.cave ? '_' : '.')));
+    }
+    ground.push(row);
+  }
+  const cells: DecoCell[] = [];
+  deco.data.forEach((gid, i) => {
+    if (!gid) return;
+    const t = lookup(gid);
+    cells.push({ x: i % m.width, y: Math.floor(i / m.width), sx: (t.local % t.ts.columns) * 16, sy: Math.floor(t.local / t.ts.columns) * 16, solid: !!tileProps(t.ts, t.local).solid });
+  });
+  const cell = (o: TiledObject): Pt => ({ x: Math.floor(o.x / 16), y: Math.floor(o.y / 16) });
+  const actors: MapDef['actors'] = [];
+  const chests: ChestDef[] = [];
+  const points: Record<string, Pt> = {};
+  for (const o of objs.objects) {
+    const p = propsOf(o.properties);
+    if (o.type === 'actor')
+      actors.push({ id: o.name, at: cell(o), dir: Number(p.dir ?? 0) as Dir, ...(p.char ? { char: p.char as Actor['char'] } : { mon: p.mon as Actor['mon'] }), hidden: !!p.hidden });
+    else if (o.type === 'chest') chests.push({ id: o.name, at: cell(o), ...(p.item ? { item: String(p.item) } : {}), ...(p.coin ? { coin: Number(p.coin) } : {}) });
+    else if (o.type === 'point') points[o.name] = cell(o);
+  }
+  return { id, name: String(props.name ?? id), bgm: (props.bgm ?? 'story') as MapDef['bgm'], cave: !!props.cave, w: m.width, h: m.height, ground, deco: cells, actors, chests, points };
+}
 
-export const MAPS: Record<MapId, MapDef> = {
-  backhill: {
-    id: 'backhill',
-    name: '달골 뒷산',
-    bgm: 'story',
-    rows: [
-      'P.P.P.P.P.P.P.',
-      '..............',
-      'P.D.....O...P.',
-      '..............',
-      'P.b.c.:::.f.P.',
-      '....l.:::.....',
-      'P.f...:::.b.P.',
-      '......:::..l..',
-      'P.R...::...R..',
-      '......::......',
-      'P.c...::.w..P.',
-      '......::......',
-      'P.P...::..P.P.',
-      '......::......',
-      'P.b..:::..f.P.',
-      '.....:::......',
-      'P.R..::...R.P.',
-      '.....::.......',
-      'P.l..::.c...P.',
-      '.....::.......',
-      'P.P..::...P.P.',
-      '.....::.......',
-      'P.f..::..b..P.',
-      '.....::.......',
-    ],
-    actors: [
-      a('baekseol_bh', [10, 5], 2, { char: 'baekseol' }, true),
-      a('racoon1', [6, 15], 1, { mon: 'racoon' }, true),
-      a('racoon2', [7, 15], 1, { mon: 'racoon' }, true),
-    ],
-    chests: [],
-  },
-  village: {
-    id: 'village',
-    name: '달골',
-    bgm: 'home',
-    rows: [
-      'P.P.P.P..::.P.P.P.P.',
-      '.........::.........',
-      'P........::.......P.',
-      '..K......::...W.....',
-      '.........::.........',
-      '.........::.........',
-      '...::::::::::::::...',
-      'b........::........b',
-      '.f.......::......c..',
-      '..H......::...M.....',
-      '.........::.........',
-      '.........::.........',
-      '....::::::::::::....',
-      'P........::.......P.',
-      '.........::.........',
-      '..J......::...G.....',
-      '.........::.........',
-      '......kj.::.........',
-      '...::::::::::::::...',
-      'b........::........b',
-      'P........::.......P.',
-      '..f......::.....w...',
-      'P.R......::....R.P..',
-      '.........::.........',
-      'P.P.P.P..::..P.P.P..',
-      '.........::.........',
-    ],
-    actors: [
-      a('innkeeper', [5, 19], 2, { char: 'innkeeper' }),
-      a('widow', [6, 13], 0, { char: 'widow' }),
-      a('worker', [12, 8], 0, { char: 'worker' }),
-      a('worker2', [13, 8], 2, { char: 'worker2' }),
-      a('keeper', [12, 19], 3, { char: 'keeper' }, true),
-      a('thug1', [11, 18], 3, { char: 'thug' }, true),
-      a('thug2', [11, 20], 3, { char: 'thug' }, true),
-      // 2화(백설 화): 장터 파락호, 주막 술꾼, 밤 도깨비불
-      a('parak1', [13, 13], 1, { char: 'thug' }, true),
-      a('parak2', [16, 13], 1, { char: 'thug' }, true),
-      a('parak3', [17, 13], 1, { char: 'thug' }, true),
-      a('drunk1', [2, 19], 1, { char: 'bandit' }, true),
-      a('drunk2', [4, 19], 1, { char: 'bandit2' }, true),
-      a('wisp1', [13, 20], 1, { mon: 'wisp' }, true),
-      a('wisp2', [16, 20], 1, { mon: 'wisp' }, true),
-      a('wisp3', [17, 20], 1, { mon: 'wisp' }, true),
-    ],
-    chests: [],
-  },
-  pass: {
-    id: 'pass',
-    name: '고갯길',
-    bgm: 'story',
-    rows: [
-      'P.P.P.P.h.P.P.P.P.',
-      '........:.........',
-      'B.......::......B.',
-      '........::........',
-      'P.o.....::....o.P.',
-      '........::........',
-      '...::::::::::::...',
-      '...::::::::::::...',
-      '...::........::...',
-      'P..::.P.P.P..::.P.',
-      '...::........::...',
-      'P..::.P.P.P..::.P.',
-      '...::........::...',
-      'P..::.P.P.P..::.P.',
-      '...::........::...',
-      '...::........::...',
-      '...::..w..w..::...',
-      '...::........::...',
-      '...::::::::::::...',
-      '........::........',
-      'P.P.....::.....P..',
-      '........::........',
-      'b.......::.......b',
-      '........::........',
-      'P.R.....::...R..P.',
-      '........::........',
-      '..f.....::....c...',
-      '........::........',
-      'P.P.....::.....P..',
-      '........::........',
-    ],
-    actors: [
-      a('toll_a', [3, 15], 0, { char: 'bandit' }),
-      a('toll_b', [4, 12], 0, { char: 'bandit2' }),
-      a('toll_c', [3, 9], 0, { char: 'bandit' }),
-      a('toll_r', [13, 12], 0, { char: 'bandit2' }),
-      a('muyeong_far', [15, 15], 2, { char: 'muyeong' }, true),
-      a('muyeong', [8, 5], 0, { char: 'muyeong' }, true),
-    ],
-    chests: [
-      { id: 'pass_left', at: { x: 5, y: 14 }, item: 'flail' },
-      { id: 'pass_right', at: { x: 15, y: 10 }, item: 'norigae', coin: 30 },
-    ],
-  },
-  cave1: {
-    id: 'cave1',
-    name: '산적굴',
-    bgm: 'battle',
-    cave: true,
-    rows: [
-      '################',
-      '######_h_#######',
-      '######___#######',
-      '##_________#####',
-      '##_x______k_####',
-      '##___####____###',
-      '##___####____###',
-      '##___####____###',
-      '##_____________#',
-      '##_________y___#',
-      '#####____#######',
-      '#####____#######',
-      '###________#####',
-      '###_j______#####',
-      '#####____#######',
-      '#####____#######',
-      '#####____#######',
-      '################',
-    ],
-    actors: [
-      a('bat1', [6, 10], 0, { mon: 'bat' }),
-      a('bat2', [7, 10], 0, { mon: 'bat' }),
-    ],
-    chests: [{ id: 'cave_chest', at: { x: 13, y: 9 }, coin: 60 }],
-  },
-  cave2: {
-    id: 'cave2',
-    name: '산적굴 깊은 곳',
-    bgm: 'battle',
-    cave: true,
-    rows: [
-      '################',
-      '####________####',
-      '###__________###',
-      '###___k__j___###',
-      '###__________###',
-      '####________####',
-      '######____######',
-      '######____######',
-      '##____________##',
-      '##__x________y##',
-      '##____________##',
-      '######____######',
-      '######____######',
-      '######____######',
-      '######_h__######',
-      '################',
-    ],
-    actors: [
-      a('sentry1', [7, 9], 0, { char: 'bandit' }),
-      a('sentry2', [8, 9], 0, { char: 'bandit2' }),
-      a('boss', [7, 2], 0, { char: 'mokso' }),
-      a('keeper2', [10, 2], 0, { char: 'keeper' }),
-      a('guard1', [6, 4], 0, { char: 'bandit2' }),
-      a('guard2', [9, 4], 0, { char: 'bandit' }),
-      a('muyeong_c', [9, 6], 2, { char: 'muyeong' }, true),
-    ],
-    chests: [],
-  },
-};
+export const MAPS = Object.fromEntries((Object.keys(RAW) as MapId[]).map((id) => [id, parseTiled(id, RAW[id])])) as Record<MapId, MapDef>;
+
+/** 이름 지점(또는 [x, y])을 좌표로 */
+export function pointOf(map: MapId, at: string | [number, number]): Pt {
+  if (typeof at !== 'string') return { x: at[0], y: at[1] };
+  const p = MAPS[map].points[at];
+  if (!p) throw new Error(`${map}에 '${at}' 지점이 없어요`);
+  return p;
+}
 
 export interface Grid {
   w: number;
@@ -281,41 +143,19 @@ export interface Grid {
   /** 땅 글자(. : _ # 빈칸) */
   ground: string[][];
   solid: boolean[][];
-  /** 도장(왼쪽 위 칸 기준) */
-  stamps: { tile: TileName; x: number; y: number; w: number; h: number }[];
-  props: { tile: TileName; x: number; y: number }[];
 }
 
 const cache = new Map<MapId, Grid>();
 
-/** 글자 맵을 땅·막힘·도장·소품으로 푼다 */
+/** 맵을 땅·막힘으로 푼다 */
 export function grid(id: MapId): Grid {
   const hit = cache.get(id);
   if (hit) return hit;
   const def = MAPS[id];
-  const h = def.rows.length;
-  const w = def.rows[0].length;
-  const base = def.cave ? '_' : '.';
-  const ground = def.rows.map((r) => [...r].map((c) => (c === '.' || c === ':' || c === '_' || c === '#' || c === ' ' ? c : base)));
-  const solid = def.rows.map((r) => [...r].map((c) => c === '#' || c === ' '));
-  const stamps: Grid['stamps'] = [];
-  const props: Grid['props'] = [];
-  def.rows.forEach((row, y) =>
-    [...row].forEach((c, x) => {
-      const st = STAMP[c];
-      if (st) {
-        stamps.push({ tile: st.tile, x, y, w: st.w, h: st.h });
-        for (let dy = 0; dy < st.h; dy++) for (let dx = 0; dx < st.w; dx++) if (solid[y + dy]) solid[y + dy][x + dx] = true;
-      }
-      const pr = PROP[c];
-      if (pr) {
-        props.push({ tile: pr.tile, x, y });
-        if (pr.solid) solid[y][x] = true;
-      }
-    }),
-  );
+  const solid = def.ground.map((r) => r.map((c) => c === '#' || c === ' '));
+  for (const d of def.deco) if (d.solid) solid[d.y][d.x] = true;
   for (const ch of def.chests) solid[ch.at.y][ch.at.x] = true;
-  const g = { w, h, ground, solid, stamps, props };
+  const g = { w: def.w, h: def.h, ground: def.ground, solid };
   cache.set(id, g);
   return g;
 }

@@ -3,7 +3,7 @@
 // 비트의 결과는 Input을 받을 때 상태에 반영하므로, 저장을 불러오면 지금 비트부터 그대로 다시 시작한다.
 import { runCombat, type CombatEvent, type CombatResult, type CombatSetup } from '../core/combat';
 import { FOES, ITEMS } from './data';
-import { MAPS, dirTo, findPath, grid, walkable, type MapId } from './maps';
+import { MAPS, dirTo, findPath, grid, pointOf, walkable, type MapId } from './maps';
 import { battleSetup, giveExp, groupCoin, groupExp, overwhelms } from './party';
 import { SCRIPT } from './story';
 import type { Dir, FoeGroup, ItemDef, Line, Member, MemberId, Pt } from './types';
@@ -30,9 +30,12 @@ export interface Debt {
   reply: Line[];
 }
 
+export type Where = string | [number, number];
+
 export type Beat =
-  | { t: 'map'; map: MapId; at: [number, number]; dir: Dir }
-  | { t: 'walk'; to: [number, number]; face?: Dir; say?: Line[] }
+  /** at·to: 맵의 이름 지점(Tiled objects 층의 point) 또는 [x, y] */
+  | { t: 'map'; map: MapId; at: Where; dir: Dir }
+  | { t: 'walk'; to: Where; face?: Dir; say?: Line[] }
   | { t: 'face'; dir: Dir }
   | { t: 'talk'; lines: Line[] }
   | { t: 'goal'; text: string }
@@ -53,7 +56,7 @@ export type Beat =
   | { t: 'night'; on: boolean }
   | { t: 'show'; ids: string[] }
   | { t: 'hide'; ids: string[] }
-  | { t: 'place'; id: string; at: [number, number]; dir: Dir }
+  | { t: 'place'; id: string; at: Where; dir: Dir }
   | { t: 'cutscene'; id: 'debt'; lines: string[] }
   | { t: 'collect'; cap: number; prompt: string; debts: Debt[] }
   | { t: 'flag'; set: string }
@@ -170,7 +173,6 @@ export const labelAt = (name: string) => {
   return i;
 };
 
-const P = (p: [number, number]): Pt => ({ x: p[0], y: p[1] });
 const has = (g: Game, f: string) => g.flags.includes(f);
 export const visibleLines = (g: Game, lines: Line[]) => lines.filter((l) => (!l.if || has(g, l.if)) && (!l.unless || !has(g, l.unless)));
 
@@ -289,7 +291,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
         g = { ...g, hidden: [...new Set([...g.hidden, ...b.ids])], pc: g.pc + 1 };
         continue;
       case 'place':
-        g = { ...g, placed: { ...g.placed, [b.id]: { at: P(b.at), dir: b.dir } }, pc: g.pc + 1 };
+        g = { ...g, placed: { ...g.placed, [b.id]: { at: pointOf(g.map, b.at), dir: b.dir } }, pc: g.pc + 1 };
         continue;
       case 'face':
         g = { ...g, dir: b.dir, pc: g.pc + 1 };
@@ -300,8 +302,9 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'map':
         return { g, fx: { k: 'warp', map: b.map } };
       case 'walk': {
-        const path = findPath(grid(g.map), g.pos, P(b.to), blockedBy(g));
-        if (!path) throw new Error(`${g.map}에서 (${g.pos.x},${g.pos.y}) → (${b.to[0]},${b.to[1]}) 길이 없어요 [pc ${g.pc}]`);
+        const to = pointOf(g.map, b.to);
+        const path = findPath(grid(g.map), g.pos, to, blockedBy(g));
+        if (!path) throw new Error(`${g.map}에서 (${g.pos.x},${g.pos.y}) → ${b.to} (${to.x},${to.y}) 길이 없어요 [pc ${g.pc}]`);
         return { g, fx: { k: 'walk', from: g.pos, path, say: visibleLines(g, b.say ?? []) } };
       }
       case 'talk': {
@@ -381,11 +384,11 @@ function resolve(game: Game, input: Input): Game {
   const next = { ...g, pc: g.pc + 1 };
   switch (b.t) {
     case 'map': {
-      const at = P(b.at);
+      const at = pointOf(b.map, b.at);
       return { ...next, map: b.map, pos: at, dir: b.dir, trail: behind(b.map, at, b.dir, 3) };
     }
     case 'walk': {
-      const path = findPath(grid(g.map), g.pos, P(b.to), blockedBy(g)) ?? [];
+      const path = findPath(grid(g.map), g.pos, pointOf(g.map, b.to), blockedBy(g)) ?? [];
       const seq = [...g.trail].reverse().concat([g.pos], path);
       const end = seq[seq.length - 1];
       const prev = seq.length > 1 ? seq[seq.length - 2] : end;

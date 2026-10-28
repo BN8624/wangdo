@@ -1,0 +1,514 @@
+{
+ "type": "map",
+ "version": "1.10",
+ "tiledversion": "1.11.2",
+ "orientation": "orthogonal",
+ "renderorder": "right-down",
+ "infinite": false,
+ "compressionlevel": -1,
+ "width": 18,
+ "height": 30,
+ "tilewidth": 16,
+ "tileheight": 16,
+ "nextlayerid": 4,
+ "nextobjectid": 24,
+ "properties": [
+  {
+   "name": "name",
+   "type": "string",
+   "value": "고갯길"
+  },
+  {
+   "name": "bgm",
+   "type": "string",
+   "value": "story"
+  }
+ ],
+ "tilesets": [
+  {
+   "firstgid": 1,
+   "source": "terrain.tsj"
+  },
+  {
+   "firstgid": 6,
+   "source": "deco.tsj"
+  }
+ ],
+ "layers": [
+  {
+   "id": 1,
+   "name": "terrain",
+   "type": "tilelayer",
+   "width": 18,
+   "height": 30,
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "data": [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1,
+    1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1
+   ]
+  },
+  {
+   "id": 2,
+   "name": "deco",
+   "type": "tilelayer",
+   "width": 18,
+   "height": 30,
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "data": [
+    52, 53, 52, 53, 52, 53, 52, 53, 34, 0, 52, 53, 52, 53, 52, 53, 52, 53,
+    68, 69, 68, 69, 68, 69, 68, 69, 0, 0, 68, 69, 68, 69, 68, 69, 68, 69,
+    76, 77, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 76, 77,
+    92, 93, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 92, 93,
+    52, 53, 42, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 42, 0, 52, 53,
+    68, 69, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 68, 69,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    52, 53, 0, 0, 0, 0, 52, 53, 52, 53, 52, 53, 0, 0, 0, 0, 52, 53,
+    68, 69, 0, 0, 0, 0, 68, 69, 68, 69, 68, 69, 0, 0, 0, 0, 68, 69,
+    52, 53, 0, 0, 0, 0, 52, 53, 52, 53, 52, 53, 0, 0, 0, 0, 52, 53,
+    68, 69, 0, 0, 0, 0, 68, 69, 68, 69, 68, 69, 0, 0, 0, 0, 68, 69,
+    52, 53, 0, 0, 0, 0, 52, 53, 52, 53, 52, 53, 0, 0, 0, 0, 52, 53,
+    68, 69, 0, 0, 0, 0, 68, 69, 68, 69, 68, 69, 0, 0, 0, 0, 68, 69,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 41, 0, 0, 41, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    52, 53, 52, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 52, 53, 0,
+    68, 69, 68, 69, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 68, 69, 0,
+    35, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 35,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    52, 53, 50, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 50, 51, 0, 52, 53,
+    68, 69, 66, 67, 0, 0, 0, 0, 0, 0, 0, 0, 0, 66, 67, 0, 68, 69,
+    0, 0, 38, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 39, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    52, 53, 52, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 52, 53, 0,
+    68, 69, 68, 69, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 68, 69, 0
+   ]
+  },
+  {
+   "id": 3,
+   "name": "objects",
+   "type": "objectgroup",
+   "draworder": "topdown",
+   "x": 0,
+   "y": 0,
+   "opacity": 1,
+   "visible": true,
+   "objects": [
+    {
+     "id": 1,
+     "name": "toll_a",
+     "type": "actor",
+     "point": true,
+     "x": 56,
+     "y": 248,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "bandit"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": 2,
+     "name": "toll_b",
+     "type": "actor",
+     "point": true,
+     "x": 72,
+     "y": 200,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "bandit2"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": 3,
+     "name": "toll_c",
+     "type": "actor",
+     "point": true,
+     "x": 56,
+     "y": 152,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "bandit"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "name": "toll_r",
+     "type": "actor",
+     "point": true,
+     "x": 216,
+     "y": 200,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "bandit2"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      }
+     ]
+    },
+    {
+     "id": 5,
+     "name": "muyeong_far",
+     "type": "actor",
+     "point": true,
+     "x": 248,
+     "y": 248,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "muyeong"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 6,
+     "name": "muyeong",
+     "type": "actor",
+     "point": true,
+     "x": 136,
+     "y": 88,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "muyeong"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 7,
+     "name": "pass_left",
+     "type": "chest",
+     "point": true,
+     "x": 88,
+     "y": 232,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "item",
+       "type": "string",
+       "value": "flail"
+      }
+     ]
+    },
+    {
+     "id": 8,
+     "name": "pass_right",
+     "type": "chest",
+     "point": true,
+     "x": 248,
+     "y": 168,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "item",
+       "type": "string",
+       "value": "norigae"
+      },
+      {
+       "name": "coin",
+       "type": "int",
+       "value": 30
+      }
+     ]
+    },
+    {
+     "id": 9,
+     "name": "고개 아래",
+     "type": "point",
+     "point": true,
+     "x": 136,
+     "y": 472,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 10,
+     "name": "갈림길",
+     "type": "point",
+     "point": true,
+     "x": 136,
+     "y": 296,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 11,
+     "name": "지름길 패거리",
+     "type": "point",
+     "point": true,
+     "x": 56,
+     "y": 264,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 12,
+     "name": "왼쪽 상자",
+     "type": "point",
+     "point": true,
+     "x": 72,
+     "y": 232,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 13,
+     "name": "지름길 둘째",
+     "type": "point",
+     "point": true,
+     "x": 72,
+     "y": 216,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 14,
+     "name": "지름길 셋째",
+     "type": "point",
+     "point": true,
+     "x": 56,
+     "y": 168,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 15,
+     "name": "지름길 끝",
+     "type": "point",
+     "point": true,
+     "x": 56,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 16,
+     "name": "돌아가는 길",
+     "type": "point",
+     "point": true,
+     "x": 232,
+     "y": 280,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 17,
+     "name": "바위 옆",
+     "type": "point",
+     "point": true,
+     "x": 232,
+     "y": 264,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 18,
+     "name": "돌아가는 길 패거리",
+     "type": "point",
+     "point": true,
+     "x": 216,
+     "y": 216,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 19,
+     "name": "오른쪽 상자",
+     "type": "point",
+     "point": true,
+     "x": 232,
+     "y": 168,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 20,
+     "name": "돌아가는 길 끝",
+     "type": "point",
+     "point": true,
+     "x": 232,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 21,
+     "name": "고갯마루",
+     "type": "point",
+     "point": true,
+     "x": 136,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 22,
+     "name": "산적굴 입구",
+     "type": "point",
+     "point": true,
+     "x": 136,
+     "y": 24,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 23,
+     "name": "고개 아래 주막",
+     "type": "point",
+     "point": true,
+     "x": 136,
+     "y": 408,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    }
+   ]
+  }
+ ]
+}

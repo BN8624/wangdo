@@ -14,6 +14,9 @@
   src/proto/atlas.ts       위 그림의 좌표표(자동 생성, 손으로 고치지 않는다)
 
 원본 위에 덧그린 것(여우귀·뿔·상투 등)은 이 파일의 OVERLAY에 칸 단위로 적는다.
+
+주의: Tiled 맵(src/proto/maps/*.tmj)은 tiles.png의 칸 위치로 장식을 기억한다(deco.tsj).
+TILES에 새 타일을 넣을 때는 반드시 맨 뒤에 붙여 기존 타일의 자리를 옮기지 않는다.
 """
 import json
 import os

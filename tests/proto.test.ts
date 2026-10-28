@@ -1,9 +1,9 @@
 // 시제품(자동 진행 도트 RPG): 맵·대본·진행기·밸런스
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CHARS, MONS, TILES } from '../src/proto/atlas';
+import { CHARS, MONS } from '../src/proto/atlas';
 import { FOES, ITEMS } from '../src/proto/data';
-import { MAPS, PROP, STAMP, grid, walkable, type MapId } from '../src/proto/maps';
+import { MAPS, grid, walkable, type MapId } from '../src/proto/maps';
 import { giveExp, overwhelms } from '../src/proto/party';
 import { buy, labelAt, newGame, step, type Game, type Input } from '../src/proto/runner';
 import { SCRIPT } from '../src/proto/story';
@@ -45,36 +45,28 @@ function playthrough(plan: Plan) {
   return { g: r.g, battles, losses };
 }
 
-describe('맵', () => {
+describe('맵(Tiled)', () => {
   for (const id of Object.keys(MAPS) as MapId[]) {
-    it(`${id}: 직사각형이고 도장이 겹치지 않으며 사람·상자가 설 수 있는 칸에 있다`, () => {
+    it(`${id}: 땅·장식 층이 맵 크기와 맞고, 사람·상자·지점이 설 수 있는 칸에 있다`, () => {
       const def = MAPS[id];
-      const w = def.rows[0].length;
-      for (const row of def.rows) expect(row.length, row).toBe(w);
-      const taken = new Set<string>();
-      def.rows.forEach((row, y) =>
-        [...row].forEach((c, x) => {
-          const st = STAMP[c];
-          if (!st) return;
-          for (let dy = 0; dy < st.h; dy++)
-            for (let dx = 0; dx < st.w; dx++) {
-              const k = `${x + dx},${y + dy}`;
-              expect(taken.has(k), `${id} ${k} 겹침`).toBe(false);
-              expect(y + dy < def.rows.length && x + dx < w, `${id} ${k} 맵 밖`).toBe(true);
-              if (dx || dy) expect(def.rows[y + dy][x + dx], `${id} ${k}는 비워 둬야 한다`).toBe('.');
-              taken.add(k);
-            }
-        }),
-      );
+      expect(def.ground.length).toBe(def.h);
+      for (const row of def.ground) {
+        expect(row.length).toBe(def.w);
+        for (const c of row) expect('.:_# ').toContain(c);
+      }
+      for (const d of def.deco) expect(d.x < def.w && d.y < def.h, `${id} 장식 ${d.x},${d.y}`).toBe(true);
       const g = grid(id);
       for (const a of def.actors) expect(walkable(g, a.at), `${id} ${a.id}`).toBe(true);
-      for (const c of def.chests) expect(def.rows[c.at.y][c.at.x], `${id} ${c.id}`).toMatch(/[.:_]/);
+      for (const [name, p] of Object.entries(def.points)) expect(walkable(g, p), `${id} 지점 ${name}`).toBe(true);
+      const decoAt = new Set(def.deco.map((d) => `${d.x},${d.y}`));
+      for (const c of def.chests) {
+        expect(decoAt.has(`${c.at.x},${c.at.y}`), `${id} ${c.id}는 장식 위에 있으면 안 된다`).toBe(false);
+        expect(def.ground[c.at.y][c.at.x], `${id} ${c.id}`).toMatch(/[.:_]/);
+      }
     });
   }
 
   it('맵이 쓰는 그림이 모두 그림 묶음에 있다', () => {
-    for (const s of Object.values(STAMP)) expect(TILES).toHaveProperty(s.tile);
-    for (const p of Object.values(PROP)) expect(TILES).toHaveProperty(p.tile);
     for (const def of Object.values(MAPS))
       for (const a of def.actors) {
         if (a.char) expect(CHARS).toHaveProperty(a.char);
@@ -82,6 +74,21 @@ describe('맵', () => {
       }
     for (const f of Object.values(FOES)) for (const u of f.waves.flat()) expect(u.char ? CHARS : MONS).toHaveProperty((u.char ?? u.mon)!);
     for (const def of Object.values(MAPS)) for (const c of def.chests) if (c.item) expect(ITEMS).toHaveProperty(c.item);
+    for (const def of Object.values(MAPS)) for (const d of def.deco) expect(d.sx < 256 && d.sy < 176, `${def.id} ${d.sx},${d.sy}`).toBe(true);
+  });
+
+  it('대본이 쓰는 이름 지점이 그 맵에 모두 있다', () => {
+    let map: MapId = 'backhill';
+    for (const b of SCRIPT) {
+      if (b.t === 'map') {
+        map = b.map;
+        if (typeof b.at === 'string') expect(MAPS[map].points, `${map} ${b.at}`).toHaveProperty([b.at]);
+      }
+      if ((b.t === 'walk' && typeof b.to === 'string') || (b.t === 'place' && typeof b.at === 'string')) {
+        const name = b.t === 'walk' ? b.to : b.at;
+        expect(Object.keys(MAPS[map].points), `${map} ${name}`).toContain(name);
+      }
+    }
   });
 });
 
