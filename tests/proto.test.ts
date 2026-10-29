@@ -5,7 +5,7 @@ import { CHARS, MONS, TILES } from '../src/proto/atlas';
 import { FOES, ITEMS } from '../src/proto/data';
 import { MAPS, grid, walkable, type MapId } from '../src/proto/maps';
 import { giveExp, overwhelms } from '../src/proto/party';
-import { buy, labelAt, newGame, step, visibleLines, type Game, type Input } from '../src/proto/runner';
+import { buy, labelAt, newGame, revive, step, visibleLines, type Game, type Input } from '../src/proto/runner';
 import { SCRIPT } from '../src/proto/story';
 import { CUTIN_MS } from '../src/proto/Battle';
 
@@ -319,6 +319,18 @@ describe('진행기', () => {
   it('끝까지 가면 넷 다 기술을 얻는다', () => {
     const r = playthrough({ collect: ['wages'] });
     expect([...r.g.skills].sort()).toEqual(['baekseol', 'me', 'muyeong', 'sodam']);
+  });
+
+  it('3화까지 끝낸 저장은 새로 붙은 4화부터 이어 간다', () => {
+    const first4 = SCRIPT.findIndex((b) => b.t === 'map' && b.map === 'village' && b.at === '오두막');
+    // 예전 저장: 끝(end)에 닿아 done인데, 그 자리에 이제 4화 첫 비트가 있다
+    const old: Game = { ...newGame(), pc: first4 - 1, done: true };
+    const g = revive(old);
+    expect(g.done).toBe(false);
+    expect(step(g).fx.k).not.toBe('end');
+    // 진짜 끝에 닿은 저장은 그대로 끝
+    const end = SCRIPT.findIndex((b) => b.t === 'end');
+    expect(revive({ ...newGame(), pc: end, done: true }).done).toBe(true);
   });
 
   it('저장한 상태를 그대로 불러와 같은 곳부터 이어 간다', () => {

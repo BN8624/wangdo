@@ -467,12 +467,17 @@ export function save(g: Game) {
   }
 }
 
+/** 끝까지 간 저장이라도 그 자리에 새 화가 붙었으면 이어서 한다(새 화는 늘 '끝' 바로 앞에 붙인다) */
+export function revive(g: Game): Game {
+  return g.done && SCRIPT[g.pc]?.t !== 'end' ? { ...g, done: false } : g;
+}
+
 export function load(): Game | null {
   try {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const g = JSON.parse(raw) as Game;
-    return g.v === 2 ? g : null;
+    return g.v === 2 ? revive(g) : null;
   } catch {
     return null;
   }
