@@ -555,6 +555,17 @@ button {
     transform: none;
   }
 }
+.seal.broken {
+  color: #e8e0d0;
+  background: #b8352b;
+  transform: rotate(-6deg);
+  animation: crack 0.35s ease-out;
+}
+@keyframes crack {
+  0% { transform: scale(1.6) rotate(4deg); opacity: 0; }
+  40% { transform: scale(0.95) rotate(-8deg); opacity: 1; }
+  100% { transform: rotate(-6deg); }
+}
 .seal {
   display: inline-block;
   margin-top: 6px;

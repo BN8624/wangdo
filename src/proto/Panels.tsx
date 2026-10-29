@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { play } from '../ui/sound';
 import { CHARS, FACES, type CharName, type FaceName } from './atlas';
-import { ITEMS, MEMBER_NAME, SHOP } from './data';
+import { ITEMS, MEMBER_NAME, SHOP, priceOf } from './data';
 import { drawChar, drawFace } from './draw';
 import { memberStats } from './party';
 import type { Effect, Game } from './runner';
@@ -309,8 +309,9 @@ export function Shop({ g, onBuy, onDone }: { g: Game; onBuy: (item: string, who:
           {SHOP.map((id) => {
             const it = ITEMS[id];
             return (
-              <button key={id} className="opt" disabled={g.coin < it.price} onClick={() => setPick(id)}>
-                {it.name} · <span className="coin">{it.price}냥</span>
+              <button key={id} className="opt" disabled={g.coin < priceOf(it.price, g.party)} onClick={() => setPick(id)}>
+                {it.name} · <span className="coin">{priceOf(it.price, g.party)}냥</span>
+                {priceOf(it.price, g.party) < it.price && <span className="gear"> (소담이 깎음)</span>}
                 <small>{it.desc}</small>
               </button>
             );
@@ -328,10 +329,11 @@ const SKILL_TEXT: Record<MemberId, string> = {
   me: '빚 독촉 — 적 모두의 공격을 꺾는다',
   baekseol: '여우불 홀림 — 한 명을 홀려 기절시킨다',
   muyeong: '쇠방망이 내려치기 — 한 명에게 큰 한 방',
+  sodam: '우렁이 밥상 — 우리 편 모두의 체력을 채운다',
 };
 
 /** 컷인 전용 상반신(투명 배경, 가로 3:2). 없으면 대화창 전신을 잘라 쓴다 */
-const CUTIN_ART: Partial<Record<MemberId, string>> = { baekseol: 'proto/cutin/baekseol.webp', muyeong: 'proto/cutin/muyeong.webp' };
+const CUTIN_ART: Partial<Record<MemberId, string>> = { baekseol: 'proto/cutin/baekseol.webp', muyeong: 'proto/cutin/muyeong.webp', sodam: 'proto/cutin/sodam.webp' };
 
 /** 기술 컷인: 비스듬한 띠 위에 일러스트(주인공은 방망이)와 기술 이름 */
 export function CutIn({ who, name }: { who: MemberId; name: string }) {
@@ -428,7 +430,7 @@ export function Defeat({ onTrain, onRetry }: { onTrain: () => void; onRetry: () 
 }
 
 /** 방망이를 두드리면 허공에 먹빛 글씨가 떠오른다 */
-export function DebtScroll({ lines, speed, onDone }: { lines: string[]; speed: number; onDone: () => void }) {
+export function DebtScroll({ lines, speed, broken, onDone }: { lines: string[]; speed: number; broken?: boolean; onDone: () => void }) {
   const [n, setN] = useState(0);
   useEffect(() => {
     if (n >= lines.length) return;
@@ -447,7 +449,7 @@ export function DebtScroll({ lines, speed, onDone }: { lines: string[]; speed: n
         {lines.slice(0, n).map((l, i) => (
           <p key={i}>{l}</p>
         ))}
-        {n >= lines.length && <span className="seal">갚아라</span>}
+        {n >= lines.length && (broken ? <span className="seal broken">쩍!</span> : <span className="seal">갚아라</span>)}
       </div>
     </div>
   );

@@ -181,6 +181,8 @@ CHARS = {
     'widow': ('OldWoman', {}, None),
     'worker': ('Villager4', {'#f6c25c': '#3b3643', '#d9a13a': '#2a2630'}, None),
     'worker2': ('Hunter', {}, None),
+    # 소담: 한쪽으로 묶은 머리를 짙은 갈색으로, 옷을 짙은 청록으로
+    'sodam': ('Woman', {'#f1c471': '#6b4630', '#d78b4a': '#43291c', '#548789': '#2b6f6a', '#79b8ce': '#4fa79a'}, None),
 }
 
 MONS = {
@@ -203,8 +205,9 @@ FACES = {
     'worker2': 'Actor/Character/Hunter/Faceset.png',
     'boss_gob': 'Actor/Boss/DemonCyclop/Faceset.png',
     'gob': 'Actor/Monster/Cyclope/Faceset.png',
+    'sodam': 'Actor/Character/Woman/Faceset.png',
 }
-FACE_RECOLOR = {'baekseol': 'baekseol', 'muyeong': 'muyeong', 'worker': 'worker'}
+FACE_RECOLOR = {'baekseol': 'baekseol', 'muyeong': 'muyeong', 'worker': 'worker', 'sodam': 'sodam'}
 
 # ── 이미 만든 캐릭터에서 파생 ──
 # 흑운채는 도깨비 유민의 산적 무리다(STORY_BIBLE). 괴물이 아니라 사람 체형 산적에 뿔을 단다.
@@ -213,15 +216,19 @@ BANDIT_HUNTER = {'#d14b34': '#3b3643', '#8f3e56': '#26222c', '#4a5270': '#2b2f3a
 BANDIT_MONK = {'#d14b34': '#3f4652', '#8f3e56': '#2b2f3a', '#e0394c': '#5a6070'}
 # 두목 먹쇠: 붉은 도깨비 살빛, 먹빛 옷, 큰 뿔
 MOKSO = {**BANDIT_MONK, '#ef914f': '#c4553f'}
+AJEON = {'#4e484a': '#3f5f8a', '#3b3643': '#2c4566'}
 DERIVED = {
     # id: (바탕 캐릭터, 색 바꾸기, 덧그리기)
     'bandit': ('worker2', BANDIT_HUNTER, 'dhorns'),
     'bandit2': ('thug', BANDIT_MONK, 'dhorns'),
     'mokso': ('thug', MOKSO, 'bighorns'),
+    # 관아 아전: 창고지기(갓 쓴 양반)의 먹빛 도포를 관아 푸른 옷으로
+    'ajeon': ('keeper', AJEON, None),
 }
 DERIVED_FACES = {
     'bandit': ('worker2', BANDIT_HUNTER, 'horns'),
     'mokso': ('thug', MOKSO, 'bighorns'),
+    'ajeon': ('keeper', AJEON, None),
 }
 
 FX = {'cut': 'FX/Attack/Cut/SpriteSheet.png', 'claw': 'FX/Attack/Claw/SpriteSheet.png'}
@@ -362,7 +369,8 @@ def derive_char(base_block, mapping, ov):
 def derive_face(base_face, mapping, ov):
     img = base_face.copy()
     recolor(img, mapping)
-    face_horns(img, ov)
+    if ov:
+        face_horns(img, ov)
     return img
 
 

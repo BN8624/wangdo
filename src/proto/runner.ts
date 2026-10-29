@@ -2,7 +2,7 @@
 // 순수 함수다. 화면은 Effect를 보여 준 뒤 결과(Input)를 넣어 step을 다시 부른다.
 // 비트의 결과는 Input을 받을 때 상태에 반영하므로, 저장을 불러오면 지금 비트부터 그대로 다시 시작한다.
 import { runCombat, type CombatEvent, type CombatResult, type CombatSetup } from '../core/combat';
-import { FOES, ITEMS } from './data';
+import { FOES, ITEMS, priceOf } from './data';
 import { MAPS, dirTo, findPath, grid, pointOf, walkable, type MapId } from './maps';
 import { battleSetup, giveExp, groupCoin, groupExp, overwhelms } from './party';
 import { SCRIPT } from './story';
@@ -57,7 +57,8 @@ export type Beat =
   | { t: 'show'; ids: string[] }
   | { t: 'hide'; ids: string[] }
   | { t: 'place'; id: string; at: Where; dir: Dir }
-  | { t: 'cutscene'; id: 'debt'; lines: string[] }
+  /** broken: 그릇이 모자라 방망이가 버티지 못하고 글씨가 중간에 끊긴다 */
+  | { t: 'cutscene'; id: 'debt'; lines: string[]; broken?: boolean }
   | { t: 'collect'; cap: number; prompt: string; debts: Debt[] }
   | { t: 'flag'; set: string }
   | { t: 'coin'; n: number }
@@ -124,7 +125,7 @@ export type Effect =
   | { k: 'shop' }
   | { k: 'join'; who: MemberId }
   | { k: 'skill'; who: MemberId; text: string }
-  | { k: 'cutscene'; id: 'debt'; lines: string[] }
+  | { k: 'cutscene'; id: 'debt'; lines: string[]; broken?: boolean }
   | { k: 'collect'; cap: number; prompt: string; debts: { id: string; text: string; amount: number }[] }
   | { k: 'end' };
 
@@ -174,7 +175,8 @@ export const labelAt = (name: string) => {
 };
 
 const has = (g: Game, f: string) => g.flags.includes(f);
-export const visibleLines = (g: Game, lines: Line[]) => lines.filter((l) => (!l.if || has(g, l.if)) && (!l.unless || !has(g, l.unless)));
+export const visibleLines = (g: Game, lines: Line[]) =>
+  lines.filter((l) => (!l.if || has(g, l.if)) && (!l.unless || !has(g, l.unless)) && (!l.with || g.party.some((m) => m.id === l.with)));
 
 /** 지금 맵에 서 있는 사람·짐승(숨김·옮김 반영) */
 export function actorsOn(g: Game, map: MapId = g.map) {
@@ -222,9 +224,9 @@ export function equip(g: Game, item: string, who: MemberId): Game {
 
 /** 장터에서 산다 */
 export function buy(g: Game, item: string, who: MemberId): Game {
-  const it = ITEMS[item];
-  if (g.coin < it.price) return g;
-  return equip({ ...g, coin: g.coin - it.price }, item, who);
+  const price = priceOf(ITEMS[item].price, g.party);
+  if (g.coin < price) return g;
+  return equip({ ...g, coin: g.coin - price }, item, who);
 }
 
 /** 근처에서 세 판 수련: 이긴 판마다 경험치 */
@@ -359,7 +361,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
         }
         return { g, fx: { k: 'skill', who: b.who, text: b.text } };
       case 'cutscene':
-        return { g, fx: { k: 'cutscene', id: b.id, lines: b.lines } };
+        return { g, fx: { k: 'cutscene', id: b.id, lines: b.lines, broken: b.broken } };
       case 'collect':
         return { g, fx: { k: 'collect', cap: b.cap, prompt: b.prompt, debts: b.debts.map(({ id, text, amount }) => ({ id, text, amount })) } };
       case 'end':
