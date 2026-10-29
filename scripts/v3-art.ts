@@ -213,6 +213,7 @@ function instructions(a: V3Art): string {
   return [
     `Use your built-in image generation tool to create exactly one image, ${a.width}x${a.height} aspect (${a.width > a.height ? 'landscape' : 'portrait'}).`,
     ...a.who.map((w, i) => `Reference ${i + 1}: the character ${w}. Preserve this character's face, hair, costume, colors and accessories, and match its art style exactly.`),
+    ...(a.style ? [`Reference ${a.who.length + 1}: ART STYLE ONLY (brushwork, shading, palette). Do not draw this character or anyone resembling her.`] : []),
     `PROMPT (Korean):\n${v3Prompt(a)}`,
     a.transparent ? 'Output must have a real transparent alpha background, not a checkerboard or painted background.' : 'Output must use an opaque background.',
     'No text, letters, signatures, watermarks or borders anywhere in the image.',
@@ -228,7 +229,7 @@ function draw(a: V3Art) {
   try {
     execFileSync(
       process.env.CODEX_BIN ?? 'codex',
-      ['exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', work, ...(a.edit ? ['-i', join(ROOT, a.edit)] : []), ...a.who.flatMap((w) => ['-i', join(ROOT, REF[w])]), '--', instructions(a)],
+      ['exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', work, ...(a.edit ? ['-i', join(ROOT, a.edit)] : []), ...a.who.flatMap((w) => ['-i', join(ROOT, REF[w])]), ...(a.style ? ['-i', join(ROOT, REF[a.style])] : []), '--', instructions(a)],
       { stdio: ['ignore', 'ignore', 'inherit'], timeout: 15 * 60_000 },
     );
     const png = join(work, 'out.png');
