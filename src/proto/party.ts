@@ -4,14 +4,14 @@ import type { BattleSkill, CombatSetup, UnitInit } from '../core/combat';
 import { BALANCE as B } from '../data/balance';
 import { SKILLS } from '../data/skills';
 import { elementOf, roleOf, type Element, type Role } from '../data/roster';
-import { ITEMS, MEMBER_NAME } from './data';
+import { ITEMS, MEMBER_NAME, PARTY_MAX } from './data';
 import type { FoeDef, FoeGroup, Member, MemberId } from './types';
 
 /** 주인공은 방망이로 상대의 기를 꺾는다 */
 const ME_SKILL: BattleSkill = { name: '빚 독촉', kind: 'weaken' };
 
-const ROLE: Record<MemberId, Role> = { me: 'support', baekseol: roleOf('baekseol'), muyeong: roleOf('muyeong') };
-const ELEMENT: Record<MemberId, Element> = { me: 'light', baekseol: elementOf('baekseol'), muyeong: elementOf('muyeong') };
+const ROLE: Record<MemberId, Role> = { me: 'support', baekseol: roleOf('baekseol'), muyeong: roleOf('muyeong'), sodam: roleOf('sodam') };
+const ELEMENT: Record<MemberId, Element> = { me: 'light', baekseol: elementOf('baekseol'), muyeong: elementOf('muyeong'), sodam: elementOf('sodam') };
 
 /** 다음 레벨까지 경험치(RPG_DESIGN.md) */
 export const expToNext = (level: number) => Math.round(10 * Math.pow(level, 1.6) + 20);
@@ -69,7 +69,7 @@ export function foeUnits(g: FoeGroup): UnitInit[][] {
 }
 
 export function battleSetup(party: Member[], g: FoeGroup, skills: MemberId[], fresh: MemberId[] = []): CombatSetup {
-  const allies: (UnitInit | null)[] = party.map((m) => heroUnit(m, skills, fresh));
+  const allies: (UnitInit | null)[] = party.slice(0, PARTY_MAX).map((m) => heroUnit(m, skills, fresh));
   while (allies.length < 5) allies.push(null);
   return { allies, waves: foeUnits(g) };
 }

@@ -138,7 +138,7 @@ export function App() {
           <p className="sub">
             빚 받으러 왕까지
             <br />
-            시제품 · 1부 1~3화 (25분 안팎)
+            시제품 · 1부 1~4화 (35분 안팎)
           </p>
           {!adult ? (
             <div className="opts">
@@ -195,7 +195,7 @@ export function App() {
       <div className="app">
         <div className="end">
           <h2>시제품은 여기까지</h2>
-          <p className="gear">1부 3화 '고갯길의 도깨비'까지 왔습니다.</p>
+          <p className="gear">1부 4화 '우렁각시의 밥상'까지 왔습니다.</p>
           <h3 className="name" style={{ marginTop: 16 }}>
             내가 고른 길
           </h3>
@@ -207,9 +207,9 @@ export function App() {
           <PartyList party={g.party} />
           <p className="coin">엽전 {g.coin}냥</p>
           <div className="next">
-            <b>다음 화 · 우렁각시의 밥상</b>
+            <b>다음 화 · 이름의 담보</b>
             <br />
-            오두막에 사흘째 밥상이 차려져 있다. 차린 사람은 보이지 않는다.
+            참봉 관복을 입은 첫 장날, 송 대감의 딸이 찾아온다. 그날 밤 백설이 거울을 덮으며 입을 연다.
           </div>
           <div className="opts">
             <button
@@ -261,7 +261,7 @@ export function App() {
       case 'defeat':
         return <Defeat onTrain={() => advance({ k: 'train' })} onRetry={() => advance({ k: 'retry' })} />;
       case 'cutscene':
-        return <DebtScroll lines={fx.lines} speed={ui.speed} onDone={() => advance()} />;
+        return <DebtScroll lines={fx.lines} speed={ui.speed} broken={fx.broken} onDone={() => advance()} />;
       case 'swift':
         return (
           <div className="toast">

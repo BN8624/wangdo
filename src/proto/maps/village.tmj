@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 4,
- "nextobjectid": 34,
+ "nextobjectid": 43,
  "properties": [
   {
    "name": "name",
@@ -856,6 +856,270 @@
      "point": true,
      "x": 67.2,
      "y": 244.8,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 34,
+     "name": "sodam_k",
+     "type": "actor",
+     "point": true,
+     "x": 264,
+     "y": 296,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "sodam"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 35,
+     "name": "meo_d1",
+     "type": "actor",
+     "point": true,
+     "x": 264,
+     "y": 216,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 36,
+     "name": "meo_d2",
+     "type": "actor",
+     "point": true,
+     "x": 280,
+     "y": 216,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 37,
+     "name": "meo1",
+     "type": "actor",
+     "point": true,
+     "x": 200,
+     "y": 312,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
+      }
+     ]
+    },
+    {
+     "id": 38,
+     "name": "meo2",
+     "type": "actor",
+     "point": true,
+     "x": 184,
+     "y": 328,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
+      }
+     ]
+    },
+    {
+     "id": 39,
+     "name": "meo3",
+     "type": "actor",
+     "point": true,
+     "x": 216,
+     "y": 328,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
+      }
+     ]
+    },
+    {
+     "id": 40,
+     "name": "meo_boss",
+     "type": "actor",
+     "point": true,
+     "x": 200,
+     "y": 296,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
+      }
+     ]
+    },
+    {
+     "id": 41,
+     "name": "ajeon",
+     "type": "actor",
+     "point": true,
+     "x": 232,
+     "y": 312,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "ajeon"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 42,
+     "name": "장독대",
+     "type": "point",
+     "point": true,
+     "x": 296,
+     "y": 280,
      "width": 0,
      "height": 0,
      "rotation": 0,

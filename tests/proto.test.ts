@@ -5,9 +5,17 @@ import { CHARS, MONS, TILES } from '../src/proto/atlas';
 import { FOES, ITEMS } from '../src/proto/data';
 import { MAPS, grid, walkable, type MapId } from '../src/proto/maps';
 import { giveExp, overwhelms } from '../src/proto/party';
-import { buy, labelAt, newGame, step, type Game, type Input } from '../src/proto/runner';
+import { buy, labelAt, newGame, step, visibleLines, type Game, type Input } from '../src/proto/runner';
 import { SCRIPT } from '../src/proto/story';
 import { CUTIN_MS } from '../src/proto/Battle';
+
+/** 받아내기: 계획한 빚 가운데 이 장면에 있는 것만, 없으면 첫째 빚 */
+function collectIds(g: Game, wanted: string[]) {
+  const b = SCRIPT[g.pc];
+  if (b.t !== 'collect') return wanted;
+  const ids = b.debts.map((d) => d.id).filter((id) => wanted.includes(id));
+  return ids.length ? ids : [b.debts[0].id];
+}
 
 interface Plan {
   picks?: Record<string, number>;
@@ -34,7 +42,7 @@ function playthrough(plan: Plan) {
         const left = b.options.map((_, i) => i).filter((i) => !done.includes(i));
         input = { k: 'pick', i: Math.max(0, left.indexOf(want)) };
       } else if (b.t === 'choice') input = { k: 'pick', i: plan.picks?.[b.id] ?? 0 };
-    } else if (fx.k === 'collect') input = { k: 'collect', ids: plan.collect };
+    } else if (fx.k === 'collect') input = { k: 'collect', ids: collectIds(g, plan.collect) };
     else if (fx.k === 'gift') input = { k: 'pick', i: 0 };
     else if (fx.k === 'defeat') {
       losses++;
@@ -129,7 +137,7 @@ describe('대본', () => {
             const r = playthrough({ picks: { road, assault }, visits: v, collect: c });
             expect(r.g.done, `${v} ${c}`).toBe(true);
             expect(r.losses, `${v} ${c}`).toBe(0);
-            expect(r.g.party.map((m) => m.id)).toEqual(['me', 'baekseol', 'muyeong']);
+            expect(r.g.party.map((m) => m.id)).toEqual(['me', 'baekseol', 'muyeong', 'sodam']);
           }
       });
 
@@ -156,6 +164,31 @@ describe('대본', () => {
     const withGamble = playthrough({ picks: { road: 0 }, collect: ['hens', 'gamble'] });
     const without = playthrough({ picks: { road: 0 }, collect: ['wages', 'hens'] });
     expect(withGamble.battles).toBe(without.battles - 1);
+  });
+});
+
+// 4화(우렁각시): 숨을 자리·붙잡는 법·받아낼 것·치수·관직 선택이 갈리고, 소담이 합류한다
+describe('4화', () => {
+  for (const pick of [0, 1])
+    it(`선택을 모두 ${pick ? '둘째' : '첫째'}로 골라도 지지 않고 끝까지 가고 깃발이 남는다`, () => {
+      const r = playthrough({ picks: { suspect: pick, hide: pick, catch: pick, measure: pick, office: pick }, collect: pick ? ['wages', 'thanks'] : ['wages', 'meals'] });
+      expect(r.g.done).toBe(true);
+      expect(r.losses).toBe(0);
+      expect(r.g.flags).toEqual(
+        expect.arrayContaining(pick ? ['hid_muyeong', 'caught_rough', 'paid_thanks', 'measured_back', 'took_office_ledger'] : ['hid_baekseol', 'caught_gently', 'paid_meals', 'measured', 'took_office']),
+      );
+    });
+
+  it('소담이 있으면 장터 값을 한 할 깎는다', () => {
+    const g = newGame();
+    const withSodam = buy({ ...g, coin: 100, party: [...g.party, { id: 'sodam', level: 1, exp: 0 }] }, 'oakclub', 'me');
+    expect(withSodam.coin).toBe(100 - Math.floor(ITEMS.oakclub.price * 0.9));
+  });
+
+  it('데려간 식객이 없으면 그 식객의 잡담은 나오지 않는다', () => {
+    const g = newGame();
+    const lines = visibleLines(g, [{ who: 'sodam', text: '소담 잡담', with: 'sodam' }, { who: 'me', text: '혼잣말' }]);
+    expect(lines.map((l) => l.text)).toEqual(['혼잣말']);
   });
 });
 
@@ -191,7 +224,7 @@ describe('지루하지 않게', () => {
         } else since += ms(fx);
         const b = SCRIPT[r.g.pc];
         const input: Input =
-          fx.k === 'collect' ? { k: 'collect', ids: ['wages'] } : fx.k === 'choice' ? { k: 'pick', i: b.t === 'choice' && b.id === 'road' ? road : 0 } : fx.k === 'gift' ? { k: 'pick', i: 0 } : { k: 'ok' };
+          fx.k === 'collect' ? { k: 'collect', ids: collectIds(r.g, ['wages']) } : fx.k === 'choice' ? { k: 'pick', i: b.t === 'choice' && b.id === 'road' ? road : 0 } : fx.k === 'gift' ? { k: 'pick', i: 0 } : { k: 'ok' };
         r = step(r.g, input);
       }
       expect(Math.max(worst, since), `길 ${road}`).toBeLessThan(180_000);
@@ -206,7 +239,7 @@ describe('진행기', () => {
     for (let guard = 0; guard < 2000; guard++) {
       const b = SCRIPT[r.g.pc];
       if (b.t === 'battle' && b.foe === foe && (r.fx.k === 'battle' || r.fx.k === 'swift')) return r.g;
-      const input: Input = r.fx.k === 'collect' ? { k: 'collect', ids: ['wages'] } : r.fx.k === 'choice' || r.fx.k === 'gift' ? { k: 'pick', i: 0 } : { k: 'ok' };
+      const input: Input = r.fx.k === 'collect' ? { k: 'collect', ids: collectIds(r.g, ['wages']) } : r.fx.k === 'choice' || r.fx.k === 'gift' ? { k: 'pick', i: 0 } : { k: 'ok' };
       r = step(r.g, input);
     }
     throw new Error(`${foe} 전투를 못 찾았어요`);
@@ -283,9 +316,9 @@ describe('진행기', () => {
     expect(step(kg, { k: 'ok' }).g.fresh).toEqual([]);
   });
 
-  it('끝까지 가면 셋 다 기술을 얻는다', () => {
+  it('끝까지 가면 넷 다 기술을 얻는다', () => {
     const r = playthrough({ collect: ['wages'] });
-    expect([...r.g.skills].sort()).toEqual(['baekseol', 'me', 'muyeong']);
+    expect([...r.g.skills].sort()).toEqual(['baekseol', 'me', 'muyeong', 'sodam']);
   });
 
   it('저장한 상태를 그대로 불러와 같은 곳부터 이어 간다', () => {
