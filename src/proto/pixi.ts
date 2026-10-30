@@ -58,7 +58,17 @@ export const tileTex = (name: TileName) => {
 
 // ── 그린 지도(B안): SD 캐릭터와 지도 그림 ──
 /** 도트 캐릭터 이름 → SD 그림(public/proto/sd/<이름>.webp) */
-export const SD_OF: Partial<Record<string, string>> = { me: 'me', baekseol: 'baekseol', muyeong: 'muyeong', sodam: 'sodam', thug: 'meoseum', ajeon: 'ajeon' };
+export const SD_OF: Partial<Record<string, string>> = {
+  me: 'me',
+  baekseol: 'baekseol',
+  muyeong: 'muyeong',
+  sodam: 'sodam',
+  thug: 'meoseum',
+  ajeon: 'ajeon',
+  worker: 'villager',
+  worker2: 'fishmonger',
+  innkeeper: 'innkeeper',
+};
 const sdCache = new Map<string, Texture | null>();
 /** SD 텍스처. 처음 부르면 받기 시작하고 null, 받은 뒤엔 텍스처 */
 export function sdTexture(name: string): Texture | null {

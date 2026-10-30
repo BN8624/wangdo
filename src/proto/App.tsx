@@ -5,8 +5,8 @@ import { MEMBER_NAME } from './data';
 import { Battle } from './Battle';
 import { Field } from './Field';
 import { MAPS } from './maps';
-import { Choice, Collect, DebtScroll, Defeat, Dialogue, Gift, Join, josa, PartyList, Shop, SkillGet, Sprite } from './Panels';
-import { buy, load, newGame, save, SAVE_KEY, step, type Effect, type Game, type Input } from './runner';
+import { Choice, Collect, DebtScroll, Defeat, Dialogue, Gift, Join, josa, Nego, PartyList, Shop, SkillGet } from './Panels';
+import { buy, load, newGame, save, SAVE_KEY, step, trialStart, type Effect, type Game, type Input } from './runner';
 
 const UI_KEY = 'wangdo.proto.ui';
 /** 성인 확인(기존 게임과 같은 키: 한 번 확인하면 둘 다 통과) */
@@ -130,9 +130,9 @@ export function App() {
       <div className="app">
         <div className="title">
           <div className="row" style={{ gap: 4 }}>
-            <Sprite c="baekseol" scale={5} />
-            <Sprite c="me" scale={5} />
-            <Sprite c="muyeong" scale={5} />
+            {['baekseol', 'me', 'muyeong', 'sodam'].map((id) => (
+              <img key={id} className="title-sd" src={`proto/sd/${id}.webp`} alt="" />
+            ))}
           </div>
           <h1>왕도</h1>
           <p className="sub">
@@ -175,6 +175,9 @@ export function App() {
             <div className="opts">
               <button className="opt primary" onClick={() => run(newGame())}>
                 처음부터
+              </button>
+              <button className="opt" onClick={() => run(trialStart())}>
+                4화 시험판 <small>그린 지도·협상 판·작전(1~3화는 건너뜀)</small>
               </button>
               {hasSave && (
                 <button className="opt" onClick={() => run(load() ?? newGame())}>
@@ -242,6 +245,8 @@ export function App() {
         return <Gift key={g.pc} fx={fx} g={g} onPick={(i) => advance({ k: 'pick', i })} />;
       case 'collect':
         return <Collect fx={fx} onDone={(ids) => advance({ k: 'collect', ids })} />;
+      case 'nego':
+        return <Nego key={g.pc + ':' + fx.turn} fx={fx} g={g} onPick={(pick) => advance({ k: 'nego', pick })} />;
       case 'shop':
         return (
           <Shop

@@ -69,8 +69,19 @@ export function foeUnits(g: FoeGroup): UnitInit[][] {
   );
 }
 
-export function battleSetup(party: Member[], g: FoeGroup, skills: MemberId[], fresh: MemberId[] = []): CombatSetup {
-  const allies: (UnitInit | null)[] = party.slice(0, PARTY_MAX).map((m) => heroUnit(m, skills, fresh));
+/** 대장 앞에서 고르는 작전 */
+export type Tactic = 'push' | 'safe' | 'skill';
+
+/** 작전이 능력치에 주는 것: 몰아쳐라(공격↑ 방어↓) · 목숨부터(체력·방어↑ 공격↓) · 기술 아끼지 마(첫 차례부터 기술, 기술 피해↑) */
+function applyTactic(u: UnitInit, t?: Tactic): UnitInit {
+  if (t === 'push') return { ...u, atk: Math.round(u.atk * 1.25), def: Math.round(u.def * 0.8) };
+  if (t === 'safe') return { ...u, hp: Math.round(u.hp * 1.35), def: Math.round(u.def * 1.4), atk: Math.round(u.atk * 0.92) };
+  if (t === 'skill' && u.skill) return { ...u, skillNow: true, skillBoost: (u.skillBoost ?? 0) + 0.3 };
+  return u;
+}
+
+export function battleSetup(party: Member[], g: FoeGroup, skills: MemberId[], fresh: MemberId[] = [], tactic?: Tactic): CombatSetup {
+  const allies: (UnitInit | null)[] = party.slice(0, PARTY_MAX).map((m) => applyTactic(heroUnit(m, skills, fresh), tactic));
   while (allies.length < 5) allies.push(null);
   return { allies, waves: foeUnits(g) };
 }

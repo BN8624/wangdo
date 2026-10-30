@@ -4,8 +4,10 @@ import { describe, expect, it } from 'vitest';
 import { CHARS, MONS, TILES } from '../src/proto/atlas';
 import { FOES, ITEMS } from '../src/proto/data';
 import { MAPS, grid, walkable, type MapId } from '../src/proto/maps';
-import { giveExp, overwhelms } from '../src/proto/party';
-import { buy, labelAt, newGame, revive, step, visibleLines, type Game, type Input } from '../src/proto/runner';
+import { battleSetup, giveExp, overwhelms } from '../src/proto/party';
+import { negoApply, negoOptions, type NegoBeat } from '../src/proto/nego';
+import type { MemberId } from '../src/proto/types';
+import { buy, labelAt, newGame, revive, step, trialStart, visibleLines, type Game, type Input } from '../src/proto/runner';
 import { SCRIPT } from '../src/proto/story';
 import { CUTIN_MS } from '../src/proto/Battle';
 
@@ -171,12 +173,14 @@ describe('대본', () => {
 describe('4화', () => {
   for (const pick of [0, 1])
     it(`선택을 모두 ${pick ? '둘째' : '첫째'}로 골라도 지지 않고 끝까지 가고 깃발이 남는다`, () => {
-      const r = playthrough({ picks: { suspect: pick, hide: pick, catch: pick, measure: pick, office: pick }, collect: pick ? ['wages', 'thanks'] : ['wages', 'meals'] });
+      const r = playthrough({ picks: { suspect: pick, hide: pick, catch: pick, measure: pick, office: pick, tactic4: pick }, visits: [0, 1, pick], collect: ['wages'] });
       expect(r.g.done).toBe(true);
       expect(r.losses).toBe(0);
       expect(r.g.flags).toEqual(
-        expect.arrayContaining(pick ? ['hid_muyeong', 'caught_rough', 'paid_thanks', 'measured_back', 'took_office_ledger'] : ['hid_baekseol', 'caught_gently', 'paid_meals', 'measured', 'took_office']),
+        expect.arrayContaining(pick ? ['hid_muyeong', 'caught_rough', 'measured_back', 'took_office_ledger', 'clue_tab'] : ['hid_baekseol', 'caught_gently', 'measured', 'took_office', 'clue_well']),
       );
+      // 협상은 이기든 지든 결과가 깃발로 남고 이야기는 이어진다
+      expect(r.g.flags.some((f) => f === 'boss_paid_full' || f === 'boss_paid_part')).toBe(true);
     });
 
   it('소담이 있으면 장터 값을 한 할 깎는다', () => {
@@ -189,6 +193,48 @@ describe('4화', () => {
     const g = newGame();
     const lines = visibleLines(g, [{ who: 'sodam', text: '소담 잡담', with: 'sodam' }, { who: 'me', text: '혼잣말' }]);
     expect(lines.map((l) => l.text)).toEqual(['혼잣말']);
+  });
+});
+
+describe('협상 판과 작전', () => {
+  const ctx = (flags: string[] = []) => ({ flags, party: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[], skills: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[] });
+  const boss = SCRIPT.find((b) => b.t === 'nego' && b.id === 'meo_boss') as NegoBeat;
+
+  it('수단마다 세기와 대가가 다르고, 상대마다 잘 먹히는 게 다르다', () => {
+    const st = { id: boss.id, left: boss.resolve, turn: 0, used: [] };
+    const threat = negoApply(boss, st, 'threat');
+    const charm = negoApply(boss, st, 'charm');
+    expect(threat.st.left).toBeLessThan(charm.st.left); // 머슴 대장에겐 위협이 홀림보다 잘 먹힌다
+    expect(threat.rep).toBe(-1);
+    expect(charm.bsDebt).toBe(1);
+  });
+
+  it('단서와 장부는 있어야 쓰고, 단서는 한 번만', () => {
+    const st = { id: boss.id, left: boss.resolve, turn: 0, used: [] };
+    expect(negoOptions(boss, st, ctx()).map((o) => o.id)).not.toContain('ledger');
+    expect(negoOptions(boss, st, ctx(['clue_ledger', 'clue_note'])).map((o) => o.id)).toEqual(expect.arrayContaining(['ledger', 'clue_note']));
+    const used = negoApply(boss, st, 'clue_note').st;
+    expect(negoOptions(boss, used, ctx(['clue_note'])).map((o) => o.id)).not.toContain('clue_note');
+  });
+
+  it('방망이만으로는 못 꺾고, 수단을 섞으면 꺾는다', () => {
+    let st = { id: boss.id, left: boss.resolve, turn: 0, used: [] as string[] };
+    for (let i = 0; i < boss.turns; i++) st = negoApply(boss, st, 'bat').st;
+    expect(st.left).toBeGreaterThan(0);
+    st = { id: boss.id, left: boss.resolve, turn: 0, used: [] };
+    for (const p of ['ledger', 'threat', 'clue_note']) st = negoApply(boss, st, p).st;
+    expect(st.left).toBe(0);
+  });
+
+  it('작전이 능력치를 바꾼다', () => {
+    const party = newGame().party;
+    const base = battleSetup(party, FOES.meoNight, ['me']).allies[0]!;
+    const push = battleSetup(party, FOES.meoNight, ['me'], [], 'push').allies[0]!;
+    const safe = battleSetup(party, FOES.meoNight, ['me'], [], 'safe').allies[0]!;
+    const skill = battleSetup(party, FOES.meoNight, ['me'], [], 'skill').allies[0]!;
+    expect(push.atk).toBeGreaterThan(base.atk);
+    expect(safe.hp).toBeGreaterThan(base.hp);
+    expect(skill.skillNow).toBe(true);
   });
 });
 
@@ -217,7 +263,7 @@ describe('지루하지 않게', () => {
       let worst = 0;
       for (let guard = 0; r.fx.k !== 'end' && guard < 3000; guard++) {
         const fx = r.fx;
-        const decide = fx.k === 'choice' || fx.k === 'collect' || fx.k === 'shop' || fx.k === 'gift';
+        const decide = fx.k === 'choice' || fx.k === 'collect' || fx.k === 'shop' || fx.k === 'gift' || fx.k === 'nego';
         if (decide) {
           worst = Math.max(worst, since);
           since = 0;
@@ -319,6 +365,20 @@ describe('진행기', () => {
   it('끝까지 가면 넷 다 기술을 얻는다', () => {
     const r = playthrough({ collect: ['wages'] });
     expect([...r.g.skills].sort()).toEqual(['baekseol', 'me', 'muyeong', 'sodam']);
+  });
+
+  it('4화 시험판은 4화 첫머리(그린 지도)에서 시작하고 끝까지 간다', () => {
+    const g = trialStart();
+    let r = step(g);
+    expect(r.fx).toMatchObject({ k: 'warp', map: 'village_p' });
+    r = step(r.g, { k: 'ok' });
+    expect(r.g.map).toBe('village_p');
+    expect(r.g.party.map((m) => m.id)).toEqual(['me', 'baekseol', 'muyeong']);
+    for (let i = 0; i < 2000 && r.fx.k !== 'end'; i++) {
+      const b = SCRIPT[r.g.pc];
+      r = step(r.g, r.fx.k === 'collect' && b.t === 'collect' ? { k: 'collect', ids: [b.debts[0].id] } : r.fx.k === 'choice' || r.fx.k === 'gift' ? { k: 'pick', i: 0 } : r.fx.k === 'defeat' ? { k: 'train' } : { k: 'ok' });
+    }
+    expect(r.fx.k).toBe('end');
   });
 
   it('3화까지 끝낸 저장은 새로 붙은 4화부터 이어 간다', () => {

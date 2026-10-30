@@ -4,7 +4,8 @@
 import { runCombat, type CombatEvent, type CombatResult, type CombatSetup } from '../core/combat';
 import { FOES, ITEMS, priceOf } from './data';
 import { MAPS, dirTo, findPath, grid, pointOf, walkable, type MapId } from './maps';
-import { battleSetup, giveExp, groupCoin, groupExp, overwhelms } from './party';
+import { battleSetup, giveExp, groupCoin, groupExp, overwhelms, type Tactic } from './party';
+import { negoApply, negoOptions, type NegoBeat, type NegoState, type NegoView } from './nego';
 import { SCRIPT } from './story';
 import type { Dir, FoeGroup, ItemDef, Line, Member, MemberId, Pt } from './types';
 
@@ -18,6 +19,8 @@ export interface ChoiceOpt {
   goto?: string;
   /** 끝 화면 요약에 남길 한 줄 */
   log?: string;
+  /** 다음 전투의 작전 */
+  tactic?: Tactic;
 }
 
 export interface Debt {
@@ -60,6 +63,7 @@ export type Beat =
   /** broken: 그릇이 모자라 방망이가 버티지 못하고 글씨가 중간에 끊긴다 */
   | { t: 'cutscene'; id: 'debt'; lines: string[]; broken?: boolean }
   | { t: 'collect'; cap: number; prompt: string; debts: Debt[] }
+  | NegoBeat
   | { t: 'flag'; set: string }
   | { t: 'coin'; n: number }
   | { t: 'end' };
@@ -102,6 +106,14 @@ export interface Game {
   wins: number;
   /** 고른 뒤 보여 줄 대사 */
   reply: Line[] | null;
+  /** 진행 중인 협상 판 */
+  nego?: NegoState | null;
+  /** 마을 평판(무영의 위협 등으로 깎인다) */
+  rep?: number;
+  /** 백설에게 진 빚(홀림을 쓸 때마다) */
+  bsDebt?: number;
+  /** 다음 전투의 작전 */
+  tactic?: Tactic | null;
   /** 졌을 때: 쉼터로 돌아온 뒤 수련할지 고르는 중 */
   defeat: boolean;
   done: boolean;
@@ -127,9 +139,10 @@ export type Effect =
   | { k: 'skill'; who: MemberId; text: string }
   | { k: 'cutscene'; id: 'debt'; lines: string[]; broken?: boolean }
   | { k: 'collect'; cap: number; prompt: string; debts: { id: string; text: string; amount: number }[] }
+  | ({ k: 'nego' } & NegoView)
   | { k: 'end' };
 
-export type Input = { k: 'ok' } | { k: 'pick'; i: number } | { k: 'collect'; ids: string[] } | { k: 'train' } | { k: 'retry' };
+export type Input = { k: 'ok' } | { k: 'pick'; i: number } | { k: 'collect'; ids: string[] } | { k: 'nego'; pick: string } | { k: 'train' } | { k: 'retry' };
 
 export const SAVE_KEY = 'wangdo.proto';
 
@@ -331,7 +344,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'battle': {
         const group = FOES[b.foe];
         if (overwhelms(g.party, group)) return { g, fx: { k: 'swift', group, reward: reward(g, group) } };
-        const setup = battleSetup(g.party, group, g.skills, g.fresh);
+        const setup = battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined);
         const { events, result } = runCombat(setup, seedOf(g), true);
         return { g, fx: { k: 'battle', group, setup, events, result, reward: result.won ? reward(g, group) : null } };
       }
@@ -364,6 +377,12 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
         return { g, fx: { k: 'cutscene', id: b.id, lines: b.lines, broken: b.broken } };
       case 'collect':
         return { g, fx: { k: 'collect', cap: b.cap, prompt: b.prompt, debts: b.debts.map(({ id, text, amount }) => ({ id, text, amount })) } };
+      case 'nego': {
+        const st = g.nego?.id === b.id ? g.nego : { id: b.id, left: b.resolve, turn: 0, used: [] };
+        if (g.nego?.id !== b.id) g = { ...g, nego: st };
+        const options = negoOptions(b, st, { flags: g.flags, party: g.party.map((m) => m.id), skills: g.skills });
+        return { g, fx: { k: 'nego', who: b.who, face: b.face, prompt: b.prompt, left: st.left, max: b.resolve, turn: st.turn, turns: b.turns, options } };
+      }
       case 'end':
         return { g: { ...g, done: true }, fx: { k: 'end' } };
     }
@@ -410,6 +429,7 @@ function resolve(game: Game, input: Input): Game {
         coin: g.coin + (o.coin ?? 0),
         log: o.log ? [...g.log, o.log] : g.log,
         reply: o.reply ? visibleLines(g, o.reply) : null,
+        ...(o.tactic ? { tactic: o.tactic } : {}),
       };
     }
     case 'visit': {
@@ -422,8 +442,8 @@ function resolve(game: Game, input: Input): Game {
       const group = FOES[b.foe];
       const hide = (x: Game) => ({ ...x, hidden: [...new Set([...x.hidden, ...(b.hide ?? [])])] });
       if (overwhelms(g.party, group)) return hide(applyReward({ ...next, wins: g.wins + 1 }, reward(g, group)));
-      const { result } = runCombat(battleSetup(g.party, group, g.skills, g.fresh), seedOf(g), true);
-      if (result.won) return hide(applyReward({ ...next, wins: g.wins + 1, fresh: [] }, reward(g, group)));
+      const { result } = runCombat(battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined), seedOf(g), true);
+      if (result.won) return hide(applyReward({ ...next, wins: g.wins + 1, fresh: [], tactic: null }, reward(g, group)));
       // 지면 마지막 쉼터로. 얻은 경험치는 남는다
       const c = g.check;
       if (!c) return { ...g, defeat: true, wins: g.wins + 1 };
@@ -442,6 +462,27 @@ function resolve(game: Game, input: Input): Game {
     case 'join': {
       const avg = Math.max(1, Math.round(g.party.reduce((s, m) => s + m.level, 0) / g.party.length));
       return { ...next, party: [...g.party, { id: b.who, level: avg, exp: 0 }] };
+    }
+    case 'nego': {
+      const st = g.nego?.id === b.id ? g.nego : { id: b.id, left: b.resolve, turn: 0, used: [] };
+      const options = negoOptions(b, st, { flags: g.flags, party: g.party.map((m) => m.id), skills: g.skills });
+      const want = input.k === 'nego' ? input.pick : options.find((o) => !o.disabled)?.id;
+      const pick = options.find((o) => o.id === want && !o.disabled) ?? options.find((o) => !o.disabled);
+      if (!pick) throw new Error('협상에 쓸 수단이 없어요');
+      const r = negoApply(b, st, pick.id);
+      const used = { ...g, rep: (g.rep ?? 0) + r.rep, bsDebt: (g.bsDebt ?? 0) + r.bsDebt, flags: r.bsDebt && !has(g, 'bs_debt') ? [...g.flags, 'bs_debt'] : g.flags };
+      const withRep = used.rep < 0 && !used.flags.includes('rep_down') ? { ...used, flags: [...used.flags, 'rep_down'] } : used;
+      if (!r.over) return { ...withRep, nego: r.st, reply: visibleLines(g, r.say) };
+      const end = r.won ? b.win : b.lose;
+      return {
+        ...withRep,
+        nego: null,
+        pc: g.pc + 1,
+        flags: withRep.flags.includes(end.flag) ? withRep.flags : [...withRep.flags, end.flag],
+        coin: g.coin + (end.coin ?? 0),
+        log: [...g.log, end.log],
+        reply: [...visibleLines(g, r.say), ...visibleLines(g, end.lines)],
+      };
     }
     case 'collect': {
       const ids = input.k === 'collect' ? input.ids : [];
@@ -465,6 +506,19 @@ export function save(g: Game) {
   } catch {
     /* 저장이 막혀도 이번 판은 이어진다 */
   }
+}
+
+/** 시험판: 처음부터 기본 선택으로 순식간에 진행해 4화(그린 지도) 첫머리에 세운다 */
+export function trialStart(): Game {
+  const first4 = SCRIPT.findIndex((b) => b.t === 'map' && b.map === 'village_p');
+  let r = step(newGame());
+  for (let i = 0; i < 5000 && r.g.pc < first4 - 1; i++) {
+    const b = SCRIPT[r.g.pc];
+    const input: Input =
+      r.fx.k === 'collect' && b.t === 'collect' ? { k: 'collect', ids: [b.debts[0].id] } : r.fx.k === 'choice' || r.fx.k === 'gift' ? { k: 'pick', i: 0 } : r.fx.k === 'defeat' ? { k: 'train' } : { k: 'ok' };
+    r = step(r.g, input);
+  }
+  return { ...r.g, reply: null, log: [...r.g.log, '4화 시험판으로 시작했다'] };
 }
 
 /** 끝까지 간 저장이라도 그 자리에 새 화가 붙었으면 이어서 한다(새 화는 늘 '끝' 바로 앞에 붙인다) */
