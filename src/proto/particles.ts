@@ -58,7 +58,7 @@ export class Particles {
   }
 
   /** view: 지금 보이는 맵 영역(도트), toScreen: 맵 좌표 → 화면 픽셀 */
-  update(now: number, def: MapDef, night: boolean, view: { x: number; y: number; w: number; h: number }, scale: number, toScreen: (x: number, y: number) => [number, number]) {
+  update(now: number, def: MapDef, night: boolean, tile: number, view: { x: number; y: number; w: number; h: number }, scale: number, toScreen: (x: number, y: number) => [number, number]) {
     if (this.map !== def.id) {
       this.map = def.id;
       this.list = [];
@@ -78,7 +78,7 @@ export class Particles {
     if (!night)
       for (const s of def.smoke)
         this.spawn('smoke', 0.9 * dt, () => ({
-          kind: 'smoke', x: s.x * T + (rnd() - 0.5) * 2, y: s.y * T, vx: 2 + rnd() * 2, vy: -7 - rnd() * 3, age: 0, life: 2.4 + rnd() * 1.2, seed: rnd() * 10, color: 0xe8e2d8,
+          kind: 'smoke', x: s.x * tile + (rnd() - 0.5) * 2, y: s.y * tile, vx: 2 + rnd() * 2, vy: -7 - rnd() * 3, age: 0, life: 2.4 + rnd() * 1.2, seed: rnd() * 10, color: 0xe8e2d8,
         }));
     if (night && !def.cave)
       this.spawn('firefly', RATE.firefly.perSec * dt * area, () => ({
@@ -97,18 +97,20 @@ export class Particles {
 
     this.world.clear();
     this.glow.clear();
+    // 그린 지도(32px 칸)에서는 낱알도 두 배로
+    const z = tile / T;
     for (const p of this.list) {
       const k = p.age / p.life;
       if (p.kind === 'leaf') {
         // 팔랑일 때 가로·세로가 번갈아 보인다
         const flat = Math.sin(t * 6 + p.seed) > 0;
-        this.world.rect(Math.round(p.x), Math.round(p.y), flat ? 2 : 1, flat ? 1 : 2).fill({ color: p.color, alpha: k > 0.85 ? (1 - k) / 0.15 : 1 });
+        this.world.rect(Math.round(p.x), Math.round(p.y), (flat ? 2 : 1) * z, (flat ? 1 : 2) * z).fill({ color: p.color, alpha: k > 0.85 ? (1 - k) / 0.15 : 1 });
       } else if (p.kind === 'step') {
-        this.world.rect(Math.round(p.x), Math.round(p.y), 1, 1).fill({ color: p.color, alpha: 0.8 * (1 - k) });
+        this.world.rect(Math.round(p.x), Math.round(p.y), z, z).fill({ color: p.color, alpha: 0.8 * (1 - k) });
       } else if (p.kind === 'dust') {
-        this.world.rect(Math.round(p.x), Math.round(p.y), 1, 1).fill({ color: p.color, alpha: 0.45 * Math.sin(Math.PI * k) });
+        this.world.rect(Math.round(p.x), Math.round(p.y), z, z).fill({ color: p.color, alpha: 0.45 * Math.sin(Math.PI * k) });
       } else if (p.kind === 'smoke') {
-        const size = 1 + Math.floor(k * 3);
+        const size = (1 + Math.floor(k * 3)) * z;
         this.world.rect(Math.round(p.x), Math.round(p.y), size, size).fill({ color: p.color, alpha: 0.4 * (1 - k) });
       } else {
         const on = 0.5 + 0.5 * Math.sin(t * 3.1 + p.seed * 5);

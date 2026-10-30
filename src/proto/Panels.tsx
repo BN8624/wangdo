@@ -4,6 +4,7 @@ import { play } from '../ui/sound';
 import { CHARS, FACES, type CharName, type FaceName } from './atlas';
 import { ITEMS, MEMBER_NAME, SHOP, priceOf } from './data';
 import { drawChar, drawFace } from './draw';
+import { SD_OF } from './pixi';
 import { memberStats } from './party';
 import type { Effect, Game } from './runner';
 import type { ItemDef, Line, Member, MemberId } from './types';
@@ -31,6 +32,18 @@ export function speakerName(who: string) {
 function faceOf(l: Line): FaceName | null {
   if (l.face) return l.face;
   return l.who in FACES ? (l.who as FaceName) : null;
+}
+
+/** SD가 있으면 SD 머리, 없으면 도트 얼굴(일러스트를 고른 경우) */
+export function Head({ face, portraits }: { face: string; portraits: boolean }) {
+  const sd = portraits ? SD_OF[face] : undefined;
+  if (sd)
+    return (
+      <div className="sdhead">
+        <img src={`proto/sd/${sd}.webp`} alt="" />
+      </div>
+    );
+  return face in FACES ? <Face face={face as FaceName} /> : null;
 }
 
 /** 대화창 얼굴(38×38 도트를 두 배로) */
@@ -133,7 +146,7 @@ export function Dialogue({ lines, speed, auto, portraits, onDone }: { lines: Lin
         </div>
       )}
       <div className="sheet talk" onClick={next} role="button" aria-label="다음 대사">
-        {face && <Face face={face} />}
+        {face && <Head face={face} portraits={portraits} />}
         <div className="talk-body">
           {name && <div className="name">{name}</div>}
           <div className={`text ${line.who === 'narration' ? 'narr' : ''}`}>{line.text.slice(0, shown)}</div>
@@ -151,7 +164,13 @@ export function PartyList({ party, compact = false }: { party: Member[]; compact
         const st = memberStats(m);
         return (
           <div className="member" key={m.id}>
-            <Sprite c={m.id as CharName} />
+            {SD_OF[m.id] ? (
+              <div className="sdhead small">
+                <img src={`proto/sd/${SD_OF[m.id]}.webp`} alt="" />
+              </div>
+            ) : (
+              <Sprite c={m.id as CharName} />
+            )}
             <div style={{ flex: 1, minWidth: 0 }}>
               <div>
                 {MEMBER_NAME[m.id]} <span className="lv">Lv{m.level}</span>
@@ -450,6 +469,52 @@ export function DebtScroll({ lines, speed, broken, onDone }: { lines: string[]; 
           <p key={i}>{l}</p>
         ))}
         {n >= lines.length && (broken ? <span className="seal broken">쩍!</span> : <span className="seal">갚아라</span>)}
+      </div>
+    </div>
+  );
+}
+
+/** 받아내기 협상 판: 버티는 마음을 정해진 차례 안에 꺾는다 */
+export function Nego({ fx, g, onPick }: { fx: Extract<Effect, { k: 'nego' }>; g: Game; onPick: (id: string) => void }) {
+  const sd = fx.face ? SD_OF[fx.face] : undefined;
+  return (
+    <div className="sheet nego">
+      <p className="prompt">{fx.prompt}</p>
+      <div className="row" style={{ alignItems: 'center', gap: 10, marginBottom: 6 }}>
+        {sd && (
+          <div className="sdhead">
+            <img src={`proto/sd/${sd}.webp`} alt="" />
+          </div>
+        )}
+        <div style={{ flex: 1 }}>
+          <div className="name">
+            {fx.who} <span className="gear">버티는 마음</span>
+          </div>
+          <div className="bar resolve">
+            <i style={{ width: `${(100 * fx.left) / fx.max}%` }} />
+          </div>
+          <p className="gear" style={{ margin: '4px 0 0' }}>
+            차례 {fx.turns - fx.turn} · 평판 {g.rep ?? 0} · 백설 빚 {g.bsDebt ?? 0}
+          </p>
+        </div>
+      </div>
+      <div className="opts">
+        {fx.options.map((o) => (
+          <button
+            key={o.id}
+            className="opt"
+            disabled={!!o.disabled}
+            onClick={() => {
+              play(o.strength === '세게' ? 'heavy' : 'hit');
+              onPick(o.id);
+            }}
+          >
+            {o.label}
+            <small>
+              {o.disabled ?? [o.strength, o.cost, o.once ? '한 번만' : undefined].filter(Boolean).join(' · ')}
+            </small>
+          </button>
+        ))}
       </div>
     </div>
   );

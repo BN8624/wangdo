@@ -25,6 +25,8 @@ export interface V3Art {
   height: number;
   /** 이 그림(저장소 경로)을 고친다. scene은 고칠 내용 */
   edit?: string;
+  /** 화풍만 따올 기준 그림(그 인물은 그리지 않는다). 지도·주인공처럼 기준 그림이 없는 것에 쓴다 */
+  style?: Who;
 }
 
 const SCENE = { width: 900, height: 1350 };
@@ -39,7 +41,39 @@ const noHands = (id: string, what: string, who: Who[]): V3Art => ({
   scene: `${what}을(를) 완전히 지우고, 그 자리를 주변 배경·옷자락·바닥으로 자연스럽게 이어 채운다. 인물의 얼굴, 몸, 자세, 옷, 소품, 조명, 구도는 그대로 둔다.`,
 });
 
+const SD = (id: string, who: Who[], body: string, style?: Who): V3Art => ({
+  id: `sd-${id}`,
+  who,
+  style,
+  width: 800,
+  height: 1200,
+  transparent: true,
+  out: `public/proto/sd/${id}.webp`,
+  scene: `[이번 그림] 지도 위를 걸어 다닐 SD 캐릭터(2.5등신, 머리가 크고 몸이 작은 귀여운 꼬마 비율). 투명 배경, 머리부터 발끝까지, 몸을 살짝 오른쪽으로 돌린 3/4 정면, 가볍게 서 있는 자세. 기준 그림과 같은 화가의 채색과 선, 같은 얼굴·머리·옷·색·장신구를 꼬마 비율로 단순하게 줄인다. 장식은 알아볼 만큼만 남기고 덜어 낸다. 노출은 줄이고 귀엽게. 발밑에 그림자는 그리지 않는다. 1인칭 시점 규칙은 이 그림에는 적용하지 않는다. ${body}`,
+});
+
 export const V3_ART: V3Art[] = [
+  // ── B안 시안(2026-10-29): 그린 큰 지도 + SD 캐릭터 ──
+  {
+    id: 'map-village',
+    who: [],
+    style: '백설',
+    width: 1024,
+    height: 1536,
+    out: 'public/proto/world/village.webp',
+    scene:
+      "[이번 그림] 게임 지도 한 장: 조선풍 시골 마을 '달골'을 위에서 비스듬히 내려다본(2D RPG 지도처럼 위에서 약 45도) 그림. 사람은 한 명도 그리지 않는다. 세로로 긴 화면 가운데를 남북으로 흙길이 지나고, 가로 흙길 세 줄이 집들을 잇는다. 초가 오두막 몇 채, 기와집 하나, 주막(초가 지붕에 술상과 장독), 장터 노점(차일과 좌판), 돌담, 싸리 울타리, 장독대, 빨랫줄, 솟대 둘(남쪽 마을 어귀), 볏단, 큰 느티나무 한 그루, 가장자리에 소나무 숲. 맨 위는 숲 사이로 고갯길이 이어지고, 맨 아래는 마을 어귀. 길과 마당은 넓게 비워 둔다(캐릭터가 걸어 다닐 자리). 맑은 낮, 부드러운 햇빛. 기준 그림의 채색 질감(섬세하고 따뜻한 반실사 일러스트)은 따르되, 지도는 장식을 줄이고 깔끔하고 읽기 쉽게. 글자·테두리 없음.",
+  },
+  SD('me', [], "[주인공 '나', 나무꾼, 남성] 해진 베옷 바지저고리에 짚신, 등에 지게, 허리춤에 빨간 술이 달린 시커먼 도깨비 방망이. 삿갓을 눈썹까지 깊이 눌러써 눈과 얼굴 윗부분이 그늘에 가려 보이지 않는다(입과 턱만 살짝). 수수한 갈색·베 빛.", '백설'),
+  SD('baekseol', ['백설'], '[백설] 여우 귀와 꼬리 아홉 개를 꼬마 비율에 맞게 작고 풍성하게.'),
+  SD('muyeong', ['무영'], '[무영] 붉은 뿔과 쇠방망이를 어깨에 멘 자세. 갑옷은 단순하게.'),
+  SD('sodam', ['소담'], '[소담] 장부를 품에 안고 다정하게 웃는다. 땋은 머리를 어깨 앞으로.'),
+  SD('meoseum', [], "[송씨 집 머슴, 남성, 4화 적] 상투 튼 머리에 머리띠, 소매를 걷어붙인 거친 무명 바지저고리, 어깨에 굵은 몽둥이, 험상궂게 인상을 쓰지만 꼬마 비율이라 우스꽝스럽다. 흙빛·쪽빛.", '백설'),
+  SD('ajeon', [], "[관아 아전, 남성] 검은 갓을 쓰고 푸른 관복(단령) 차림, 두 손에 두루마리를 받쳐 든 점잖은 자세, 콧수염. 푸른·먹빛.", '백설'),
+  SD('villager', [], "[마을 아낙, 여성, 40대] 머리에 수건을 두르고 쪽진 머리, 소매를 걷은 흰 저고리와 쪽빛 치마, 허리춤에 물바가지. 수다스럽게 웃는 얼굴.", '백설'),
+  SD('fishmonger', [], "[생선 장수, 남성, 40대] 머리띠를 두른 상투, 짧은 무명 저고리에 앞치마, 한 손에 생선 두 마리를 꿴 새끼줄. 겁 많고 눈치 보는 얼굴.", '백설'),
+  SD('innkeeper', [], "[주막 영감, 남성, 60대] 흰 수염과 탕건, 낡은 회색 두루마기, 허리에 술병, 능글맞게 웃는 얼굴.", '백설'),
+
   noHands('e1-tree', "화면 왼쪽 아래의 '나'의 손과 소매, 손에 쥔 빨간 술 달린 시커먼 방망이", ['백설']),
   noHands('e1-coins', "화면 아래의 '나'의 손과 소매, 손에 쥔 빨간 술 달린 시커먼 방망이", ['백설']),
   noHands('e2-mirror', "화면 왼쪽 아래에서 백설의 어깨로 다가가는 '나'의 손과 베옷 소매", ['백설']),
@@ -184,6 +218,7 @@ function instructions(a: V3Art): string {
   return [
     `Use your built-in image generation tool to create exactly one image, ${a.width}x${a.height} aspect (${a.width > a.height ? 'landscape' : 'portrait'}).`,
     ...a.who.map((w, i) => `Reference ${i + 1}: the character ${w}. Preserve this character's face, hair, costume, colors and accessories, and match its art style exactly.`),
+    ...(a.style ? [`Reference ${a.who.length + 1}: ART STYLE ONLY (brushwork, shading, palette). Do not draw this character or anyone resembling her.`] : []),
     `PROMPT (Korean):\n${v3Prompt(a)}`,
     a.transparent ? 'Output must have a real transparent alpha background, not a checkerboard or painted background.' : 'Output must use an opaque background.',
     'No text, letters, signatures, watermarks or borders anywhere in the image.',
@@ -199,7 +234,7 @@ function draw(a: V3Art) {
   try {
     execFileSync(
       process.env.CODEX_BIN ?? 'codex',
-      ['exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', work, ...(a.edit ? ['-i', join(ROOT, a.edit)] : []), ...a.who.flatMap((w) => ['-i', join(ROOT, REF[w])]), '--', instructions(a)],
+      ['exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', work, ...(a.edit ? ['-i', join(ROOT, a.edit)] : []), ...a.who.flatMap((w) => ['-i', join(ROOT, REF[w])]), ...(a.style ? ['-i', join(ROOT, REF[a.style])] : []), '--', instructions(a)],
       { stdio: ['ignore', 'ignore', 'inherit'], timeout: 15 * 60_000 },
     );
     const png = join(work, 'out.png');

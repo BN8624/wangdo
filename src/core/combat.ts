@@ -58,6 +58,8 @@ export interface UnitInit {
   boss?: boolean;
   /** 우리 편: 첫 차례부터 기술을 쓴다(기본은 COMBAT.firstSkillTurn 차례) */
   skillNow?: boolean;
+  /** 정예(그림을 조금 크게 그린다. 계산에는 쓰지 않는다) */
+  elite?: boolean;
 }
 
 export interface CombatSetup {

@@ -860,3 +860,40 @@ button {
     animation: none;
   }
 }
+
+/* ── 받아내기 협상 판 ── */
+.bar.resolve {
+  height: 8px;
+}
+.bar.resolve > i {
+  background: linear-gradient(90deg, #b8352b, #e0574a);
+  transition: width 0.4s ease-out;
+}
+
+/* SD 머리: 그림 위쪽(얼굴)만 둥근 칸에 */
+.sdhead {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #2a2230;
+  border: 1px solid #4a3d52;
+}
+.sdhead img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transform: scale(1.5) translateY(4%);
+  transform-origin: 50% 0;
+}
+
+.sdhead.small {
+  width: 40px;
+  height: 40px;
+}
+.title-sd {
+  height: 120px;
+  margin: 0 -10px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+}

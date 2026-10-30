@@ -66,7 +66,7 @@ export const FOES: Record<string, FoeGroup> = {
     boss: true,
     waves: [
       [thug(12), thug(13, 'defense')],
-      [thug(13), { name: '머슴 대장', char: 'thug', level: 14, role: 'attack', element: 'fire', kind: 'elite', power: 0.85 }, thug(13, 'defense')],
+      [thug(13), { name: '머슴 대장', char: 'thug', level: 15, role: 'attack', element: 'fire', kind: 'elite', power: 1.25 }, thug(13, 'defense')],
     ],
   },
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },

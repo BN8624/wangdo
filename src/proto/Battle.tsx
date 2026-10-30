@@ -5,10 +5,10 @@ import { play } from '../ui/sound';
 import { CHARS, FX, MONS, type CharName, type MonName, type TileName } from './atlas';
 import { MEMBER_NAME } from './data';
 import { CutIn } from './Panels';
-import { Application, Container, Graphics, Sprite, Text } from 'pixi.js';
+import { Application, BlurFilter, Container, Graphics, Sprite, Text, Texture } from 'pixi.js';
 import { CH, T, drawTile } from './draw';
 import { softTexture } from './light';
-import { canvasTexture, charTex, cut as cutTex, monTex } from './pixi';
+import { SD_OF, canvasTexture, charTex, cut as cutTex, monTex, paintTexture, sdTexture } from './pixi';
 import type { Effect } from './runner';
 import type { Dir, MemberId } from './types';
 
@@ -99,13 +99,34 @@ function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
   return c;
 }
 
+/** 그린 지도 전투에서 SD 키(무대 도트 단위) */
+const BATTLE_SD = 38;
+
 const isChar = (art: string): art is CharName => art in CHARS;
 /** 크게 그리는 대장: 몬스터 대장 그림, 또는 사람 도트를 두 배로 그리는 흑운채 두목 */
 const BIG_CHAR: string[] = ['mokso'];
 const isBig = (art: string) => art === 'boss_gob' || BIG_CHAR.includes(art);
 const isMon = (art: string): art is MonName => art in MONS;
 
-export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Effect, { k: 'battle' }>; speed: number; cutins: boolean; onSpeed: (s: number) => void; onDone: () => void }) {
+export function Battle({
+  fx,
+  speed,
+  cutins,
+  paint,
+  night,
+  onSpeed,
+  onDone,
+}: {
+  fx: Extract<Effect, { k: 'battle' }>;
+  speed: number;
+  cutins: boolean;
+  /** 그린 지도에서 싸우면 그 지도 그림(배경)과 SD로 그린다 */
+  paint?: string;
+  /** 밤 싸움: 배경을 밤빛으로 */
+  night?: boolean;
+  onSpeed: (s: number) => void;
+  onDone: () => void;
+}) {
   const units = useRef<U[]>([]);
   const pops = useRef<Pop[]>([]);
   const fxAt = useRef<{ x: number; y: number; t: number } | null>(null);
@@ -333,7 +354,10 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
     // 발밑 그림자: 배경 위, 사람 아래
     const shadows = new Graphics();
     shadows.zIndex = -5e5;
-    world.addChild(bg, shadows, bars, cutFx);
+    // 그린 지도 배경을 가라앉히는 막
+    const bgDim = new Graphics();
+    bgDim.zIndex = -9e5;
+    world.addChild(bg, bgDim, shadows, bars, cutFx);
     // 기술 효과(맞은 자리의 불꽃·먼지)
     const fxLayer = new Container();
     fxLayer.zIndex = 1e6 + 2;
@@ -434,10 +458,27 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
       raf = requestAnimationFrame(draw);
       const H = hRef.current;
       if (app.renderer.width !== W * K || app.renderer.height !== H * K) app.renderer.resize(W * K, H * K);
-      const key = `${fx.group.ground}:${H}`;
+      const key = `${paint ?? fx.group.ground}:${H}`;
       if (bgKey !== key) {
         bgKey = key;
-        bg.texture = canvasTexture(`battle:${key}`, battleBackground(fx.group.ground, H));
+        if (paint) {
+          bg.texture = Texture.EMPTY;
+          paintTexture(paint).then((t) => {
+            // 지도 그림의 가운데 띠를 무대에 꽉 차게, 어둡게 가라앉혀 깐다
+            bg.texture = t;
+            const k = Math.max(W / t.width, H / t.height) * 1.6;
+            bg.scale.set(k);
+            bg.position.set((W - t.width * k) / 2, (H - t.height * k) / 2);
+          });
+          bg.filters = [new BlurFilter({ strength: 3, quality: 3 })];
+          bgDim.clear().rect(0, 0, W, H).fill({ color: night ? 0x0b0e2a : 0x0d0b10, alpha: night ? 0.62 : 0.5 });
+        } else {
+          bg.filters = [];
+          bg.scale.set(1);
+          bg.position.set(0, 0);
+          bg.texture = canvasTexture(`battle:${key}`, battleBackground(fx.group.ground, H));
+          bgDim.clear();
+        }
       }
       const lungeMs = BASE[2] / speedRef.current;
       // 흔들림: 끝날수록 잦아든다
@@ -480,7 +521,19 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
         }
         sp.zIndex = u.y;
         sp.scale.set(1);
-        if (isChar(art)) {
+        sp.anchor.set(0);
+        const sdName = paint ? SD_OF[art] : undefined;
+        const sdTex = sdName ? sdTexture(sdName) : null;
+        if (sdTex) {
+          // SD: 발밑 칸 가운데에 발을 딛고, 우리 편은 오른쪽(그림 그대로), 적은 왼쪽을 본다. 정예는 조금 크게
+          const tall = BATTLE_SD * (u.init.elite ? 1.18 : 1);
+          const k = tall / sdTex.height;
+          const hop = since < lungeMs ? Math.sin((since / lungeMs) * Math.PI) * 3 : 0;
+          sp.texture = sdTex;
+          sp.anchor.set(0.5, 1);
+          sp.scale.set(k * (u.side === 0 ? 1 : -1), k);
+          sp.position.set(x + T / 2, y + T - hop);
+        } else if (isChar(art)) {
           const big = BIG_CHAR.includes(art);
           sp.texture = charTex(art, dir, since < lungeMs ? 4 : Math.floor(now / 400) % 2);
           if (big) {
@@ -497,7 +550,7 @@ export function Battle({ fx, speed, cutins, onSpeed, onDone }: { fx: Extract<Eff
           const big = isBig(art);
           const bw = big ? 30 : 14;
           const bx = big ? x - 7 : x + 1;
-          const by = big ? y - 36 : y - 7;
+          const by = sdTex ? y + T - BATTLE_SD * (u.init.elite ? 1.18 : 1) - 3 : big ? y - 36 : y - 7;
           bars.rect(bx, by, bw, 2).fill(0x3a2a30);
           const left = Math.max(0, Math.round((bw * u.hp) / u.max));
           if (left) bars.rect(bx, by, left, 2).fill(0xe0574a);
