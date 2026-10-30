@@ -1,11 +1,11 @@
 // 맵 화면: 미리 구운 맵 위에 사람·짐승·상자·파티를 그리고, 걷기 Effect를 움직임으로 보여 준다
 import { useEffect, useMemo, useRef } from 'react';
 import type { CharName } from './atlas';
-import { Application, Assets, Container, Graphics, Sprite, Texture } from 'pixi.js';
+import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { Lighting, type Lamp } from './light';
 import { Particles } from './particles';
 import { CH, aboveCanvas, isCave, mapCanvas } from './draw';
-import { canvasTexture, charTex, monTex, tileTex } from './pixi';
+import { SD_OF, canvasTexture, charTex, monTex, paintTexture, sdTexture, tileTex } from './pixi';
 import { MAPS, dirTo, grid } from './maps';
 import { actorsOn, type Effect, type Game } from './runner';
 import type { Dir, Line, Pt } from './types';
@@ -41,23 +41,6 @@ const CARRY = { night: 2.8, cave: 4.5, torch: 2.6, wisp: 1.8, foxfire: 1.5 };
 const PAINT_VIEW = 480;
 /** SD 키(칸 단위) */
 const SD_TALL = 3.4;
-/** 도트 캐릭터 이름 → SD 그림(public/proto/sd/<이름>.webp) */
-const SD_OF: Partial<Record<string, string>> = { me: 'me', baekseol: 'baekseol', muyeong: 'muyeong', sodam: 'sodam', thug: 'meoseum', ajeon: 'ajeon' };
-const sdCache = new Map<string, Texture | null>();
-/** SD 텍스처. 처음 부르면 받기 시작하고 null, 받은 뒤엔 텍스처 */
-function sdTexture(name: string): Texture | null {
-  if (!sdCache.has(name)) {
-    sdCache.set(name, null);
-    Assets.load<Texture>(`proto/sd/${name}.webp`).then((t) => sdCache.set(name, t), () => undefined);
-  }
-  return sdCache.get(name) ?? null;
-}
-const paintCache = new Map<string, Promise<Texture>>();
-function paintTexture(src: string) {
-  let p = paintCache.get(src);
-  if (!p) paintCache.set(src, (p = Assets.load<Texture>(src)));
-  return p;
-}
 /** 그린 지도에서 서 있을 때 자리(칸): 이끄는 사람은 조금 앞, 식객들은 옆으로 나란히 */
 const IDLE_SPREAD: [number, number][] = [
   [0, 0.3],

@@ -302,7 +302,7 @@ export function App() {
         </div>
       )}
       {panel}
-      {fx?.k === 'battle' && <Battle key={g.pc + ':' + g.wins} fx={fx} speed={ui.speed} cutins={ui.cutins} onSpeed={(s) => setUi({ speed: s })} onDone={() => advance()} />}
+      {fx?.k === 'battle' && <Battle key={g.pc + ':' + g.wins} fx={fx} speed={ui.speed} cutins={ui.cutins} paint={MAPS[g.map].image} night={g.night} onSpeed={(s) => setUi({ speed: s })} onDone={() => advance()} />}
       {fading && <div className="fade" />}
       {!fading && <div className="fade out" key={g.map + (g.night ? 'n' : 'd')} />}
       {menu && (

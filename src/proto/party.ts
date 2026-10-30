@@ -53,8 +53,8 @@ export function heroUnit(m: Member, skills: MemberId[], fresh: MemberId[] = []):
 
 export function foeUnits(g: FoeGroup): UnitInit[][] {
   return g.waves.map((wave) =>
-    wave.map((f, i) =>
-      foeUnit({
+    wave.map((f, i) => ({
+      ...foeUnit({
         id: `${f.mon ?? f.char}-${i}`,
         name: f.name,
         art: (f.mon ?? f.char)!,
@@ -64,7 +64,8 @@ export function foeUnits(g: FoeGroup): UnitInit[][] {
         kind: f.kind,
         power: f.power ?? 1,
       }),
-    ),
+      ...(f.kind === 'elite' ? { elite: true } : {}),
+    })),
   );
 }
 
