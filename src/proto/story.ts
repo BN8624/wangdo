@@ -781,7 +781,7 @@ export const SCRIPT: Beat[] = [
 
   // ── 4화: 우렁각시의 밥상 (원고 3화) ──
   { t: 'night', on: false },
-  { t: 'map', map: 'village', at: '오두막', dir: 0 },
+  { t: 'map', map: 'village_p', at: '오두막', dir: 0 },
   { t: 'goal', text: '밥상 차린 사람 찾기' },
   {
     t: 'talk',

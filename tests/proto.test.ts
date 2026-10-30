@@ -322,7 +322,7 @@ describe('진행기', () => {
   });
 
   it('3화까지 끝낸 저장은 새로 붙은 4화부터 이어 간다', () => {
-    const first4 = SCRIPT.findIndex((b) => b.t === 'map' && b.map === 'village' && b.at === '오두막');
+    const first4 = SCRIPT.findIndex((b) => b.t === 'map' && b.map === 'village_p' && b.at === '오두막');
     // 예전 저장: 끝(end)에 닿아 done인데, 그 자리에 이제 4화 첫 비트가 있다
     const old: Game = { ...newGame(), pc: first4 - 1, done: true };
     const g = revive(old);
