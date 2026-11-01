@@ -61,6 +61,8 @@ CHARS = {
                 "a big sturdy Heugun-chae mountain bandit who is a dokkaebi (Korean goblin) man: one thick horn on his forehead, bald head, grey-green skin, a fur shoulder cape, dark brown clothes with a rope belt, a heavy wooden shield and a club. Dark green and brown colors."),
     'chaeryeong': ([],
                    'Song Chaeryeong, a cool and elegant noble lady of thirty-two: jet-black hair in a low bun with a jade binyeo pin, narrow dark eyes, red lips, a deep purple silk dangui jacket with gold pattern, a navy long skirt, a folded fan in one hand.'),
+    'yunseo': ([],
+               'Yun Seogyeong, a cold royal inspector woman of thirty-five: black hair tucked under a black samo official hat, thin round gold-rimmed glasses, a navy dallyeong official robe with a gold phoenix rank badge on the chest, a black belt, holding a thick document folder.'),
     'pickpocket': ([],
                    'a Joseon market pickpocket thug: a tilted bamboo paerangi hat, a black cloth over his nose and mouth, ragged grey-brown clothes with leg wraps, a short knife in one hand.'),
     'mokso': ([],

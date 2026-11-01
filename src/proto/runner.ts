@@ -48,7 +48,7 @@ export type Beat =
   | { t: 'goto'; label: string }
   | { t: 'ret' }
   | { t: 'if'; flag: string; goto: string; not?: boolean }
-  | { t: 'battle'; foe: string; hide?: string[] }
+  | { t: 'battle'; foe: string; hide?: string[]; /** 기력이 빠져 약해진 사람 */ weak?: MemberId[] }
   | { t: 'chest'; id: string }
   | { t: 'give'; item: string; from: string }
   | { t: 'shop' }
@@ -65,6 +65,8 @@ export type Beat =
   | { t: 'collect'; cap: number; prompt: string; debts: Debt[] }
   | NegoBeat
   | { t: 'flag'; set: string }
+  /** 엽전을 치른다(모자라면 있는 만큼) */
+  | { t: 'pay'; coin: number; log?: string }
   | { t: 'coin'; n: number }
   | { t: 'end' };
 
@@ -302,6 +304,9 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'flag':
         g = { ...g, flags: has(g, b.set) ? g.flags : [...g.flags, b.set], pc: g.pc + 1 };
         continue;
+      case 'pay':
+        g = { ...g, coin: Math.max(0, g.coin - b.coin), log: b.log ? [...g.log, b.log] : g.log, pc: g.pc + 1 };
+        continue;
       case 'night':
         g = { ...g, night: b.on, pc: g.pc + 1 };
         continue;
@@ -353,7 +358,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'battle': {
         const group = FOES[b.foe];
         if (overwhelms(g.party, group)) return { g, fx: { k: 'swift', group, reward: reward(g, group) } };
-        const setup = battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined);
+        const setup = battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined, b.weak);
         const { events, result } = runCombat(setup, seedOf(g), true);
         return { g, fx: { k: 'battle', group, setup, events, result, reward: result.won ? reward(g, group) : null } };
       }
@@ -451,7 +456,7 @@ function resolve(game: Game, input: Input): Game {
       const group = FOES[b.foe];
       const hide = (x: Game) => ({ ...x, hidden: [...new Set([...x.hidden, ...(b.hide ?? [])])] });
       if (overwhelms(g.party, group)) return hide(applyReward({ ...next, wins: g.wins + 1 }, reward(g, group)));
-      const { result } = runCombat(battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined), seedOf(g), true);
+      const { result } = runCombat(battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined, b.weak), seedOf(g), true);
       if (result.won) return hide(applyReward({ ...next, wins: g.wins + 1, fresh: [], tactic: null }, reward(g, group)));
       // 지면 마지막 쉼터로. 얻은 경험치는 남는다
       const c = g.check;

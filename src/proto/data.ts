@@ -72,6 +72,8 @@ export const FOES: Record<string, FoeGroup> = {
   },
   pickpockets: { name: '소매치기패', ground: 'dirt', waves: [[pick(15), pick(15, 'defense'), pick(16)]] },
   pickTrain: { name: '장터 왈패', ground: 'dirt', waves: [[pick(13), pick(13)]] },
+  oilmen: { name: '송씨 일꾼', ground: 'dirt', waves: [[thug(16), thug(16, 'defense'), thug(17)]] },
+  oilTrain: { name: '송씨 일꾼', ground: 'dirt', waves: [[thug(14), thug(14)]] },
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
   village: { name: '도깨비불', ground: 'grass', waves: [[wisp(1), wisp(2)]] },
