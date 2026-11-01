@@ -69,9 +69,9 @@ export function Sprite({ c, scale = 2, className }: { c: CharName; scale?: numbe
     const ctx = cv.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, cv.width, cv.height);
-    drawChar(ctx, c, 0, 0, 0, 4 * scale, scale);
+    drawChar(ctx, c, 0, 0, 8 * scale, 16 * scale, scale);
   }, [c, scale]);
-  return <canvas ref={ref} className={`pix ${className ?? ''}`} width={16 * scale} height={20 * scale} />;
+  return <canvas ref={ref} className={`pix ${className ?? ''}`} width={32 * scale} height={32 * scale} />;
 }
 
 /** 대사를 한 줄씩. 누르면 다음 줄, 글자가 아직 나오는 중이면 한 번에 다 보인다 */

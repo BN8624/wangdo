@@ -1,13 +1,19 @@
 // 도트 그리기: 그림 불러오기, 맵 미리 굽기, 캐릭터·몬스터 한 칸 그리기
-import { CHARS, FACES, FX, MONS, TILES, type CharName, type FaceName, type MonName, type Rect, type TileName } from './atlas';
+import { FACES, FX, MONS, TILES, type CharName, type FaceName, type MonName, type Rect, type TileName } from './atlas';
+import { CHAR_CELL, CHARS32 } from './atlas32';
 import { MAPS, grid, type MapId } from './maps';
 import type { Dir } from './types';
 
 export const T = 16;
-/** 캐릭터 한 칸 높이(머리 위 여백 4) */
-export const CH = 20;
+/** 캐릭터 한 칸(32×32). 발밑 칸(16×16)의 가운데 아래에 발을 딛는다 */
+export const CC = CHAR_CELL;
+/** 캐릭터 칸 왼쪽 위 ← 발밑 칸 왼쪽 위 */
+export const CHAR_DX = -(CC - T) / 2;
+export const CHAR_DY = -(CC - T);
+/** 머리 꼭대기(말풍선·체력 막대 자리) ← 발밑 칸 위 */
+export const HEAD_DY = -(CC - T) + 2;
 
-const SRC = { tiles: 'proto/tiles.png', chars: 'proto/chars.png', mons: 'proto/mons.png', faces: 'proto/faces.png', fx: 'proto/fx.png' };
+const SRC = { tiles: 'proto/tiles.png', chars: 'proto/chars32.png', mons: 'proto/mons.png', faces: 'proto/faces.png', fx: 'proto/fx.png' };
 type Sheet = keyof typeof SRC;
 const imgs: Partial<Record<Sheet, HTMLImageElement>> = {};
 
@@ -47,9 +53,10 @@ export function drawTile(ctx: CanvasRenderingContext2D, name: TileName, dx: numb
   blit(ctx, 'tiles', r, 0, 0, r[2], r[3], dx, dy, scale);
 }
 
-/** 걷는 캐릭터 한 칸. row 0~3 걷기, 4 공격. (dx, dy)는 발밑 칸의 왼쪽 위 */
+/** 걷는 캐릭터 한 칸(32×32). row 0~3 걷기, 4 공격. (dx, dy)는 발밑 칸의 왼쪽 위 */
 export function drawChar(ctx: CanvasRenderingContext2D, c: CharName, dir: Dir, row: number, dx: number, dy: number, scale = 1) {
-  blit(ctx, 'chars', CHARS[c], dir * T, row * CH, T, CH, dx, dy - (CH - T) * scale, scale);
+  const [x, y] = CHARS32[c];
+  blit(ctx, 'chars', [x, y, 4 * CC, 5 * CC], dir * CC, row * CC, CC, CC, dx + CHAR_DX * scale, dy + CHAR_DY * scale, scale);
 }
 
 /** 몬스터 한 칸(64×64 시트: 열 = 방향, 줄 = 걸음). 대장은 50×50 다섯 장 */

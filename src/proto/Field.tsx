@@ -4,8 +4,8 @@ import type { CharName } from './atlas';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { Lighting, type Lamp } from './light';
 import { Particles } from './particles';
-import { CH, aboveCanvas, isCave, mapCanvas } from './draw';
-import { SD_OF, canvasTexture, charTex, monTex, paintTexture, sdTexture, tileTex } from './pixi';
+import { CHAR_DX, CHAR_DY, HEAD_DY, aboveCanvas, isCave, mapCanvas } from './draw';
+import { canvasTexture, charTex, monTex, tileTex } from './pixi';
 import { MAPS, dirTo, grid } from './maps';
 import { actorsOn, type Effect, type Game } from './runner';
 import type { Dir, Line, Pt } from './types';
@@ -37,19 +37,8 @@ const SKY = {
 const CARRY = { night: 2.8, cave: 4.5, torch: 2.6, wisp: 1.8, foxfire: 1.5 };
 
 /** 서 있을 때 숨 쉬듯 1도트 오르내림(사람마다 박자를 어긋나게) */
-/** 그린 지도: 화면 너비에 들어오는 지도 픽셀(이만큼 보이게 키운다) */
-const PAINT_VIEW = 480;
-/** SD 키(칸 단위) */
-const SD_TALL = 3.4;
-/** 그린 지도에서 서 있을 때 자리(칸): 이끄는 사람은 조금 앞, 식객들은 옆으로 나란히 */
-const IDLE_SPREAD: [number, number][] = [
-  [0, 0.3],
-  [-1.25, 0],
-  [1.25, 0],
-  [-2.45, -0.15],
-];
-/** SD가 마지막으로 본 좌우(1 오른쪽, -1 왼쪽) */
-const facing = new Map<string, number>();
+/** 따라오는 사람 사이 간격(칸). 캐릭터가 32px로 넓어 한 칸이면 반쯤 겹친다 */
+const FOLLOW = 1.5;
 
 const breath = (now: number, seed: number) => (Math.floor(now / 650 + seed) % 2 === 0 ? 0 : 1);
 
@@ -146,9 +135,8 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       const def = MAPS[game.map];
       // 칸 크기: 도트 맵 16, 그린 지도 32
       const T = def.tile;
-      const painted = !!def.image;
-      // 그린 지도는 화면 너비에 지도 PAINT_VIEW 픽셀이 들어오게(부드럽게), 도트 맵은 정수 배율로
-      const s = painted ? cw / PAINT_VIEW : Math.max(1, Math.round(ZOOM * dpr));
+      // 도트가 고르게 보이게 정수 배율로
+      const s = Math.max(1, Math.round(ZOOM * dpr));
 
       // 파티 자리
       const members = game.party.map((m) => m.id as CharName);
@@ -159,8 +147,8 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
         const el = now - w.start;
         const t = Math.min(w.steps, el / w.tileMs);
         members.forEach((_, k) => {
-          const a = along(w.track, w.base + t - k);
-          const moving = t < w.steps && w.base + t - k > 0;
+          const a = along(w.track, w.base + t - k * FOLLOW);
+          const moving = t < w.steps && w.base + t - k * FOLLOW > 0;
           pos.push({ p: a.p, dir: a.dir ?? (k === 0 ? game.dir : pos[k - 1]?.dir ?? game.dir), moving });
         });
         lineIdx = Math.floor(el / w.lineMs);
@@ -170,12 +158,13 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
           live.current.onWalked();
         }
       } else {
+        // 서 있을 때도 걸을 때처럼 지나온 길 위에 FOLLOW칸씩 떨어져 선다
+        const track = [...game.trail].reverse().concat([game.pos]);
         members.forEach((_, k) => {
           if (k === 0) pos.push({ p: game.pos, dir: game.dir, moving: false });
           else {
-            const p = game.trail[k - 1] ?? game.pos;
-            const ahead = k === 1 ? game.pos : (game.trail[k - 2] ?? game.pos);
-            pos.push({ p, dir: p.x === ahead.x && p.y === ahead.y ? game.dir : dirTo(p, ahead), moving: false });
+            const a = along(track, game.trail.length - k * FOLLOW);
+            pos.push({ p: a.p, dir: a.dir ?? game.dir, moving: false });
           }
         });
       }
@@ -196,25 +185,16 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
 
       if (shownMap !== game.map) {
         shownMap = game.map;
-        if (def.image) {
-          mapSprite.texture = Texture.EMPTY;
-          aboveSprite.texture = Texture.EMPTY;
-          const want = game.map;
-          paintTexture(def.image).then((t) => {
-            if (shownMap === want) mapSprite.texture = t;
-          });
-        } else {
-          mapSprite.texture = canvasTexture(game.map, mapCanvas(game.map));
-          aboveSprite.texture = canvasTexture(`${game.map}:above`, aboveCanvas(game.map));
-        }
+        mapSprite.texture = canvasTexture(game.map, mapCanvas(game.map));
+        aboveSprite.texture = canvasTexture(`${game.map}:above`, aboveCanvas(game.map));
       }
 
       // 사람·짐승·상자·파티: 발밑 y 순서(zIndex)로
       const seen = new Set<string>();
       shadows.clear();
       /** 발밑 칸(x, y: 도트 좌표, 칸 왼쪽 위)에 납작한 그림자 */
-      const shadow = (x: number, y: number, rx = 5) =>
-        shadows.ellipse(x + T / 2, y + T - 1.5 * (T / 16), painted ? T * 0.42 : rx, 2 * (T / 16)).fill({ color: 0x000000, alpha: 0.28 });
+      const shadow = (x: number, y: number, rx = 7) =>
+        shadows.ellipse(x + T / 2, y + T - 1.5 * (T / 16), rx, 2 * (T / 16)).fill({ color: 0x000000, alpha: 0.28 });
       const put = (key: string, tex: Texture, x: number, y: number, z: number) => {
         const sp = spriteOf(key);
         sp.texture = tex;
@@ -225,35 +205,13 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
         sp.visible = true;
         seen.add(key);
       };
-      /** 그린 지도: SD 캐릭터(발밑 칸 가운데에 발을 딛고 선다). 왼쪽으로 가면 뒤집고, 걸을 땐 통통 튄다 */
-      const putSd = (key: string, name: string, cx: number, cy: number, dir: Dir, moving: boolean, z: number, bob: number) => {
-        const tex = sdTexture(name);
-        if (!tex) return false;
-        const sp = spriteOf(key);
-        if (dir === 2) facing.set(key, -1);
-        else if (dir === 3) facing.set(key, 1);
-        const flip = facing.get(key) ?? 1;
-        const k = (SD_TALL * T) / tex.height;
-        sp.texture = tex;
-        sp.anchor.set(0.5, 1);
-        sp.scale.set(k * flip, k);
-        const hop = moving ? Math.abs(Math.sin(now / 95)) * T * 0.12 : bob;
-        sp.position.set(cx * T + T / 2, cy * T + T - T * 0.08 - hop);
-        sp.zIndex = z;
-        sp.visible = true;
-        seen.add(key);
-        return true;
-      };
       const order = (y: number) => y * 1000;
       for (const ch of MAPS[game.map].chests) put(`chest:${ch.id}`, tileTex(game.opened.includes(ch.id) ? 'chest_open' : 'chest'), ch.at.x * T, ch.at.y * T, order(ch.at.y));
       const f = Math.floor(now / 260);
       for (const a of actorsRef.current) {
-        if (a.char && painted && SD_OF[a.char]) {
+        if (a.char) {
           shadow(a.at.x * T, a.at.y * T);
-          putSd(`actor:${a.id}`, SD_OF[a.char]!, a.at.x, a.at.y, a.dir, false, order(a.at.y), breath(now, a.at.x * 3 + a.at.y));
-        } else if (a.char) {
-          shadow(a.at.x * T, a.at.y * T);
-          put(`actor:${a.id}`, charTex(a.char, a.dir, 0), a.at.x * T, a.at.y * T - (CH - T) + breath(now, a.at.x * 3 + a.at.y), order(a.at.y));
+          put(`actor:${a.id}`, charTex(a.char, a.dir, 0), a.at.x * T + CHAR_DX, a.at.y * T + CHAR_DY + breath(now, a.at.x * 3 + a.at.y), order(a.at.y));
         } else if (a.mon) {
           const tex = monTex(a.mon, a.dir, f);
           // 대장(50×50)은 발밑 칸 가운데에 맞춘다
@@ -265,15 +223,9 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       }
       pos.forEach((q, k) => {
         const row = q.moving ? Math.floor((now / (TILE_MS / 2 / live.current.speed)) % 4) : 0;
-        if (!painted || w) shadow(q.p.x * T, q.p.y * T);
-        else shadow((lead.x + (IDLE_SPREAD[k]?.[0] ?? 0)) * T, (lead.y + (IDLE_SPREAD[k]?.[1] ?? 0)) * T);
+        shadow(q.p.x * T, q.p.y * T);
         const z = order(q.p.y + 0.01 * (members.length - k));
-        // 그린 지도에서 서 있을 땐 SD가 한자리에 겹치지 않게 이끄는 사람 둘레로 벌려 선다(걸을 땐 한 줄)
-        const spread = painted && !w ? IDLE_SPREAD[k] ?? [0, 0] : [0, 0];
-        const sx0 = painted && !w ? lead.x + spread[0] : q.p.x;
-        const sy0 = painted && !w ? lead.y + spread[1] : q.p.y;
-        if (!(painted && putSd(`party:${k}`, SD_OF[members[k]] ?? members[k], sx0, sy0, q.dir, q.moving, order(sy0 + 0.01 * (members.length - k)), q.moving ? 0 : breath(now, k * 2.7))))
-          put(`party:${k}`, charTex(members[k], q.dir, row), q.p.x * T, q.p.y * T - (CH - T) + (q.moving ? 0 : breath(now, k * 2.7)), z);
+          put(`party:${k}`, charTex(members[k], q.dir, row), q.p.x * T + CHAR_DX, q.p.y * T + CHAR_DY + (q.moving ? 0 : breath(now, k * 2.7)), z);
       });
       for (const [key, sp] of sprites) if (!seen.has(key)) sp.visible = false;
 
@@ -312,7 +264,7 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
           const who = members.indexOf(line.who as CharName);
           const q = pos[who >= 0 ? who : 0].p;
           const x = ((q.x * T + T / 2 - camX) * s) / dpr;
-          const y = ((q.y * T + (painted ? T - SD_TALL * T : -(CH - T)) - camY) * s) / dpr;
+          const y = ((q.y * T + HEAD_DY - camY) * s) / dpr;
           if (b.dataset.i !== String(lineIdx)) {
             b.dataset.i = String(lineIdx);
             b.textContent = line.text;

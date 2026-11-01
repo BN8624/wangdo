@@ -9,7 +9,7 @@ import './proto.css';
 function Sprites() {
   return (
     <div className="sprites">
-      {['chars', 'mons', 'faces', 'tiles', 'fx'].map((s) => (
+      {['chars32', 'mons', 'faces', 'tiles', 'fx'].map((s) => (
         <img key={s} src={`proto/${s}.png`} alt={s} style={{ width: 'auto', zoom: 3 }} />
       ))}
     </div>
