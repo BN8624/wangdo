@@ -10,8 +10,8 @@ import { dirname, join, resolve } from 'node:path';
 
 const ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..');
 
-type Who = '백설' | '무영' | '소담' | '송채령';
-const REF: Record<Who, string> = { 백설: 'art/ref/baekseol.webp', 무영: 'art/ref/muyeong.webp', 소담: 'art/ref/sodam.webp', 송채령: 'art/ref/chaeryeong.webp' };
+type Who = '백설' | '무영' | '소담' | '송채령' | '윤서경';
+const REF: Record<Who, string> = { 백설: 'art/ref/baekseol.webp', 무영: 'art/ref/muyeong.webp', 소담: 'art/ref/sodam.webp', 송채령: 'art/ref/chaeryeong.webp', 윤서경: 'art/ref/yunseo.webp' };
 
 export interface V3Art {
   id: string;
@@ -53,6 +53,36 @@ const SD = (id: string, who: Who[], body: string, style?: Who): V3Art => ({
 });
 
 export const V3_ART: V3Art[] = [
+  // ── 6화 '창고를 여는 값' ──
+  {
+    id: 'ref-yunseo',
+    who: [],
+    style: '백설',
+    width: 900,
+    height: 1350,
+    transparent: true,
+    out: 'art/ref/yunseo.webp',
+    scene:
+      "[이번 그림] 인물 기준 그림: 윤서경(왕실 조사관, 서른다섯, 사람 여성). 투명 배경, 세로 2:3, 머리부터 발끝까지 3/4 전신. 검은 머리를 단단히 틀어 올려 검은 사모(관모) 아래로 넣고 귀 옆 잔머리 한 가닥, 얇은 금테 둥근 안경 너머 가늘고 냉정한 회색빛 눈, 표정 없는 입매. 남색 단령 관복, 가슴에 금실 봉황 흉배, 허리에 검은 각대. 한 손에 붓, 다른 팔에 두꺼운 서류철, 허리에 작은 먹통. 서류에서 눈을 떼지 않은 채 이쪽을 훑어보는 자세. 차갑고 유능한 미인. 1인칭 시점 규칙은 이 그림에는 적용하지 않는다.",
+  },
+  SD('yunseo', ['윤서경'], '[윤서경] 서류철을 펼쳐 들고 안경 너머로 이쪽을 흘끗 본다. 남색 관복과 검은 사모, 금테 안경.'),
+  {
+    id: 'e6-faint',
+    who: ['무영'],
+    ...SCENE,
+    out: 'public/proto/scene/e6-faint.webp',
+    scene:
+      "[이번 장면] 6화 낮, 텅 빈 곡식 창고 문 앞. 기력이 빠져 쓰러지는 '나'를 무영이 정면에서 끌어안아 받쳐 든 초근접 장면. 화면 가득 무영의 얼굴과 어깨: 걱정과 화가 뒤섞인 금빛 눈, 꽉 다문 붉은 입술, 귀 끝까지 붉어진 얼굴, 가쁜 숨. 갑옷 흉갑의 금장식과 흐트러진 검은 곱슬머리가 가까이. 뒤로 열린 창고 문과 바닥에 떨어진 자물쇠, 잿빛으로 바스러진 엽전 가루가 흐릿하게. '나'의 손이나 몸은 그리지 않는다. 1인칭 시점, 세로 2:3.",
+  },
+  {
+    id: 'e6-porridge',
+    who: ['소담'],
+    ...SCENE,
+    out: 'public/proto/scene/e6-porridge.webp',
+    scene:
+      "[이번 장면] 6화 밤, 오두막 아랫목. 이불에 누운 '나'를 내려다보며 소담이 무릎을 꿇고 앉아, 잣죽을 뜬 숟가락을 입김으로 후후 불어 '나'의 입가로 내민다. 걱정스럽지만 다정한 초록 눈, 볼의 홍조, 어깨 앞으로 늘어진 땋은 머리, 소매를 걷은 팔, 살짝 벌어진 앞섶. 곁의 소반에 죽 그릇과 젖은 수건. 따뜻한 등잔빛, 아늑하고 은근한 분위기. '나'의 손이나 몸은 그리지 않는다. 1인칭 시점, 세로 2:3.",
+  },
+
   // ── 5화 '이름의 담보' ──
   {
     // 송채령 기준 그림(아직 없으니 화풍만 백설에게서 따온다). 이걸 만든 뒤로는 who: ['송채령']으로 쓴다

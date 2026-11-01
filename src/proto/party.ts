@@ -80,8 +80,14 @@ function applyTactic(u: UnitInit, t?: Tactic): UnitInit {
   return u;
 }
 
-export function battleSetup(party: Member[], g: FoeGroup, skills: MemberId[], fresh: MemberId[] = [], tactic?: Tactic): CombatSetup {
-  const allies: (UnitInit | null)[] = party.slice(0, PARTY_MAX).map((m) => applyTactic(heroUnit(m, skills, fresh), tactic));
+/** 기력이 빠진 사람: 체력은 반쯤, 공격은 일곱 할로(6화 창고 문을 연 뒤의 나) */
+const weaken = (u: UnitInit): UnitInit => ({ ...u, hp: Math.round(u.hp * 0.5), atk: Math.round(u.atk * 0.7) });
+
+export function battleSetup(party: Member[], g: FoeGroup, skills: MemberId[], fresh: MemberId[] = [], tactic?: Tactic, weak: MemberId[] = []): CombatSetup {
+  const allies: (UnitInit | null)[] = party.slice(0, PARTY_MAX).map((m) => {
+    const u = applyTactic(heroUnit(m, skills, fresh), tactic);
+    return weak.includes(m.id) ? weaken(u) : u;
+  });
   while (allies.length < 5) allies.push(null);
   return { allies, waves: foeUnits(g) };
 }

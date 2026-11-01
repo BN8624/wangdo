@@ -138,7 +138,7 @@ export function App() {
           <p className="sub">
             빚 받으러 왕까지
             <br />
-            시제품 · 1부 1~5화 (45분 안팎)
+            시제품 · 1부 1~6화 (55분 안팎)
           </p>
           {!adult ? (
             <div className="opts">
@@ -177,7 +177,7 @@ export function App() {
                 처음부터
               </button>
               <button className="opt" onClick={() => run(trialStart())}>
-                4화부터 <small>협상 판·작전·5화(1~3화는 건너뜀)</small>
+                4화부터 <small>협상 판·작전·5~6화(1~3화는 건너뜀)</small>
               </button>
               {hasSave && (
                 <button className="opt" onClick={() => run(load() ?? newGame())}>
@@ -198,7 +198,7 @@ export function App() {
       <div className="app">
         <div className="end">
           <h2>시제품은 여기까지</h2>
-          <p className="gear">1부 5화 '이름의 담보'까지 왔습니다.</p>
+          <p className="gear">1부 6화 '창고를 여는 값'까지 왔습니다.</p>
           <h3 className="name" style={{ marginTop: 16 }}>
             내가 고른 길
           </h3>
@@ -210,9 +210,9 @@ export function App() {
           <PartyList party={g.party} />
           <p className="coin">엽전 {g.coin}냥</p>
           <div className="next">
-            <b>다음 화 · 창고를 여는 값</b>
+            <b>다음 화 · 강으로 간 곡식</b>
             <br />
-            청원을 받은 왕실 조사관이 달골에 내려온다. 송씨 창고 문 앞에서 방망이가 처음으로 값을 요구한다.
+            곡식은 수레가 아니라 배로 나갔다. 갈대 한 줌을 쥐고 강가 나루로 간다.
           </div>
           <div className="opts">
             <button

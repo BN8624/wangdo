@@ -232,6 +232,32 @@ describe('5화', () => {
   });
 });
 
+describe('6화', () => {
+  for (const pick of [0, 1, 2])
+    it(`입회인·작전을 ${pick + 1}번째로 골라도 약해진 나와 함께 이기고 끝까지 간다`, () => {
+      const r = playthrough({ picks: { inspect6: pick % 2, witness6: pick, tactic6: pick, warm6: pick % 2 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      expect(r.g.done).toBe(true);
+      expect(r.losses).toBe(0);
+      expect(r.g.flags).toContain(['wit_widow', 'wit_tab', 'wit_sodam'][pick]);
+      expect(r.g.flags.some((f) => f === 'steward_talked' || f === 'steward_silent')).toBe(true);
+      expect(r.g.log).toContain('창고 문을 여는 데 엽전 열세 닢과 기력을 치렀다');
+    });
+
+  it('기력이 빠진 사람은 체력과 공격이 깎인다', () => {
+    const party = newGame().party;
+    const base = battleSetup(party, FOES.oilmen, ['me']).allies[0]!;
+    const weak = battleSetup(party, FOES.oilmen, ['me'], [], undefined, ['me']).allies[0]!;
+    expect(weak.hp).toBeLessThan(base.hp);
+    expect(weak.atk).toBeLessThan(base.atk);
+  });
+
+  it('엽전을 치르는 비트는 있는 만큼만 깎는다', () => {
+    const i = SCRIPT.findIndex((b) => b.t === 'pay');
+    const r = step({ ...newGame(), pc: i, coin: 5 });
+    expect(r.g.coin).toBe(0);
+  });
+});
+
 describe('협상 판과 작전', () => {
   const ctx = (flags: string[] = []) => ({ flags, party: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[], skills: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[] });
   const boss = SCRIPT.find((b) => b.t === 'nego' && b.id === 'meo_boss') as NegoBeat;
