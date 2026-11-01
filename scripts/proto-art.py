@@ -113,10 +113,21 @@ EXTRA_TILES = {
     'laundry': ('Backgrounds/Tilesets/TilesetElement.png', 14, 2, 2, 2, LAUNDRY),
     'straw': ('Backgrounds/Tilesets/TilesetElement.png', 12, 4, 1, 1, None),
 }
+# 솟대 다음에 붙이는 것(솟대 자리를 옮기지 않게 따로 둔다)
+EXTRA_TILES2 = {
+    # 7화 강나루(2026-11-02): 풀 가장자리 물(흙길과 같은 칸 배치), 나루 판자, 나룻배, 갈대
+    **{f'w_{k}': ('Backgrounds/Tilesets/TilesetWater.png', x, y, 1, 1, None) for k, (x, y) in {
+        'tl': (0, 6), 't': (1, 6), 'tr': (2, 6), 'l': (0, 7), 'c': (1, 7), 'r': (2, 7), 'bl': (0, 8), 'b': (1, 8), 'br': (2, 8),
+        'vt': (3, 6), 'vm': (3, 7), 'vb': (3, 8), 'hl': (0, 9), 'hm': (1, 9), 'hr': (2, 9), 'one': (3, 9)}.items()},
+    'pier': ('Backgrounds/Tilesets/TilesetWater.png', 1, 12, 1, 1, None),
+    'boat': ('Backgrounds/Tilesets/TilesetWater.png', 26, 0, 2, 1, None),
+    'reeds': ('Backgrounds/Tilesets/TilesetNature.png', 7, 11, 1, 1, None),
+}
 # Tiled deco.tsj에 적을 속성: 칸마다 solid(막힘)·above(사람을 덮음). 줄 단위(위→아래)
 EXTRA_PROPS = {
     'fence': ['solid'], 'stonewall': ['solid'], 'clothesline': ['above', 'solid'], 'laundry': ['above', 'solid'], 'straw': ['solid'],
     'sotdae': ['above', 'above', 'solid'],
+    'boat': ['solid'],
 }
 
 
@@ -489,6 +500,8 @@ def build(src):
     for name, (rel, cx, cy, cw, ch, mapping) in EXTRA_TILES.items():
         tp.add(name, recolor(load(src, rel).crop((cx * T, cy * T, (cx + cw) * T, (cy + ch) * T)), mapping))
     tp.add('sotdae', sotdae())
+    for name, (rel, cx, cy, cw, ch, mapping) in EXTRA_TILES2.items():
+        tp.add(name, recolor(load(src, rel).crop((cx * T, cy * T, (cx + cw) * T, (cy + ch) * T)), mapping))
     tp.image().save(os.path.join(OUT, 'tiles.png'))
     atlas['tiles'] = tp.rects()
     sync_deco_tsj(atlas['tiles'])

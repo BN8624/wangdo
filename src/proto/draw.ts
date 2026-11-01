@@ -88,8 +88,13 @@ function grassAt(x: number, y: number): TileName {
   return v < 17 ? 'grass' : (['grass2', 'grass3', 'grass4', 'grass5', 'grass6', 'grass7', 'grass2'] as TileName[])[v - 17];
 }
 
-/** 이웃 네 방향의 흙길 여부로 고르는 흙길 타일 */
-function dirtAt(isDirt: (x: number, y: number) => boolean, x: number, y: number): TileName {
+/** 이웃 네 방향의 흙길 여부로 고르는 흙길 타일(물도 같은 칸 배치라 앞글자만 바꿔 쓴다) */
+function dirtAt(isDirt: (x: number, y: number) => boolean, x: number, y: number, kind: 'd' | 'w' = 'd'): TileName {
+  const t = dirtKey(isDirt, x, y);
+  return (kind === 'd' ? t : t.replace(/^d_/, 'w_').replace(/^w_c[23]$/, 'w_c')) as TileName;
+}
+
+function dirtKey(isDirt: (x: number, y: number) => boolean, x: number, y: number): TileName {
   const n = isDirt(x, y - 1);
   const e = isDirt(x + 1, y);
   const s = isDirt(x, y + 1);
@@ -129,10 +134,11 @@ export function mapCanvas(id: MapId): HTMLCanvasElement {
   const ctx = cv.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
   const cell = (x: number, y: number) => (x < 0 || y < 0 || x >= g.w || y >= g.h ? null : g.ground[y][x]);
-  const isDirt = (x: number, y: number) => {
-    const c = cell(x, y);
-    return c === null ? cell(Math.max(0, Math.min(g.w - 1, x)), Math.max(0, Math.min(g.h - 1, y))) === ':' : c === ':';
-  };
+  /** 맵 밖은 가장자리 칸을 이어 본다 */
+  const near = (x: number, y: number) => cell(x, y) ?? cell(Math.max(0, Math.min(g.w - 1, x)), Math.max(0, Math.min(g.h - 1, y)));
+  const isDirt = (x: number, y: number) => near(x, y) === ':';
+  // 나루 판자(=)는 물 위에 깐 것이라 물로 본다
+  const isWater = (x: number, y: number) => near(x, y) === '~' || near(x, y) === '=';
   for (let y = 0; y < g.h; y++)
     for (let x = 0; x < g.w; x++) {
       const c = g.ground[y][x];
@@ -147,6 +153,10 @@ export function mapCanvas(id: MapId): HTMLCanvasElement {
         drawTile(ctx, cell(x, y + 1) === '#' || cell(x, y + 1) === null ? 'wall' : 'wall_foot', dx, dy);
       } else if (c === '_') {
         drawTile(ctx, 'cave', dx, dy);
+      } else if (c === '~' || c === '=') {
+        drawTile(ctx, grassAt(x, y), dx, dy);
+        drawTile(ctx, dirtAt(isWater, x, y, 'w'), dx, dy);
+        if (c === '=') drawTile(ctx, 'pier', dx, dy);
       } else {
         drawTile(ctx, grassAt(x, y), dx, dy);
         if (c === ':') drawTile(ctx, dirtAt(isDirt, x, y), dx, dy);

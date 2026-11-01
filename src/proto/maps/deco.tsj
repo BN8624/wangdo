@@ -5,11 +5,11 @@
  "name": "deco",
  "tilewidth": 16,
  "tileheight": 16,
- "tilecount": 208,
+ "tilecount": 224,
  "columns": 16,
  "image": "../../../public/proto/tiles.png",
  "imagewidth": 256,
- "imageheight": 208,
+ "imageheight": 224,
  "margin": 0,
  "spacing": 0,
  "tiles": [
@@ -2090,6 +2090,146 @@
   },
   {
    "id": 201,
+   "properties": [
+    {
+     "name": "name",
+     "type": "string",
+     "value": "sotdae"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    },
+    {
+     "name": "above",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 202,
+   "properties": [
+    {
+     "name": "name",
+     "type": "string",
+     "value": "boat"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    },
+    {
+     "name": "above",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 203,
+   "properties": [
+    {
+     "name": "name",
+     "type": "string",
+     "value": "boat"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    },
+    {
+     "name": "above",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 205,
+   "properties": [
+    {
+     "name": "name",
+     "type": "string",
+     "value": "sotdae"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    },
+    {
+     "name": "above",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 219,
+   "properties": [
+    {
+     "name": "name",
+     "type": "string",
+     "value": "boat"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    },
+    {
+     "name": "above",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 220,
+   "properties": [
+    {
+     "name": "name",
+     "type": "string",
+     "value": "boat"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    },
+    {
+     "name": "above",
+     "type": "bool",
+     "value": false
+    }
+   ]
+  },
+  {
+   "id": 221,
+   "properties": [
+    {
+     "name": "name",
+     "type": "string",
+     "value": "sotdae"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
+    },
+    {
+     "name": "above",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 237,
    "properties": [
     {
      "name": "name",

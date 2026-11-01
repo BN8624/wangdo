@@ -5,10 +5,10 @@
  "name": "terrain",
  "tilewidth": 16,
  "tileheight": 16,
- "tilecount": 5,
- "columns": 5,
+ "tilecount": 7,
+ "columns": 7,
  "image": "terrain.png",
- "imagewidth": 80,
+ "imagewidth": 112,
  "imageheight": 16,
  "margin": 0,
  "spacing": 0,
@@ -110,6 +110,46 @@
      "name": "solid",
      "type": "bool",
      "value": true
+    }
+   ]
+  },
+  {
+   "id": 5,
+   "properties": [
+    {
+     "name": "ground",
+     "type": "string",
+     "value": "~"
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "value": "물"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": true
+    }
+   ]
+  },
+  {
+   "id": 6,
+   "properties": [
+    {
+     "name": "ground",
+     "type": "string",
+     "value": "="
+    },
+    {
+     "name": "name",
+     "type": "string",
+     "value": "나루 판자"
+    },
+    {
+     "name": "solid",
+     "type": "bool",
+     "value": false
     }
    ]
   }
