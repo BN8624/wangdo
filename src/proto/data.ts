@@ -27,6 +27,7 @@ const wisp = (level: number) => ({ name: '도깨비불', mon: 'wisp' as const, l
 // 흑운채: 도깨비 유민의 산적 무리. 사람 체형에 뿔 달린 도트(괴물 아님)
 const gob = (level: number) => ({ name: '흑운채 졸개', char: 'bandit' as const, level, role: 'attack' as const, element: 'dark' as const, kind: 'grunt' as const, power: 0.9 });
 const gob2 = (level: number) => ({ name: '흑운채 졸개', char: 'bandit2' as const, level, role: 'defense' as const, element: 'wood' as const, kind: 'grunt' as const, power: 0.9 });
+const pick = (level: number, role: 'attack' | 'defense' = 'attack') => ({ name: '소매치기', char: 'pickpocket' as const, level, role, element: 'dark' as const, kind: 'grunt' as const, power: 0.9 });
 const thug = (level: number, role: 'attack' | 'defense' = 'attack') => ({ name: '송씨 머슴', char: 'thug' as const, level, role, element: 'fire' as const, kind: 'grunt' as const, power: 0.85 });
 const bat = (level: number) => ({ name: '굴 박쥐', mon: 'bat' as const, level, role: 'attack' as const, element: 'dark' as const, kind: 'grunt' as const, power: 0.8 });
 
@@ -69,6 +70,8 @@ export const FOES: Record<string, FoeGroup> = {
       [thug(13), { name: '머슴 대장', char: 'thug', level: 15, role: 'attack', element: 'fire', kind: 'elite', power: 1.25 }, thug(13, 'defense')],
     ],
   },
+  pickpockets: { name: '소매치기패', ground: 'dirt', waves: [[pick(15), pick(15, 'defense'), pick(16)]] },
+  pickTrain: { name: '장터 왈패', ground: 'dirt', waves: [[pick(13), pick(13)]] },
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
   village: { name: '도깨비불', ground: 'grass', waves: [[wisp(1), wisp(2)]] },

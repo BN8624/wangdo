@@ -138,7 +138,7 @@ export function App() {
           <p className="sub">
             빚 받으러 왕까지
             <br />
-            시제품 · 1부 1~4화 (35분 안팎)
+            시제품 · 1부 1~5화 (45분 안팎)
           </p>
           {!adult ? (
             <div className="opts">
@@ -177,7 +177,7 @@ export function App() {
                 처음부터
               </button>
               <button className="opt" onClick={() => run(trialStart())}>
-                4화 시험판 <small>그린 지도·협상 판·작전(1~3화는 건너뜀)</small>
+                4화부터 <small>협상 판·작전·5화(1~3화는 건너뜀)</small>
               </button>
               {hasSave && (
                 <button className="opt" onClick={() => run(load() ?? newGame())}>
@@ -188,7 +188,7 @@ export function App() {
           )}
           <p className="credit">파티는 이야기를 따라 알아서 걷고 싸웁니다. 갈림길·들를 곳·장비·대사 선택만 고르세요.
             <br />
-            그림: Ninja Adventure(pixel-boy, CC0)를 조선풍으로 고쳐 씀</p>
+            땅 그림: Ninja Adventure(pixel-boy, CC0)를 조선풍으로 고쳐 씀</p>
         </div>
       </div>
     );
@@ -198,7 +198,7 @@ export function App() {
       <div className="app">
         <div className="end">
           <h2>시제품은 여기까지</h2>
-          <p className="gear">1부 4화 '우렁각시의 밥상'까지 왔습니다.</p>
+          <p className="gear">1부 5화 '이름의 담보'까지 왔습니다.</p>
           <h3 className="name" style={{ marginTop: 16 }}>
             내가 고른 길
           </h3>
@@ -210,9 +210,9 @@ export function App() {
           <PartyList party={g.party} />
           <p className="coin">엽전 {g.coin}냥</p>
           <div className="next">
-            <b>다음 화 · 이름의 담보</b>
+            <b>다음 화 · 창고를 여는 값</b>
             <br />
-            참봉 관복을 입은 첫 장날, 송 대감의 딸이 찾아온다. 그날 밤 백설이 거울을 덮으며 입을 연다.
+            청원을 받은 왕실 조사관이 달골에 내려온다. 송씨 창고 문 앞에서 방망이가 처음으로 값을 요구한다.
           </div>
           <div className="opts">
             <button

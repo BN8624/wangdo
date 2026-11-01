@@ -1,7 +1,8 @@
 // 시제품(자동 진행 도트 RPG): 맵·대본·진행기·밸런스
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { CHARS, MONS, TILES } from '../src/proto/atlas';
+import { MONS, TILES } from '../src/proto/atlas';
+import { CHARS32 } from '../src/proto/atlas32';
 import { FOES, ITEMS } from '../src/proto/data';
 import { MAPS, grid, walkable, type MapId } from '../src/proto/maps';
 import { battleSetup, giveExp, overwhelms } from '../src/proto/party';
@@ -80,10 +81,10 @@ describe('맵(Tiled)', () => {
   it('맵이 쓰는 그림이 모두 그림 묶음에 있다', () => {
     for (const def of Object.values(MAPS))
       for (const a of def.actors) {
-        if (a.char) expect(CHARS).toHaveProperty(a.char);
+        if (a.char) expect(CHARS32).toHaveProperty(a.char);
         if (a.mon) expect(MONS).toHaveProperty(a.mon);
       }
-    for (const f of Object.values(FOES)) for (const u of f.waves.flat()) expect(u.char ? CHARS : MONS).toHaveProperty((u.char ?? u.mon)!);
+    for (const f of Object.values(FOES)) for (const u of f.waves.flat()) expect(u.char ? CHARS32 : MONS).toHaveProperty((u.char ?? u.mon)!);
     for (const def of Object.values(MAPS)) for (const c of def.chests) if (c.item) expect(ITEMS).toHaveProperty(c.item);
     // 장식 칸이 tiles.png 안에 있다(시트 크기는 그림 좌표표에서)
     const sheetH = Math.max(...Object.values(TILES).map((r) => r[1] + r[3]));
@@ -193,6 +194,41 @@ describe('4화', () => {
     const g = newGame();
     const lines = visibleLines(g, [{ who: 'sodam', text: '소담 잡담', with: 'sodam' }, { who: 'me', text: '혼잣말' }]);
     expect(lines.map((l) => l.text)).toEqual(['혼잣말']);
+  });
+});
+
+describe('5화', () => {
+  for (const pick of [0, 1, 2])
+    it(`백설에게 ${['장부를 뒤집자', '이름을 받아 오겠다', '듣기만 한다'][pick]}고 해도 끝까지 가고 깃발이 남는다`, () => {
+      // 들르기: 1화 둘, 4화 하나, 5화 둘(과부댁·주막 / 주막·아낙 / 과부댁·아낙)
+      const v5 = [[0, 1], [1, 2], [0, 2]][pick];
+      const r = playthrough({ picks: { name5: pick }, visits: [0, 1, 0, ...v5], collect: ['wages'] });
+      expect(r.g.done).toBe(true);
+      expect(r.losses).toBe(0);
+      expect(r.g.flags).toContain(['bs_vow_ledger', 'bs_vow_name', 'bs_vow_listen'][pick]);
+      expect(r.g.flags).toEqual(expect.arrayContaining([['clue_heir', 'clue_twelve'], ['clue_twelve', 'clue_list'], ['clue_heir', 'clue_list']][pick]));
+      expect(r.g.flags.some((f) => f === 'chae_sealed' || f === 'chae_unsealed')).toBe(true);
+    });
+
+  it('송채령에겐 홀림·위협이 잘 안 먹히고, 장부와 단서로 꺾는다', () => {
+    const chae = SCRIPT.find((b) => b.t === 'nego' && b.id === 'chaeryeong') as NegoBeat;
+    const st = { id: chae.id, left: chae.resolve, turn: 0, used: [] as string[] };
+    expect(negoApply(chae, st, 'charm').st.left).toBeGreaterThan(negoApply(chae, st, 'bat').st.left - 5);
+    let bat = st;
+    for (let i = 0; i < chae.turns; i++) bat = negoApply(chae, bat, 'bat').st;
+    expect(bat.left).toBeGreaterThan(0);
+    let mix = st;
+    for (const p of ['ledger', 'clue_heir', 'clue_twelve']) mix = negoApply(chae, mix, p).st;
+    expect(mix.left).toBe(0);
+  });
+
+  it('백설에게 진 빚이 있으면 그날 밤 그 빚을 받으러 온다', () => {
+    const night = SCRIPT.flatMap((b) => (b.t === 'talk' ? b.lines : [])).filter((l) => l.if === 'bs_debt' || l.unless === 'bs_debt');
+    const g = newGame();
+    const owed = visibleLines({ ...g, flags: ['bs_debt'] }, night).map((l) => l.text);
+    const free = visibleLines(g, night).map((l) => l.text);
+    expect(owed.some((t) => t.includes('그 빚, 오늘 받을게요'))).toBe(true);
+    expect(free.some((t) => t.includes('그 빚, 오늘 받을게요'))).toBe(false);
   });
 });
 

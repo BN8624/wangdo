@@ -7,16 +7,22 @@ export const CHARS32 = {
   baekseol: [0, 0] as [number, number],
   bandit: [384, 320] as [number, number],
   bandit2: [0, 480] as [number, number],
+  bat: [256, 640] as [number, number],
+  chaeryeong: [128, 480] as [number, number],
   innkeeper: [0, 320] as [number, number],
   keeper: [128, 320] as [number, number],
   me: [128, 0] as [number, number],
-  mokso: [128, 480] as [number, number],
+  mokso: [384, 480] as [number, number],
   muyeong: [256, 0] as [number, number],
+  pickpocket: [256, 480] as [number, number],
+  racoon: [0, 640] as [number, number],
   sodam: [384, 0] as [number, number],
   thug: [0, 160] as [number, number],
   widow: [256, 320] as [number, number],
+  wisp: [128, 640] as [number, number],
   worker: [256, 160] as [number, number],
   worker2: [384, 160] as [number, number],
 } as const;
 
-export type Char32Name = keyof typeof CHARS32;
+/** 캐릭터(사람·짐승) 이름 */
+export type CharName = keyof typeof CHARS32;

@@ -1,7 +1,7 @@
 // PixiJS 연결: 도트 시트(draw.ts가 불러 둔 그림)에서 잘라 낸 텍스처를 만들어 둔다. 확대는 늘 최근접(도트가 번지지 않게)
 import { Rectangle, Texture, TextureSource, TextureStyle } from 'pixi.js';
-import { MONS, TILES, type CharName, type MonName, type TileName } from './atlas';
-import { CHARS32 } from './atlas32';
+import { MONS, TILES, type MonName, type TileName } from './atlas';
+import { CHARS32, type CharName } from './atlas32';
 import { CC, T, sheet } from './draw';
 import type { Dir } from './types';
 
@@ -47,6 +47,9 @@ export const charTex = (c: CharName, dir: Dir, row: number) => cut('chars', CHAR
 
 /** 몬스터 한 칸(16×16), 대장은 50×50 다섯 장 */
 export function monTex(m: MonName, dir: Dir, frame: number): Texture {
+  // 새로 그린 짐승·도깨비불은 캐릭터 시트(32×32)에 있다: 줄 0~3을 차례로
+  const c = (CHARS32 as Record<string, readonly [number, number]>)[m];
+  if (c) return cut('chars', c[0] + dir * CC, c[1] + (frame % 4) * CC, CC, CC);
   const r = MONS[m];
   if (r[2] > 64) return cut('mons', r[0] + (frame % 5) * 50, r[1], 50, 50);
   return cut('mons', r[0] + dir * T, r[1] + (frame % 4) * T, T, T);
@@ -68,4 +71,5 @@ export const SD_OF: Partial<Record<string, string>> = {
   worker: 'villager',
   worker2: 'fishmonger',
   innkeeper: 'innkeeper',
+  chaeryeong: 'chaeryeong',
 };

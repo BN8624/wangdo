@@ -1,5 +1,6 @@
 // 시제품(자동 진행 도트 RPG)의 공통 타입
-import type { CharName, FaceName, MonName } from './atlas';
+import type { MonName } from './atlas';
+import type { CharName } from './atlas32';
 
 /** 0 아래 · 1 위 · 2 왼 · 3 오른(스프라이트 시트의 열 순서) */
 export type Dir = 0 | 1 | 2 | 3;
@@ -12,8 +13,8 @@ export interface Pt {
 export interface Line {
   who: string;
   text: string;
-  /** 대화창 얼굴(없으면 who로 찾는다) */
-  face?: FaceName;
+  /** 대화창 얼굴: 캐릭터 이름(SD 머리·도트 얼굴을 찾는다). 없으면 who로 찾는다 */
+  face?: string;
   /** 이 깃발이 있을 때만 */
   if?: string;
   /** 이 깃발이 없을 때만 */

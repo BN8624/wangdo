@@ -1,10 +1,10 @@
 // 맵 화면: 미리 구운 맵 위에 사람·짐승·상자·파티를 그리고, 걷기 Effect를 움직임으로 보여 준다
 import { useEffect, useMemo, useRef } from 'react';
-import type { CharName } from './atlas';
+import type { CharName } from './atlas32';
 import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 import { Lighting, type Lamp } from './light';
 import { Particles } from './particles';
-import { CHAR_DX, CHAR_DY, HEAD_DY, aboveCanvas, isCave, mapCanvas } from './draw';
+import { CC, CHAR_DX, CHAR_DY, HEAD_DY, aboveCanvas, isCave, mapCanvas } from './draw';
 import { canvasTexture, charTex, monTex, tileTex } from './pixi';
 import { MAPS, dirTo, grid } from './maps';
 import { actorsOn, type Effect, type Game } from './runner';
@@ -214,11 +214,13 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
           put(`actor:${a.id}`, charTex(a.char, a.dir, 0), a.at.x * T + CHAR_DX, a.at.y * T + CHAR_DY + breath(now, a.at.x * 3 + a.at.y), order(a.at.y));
         } else if (a.mon) {
           const tex = monTex(a.mon, a.dir, f);
-          // 대장(50×50)은 발밑 칸 가운데에 맞춘다
-          const big = tex.frame.width > T;
-          // 도깨비불은 떠 있으니 그림자 없이
-          if (a.mon !== 'wisp') shadow(a.at.x * T, a.at.y * T, big ? 14 : 5);
-          put(`actor:${a.id}`, tex, a.at.x * T + (big ? T / 2 - 25 : 0), a.at.y * T + (big ? T - 50 : 0), order(a.at.y));
+          const fw = tex.frame.width;
+          // 도깨비불·박쥐는 떠 있다(그림자는 작게, 도깨비불은 없이)
+          const fly = a.mon === 'wisp' || a.mon === 'bat' ? 4 + Math.sin(now / 300 + a.at.x) * 1.5 : 0;
+          if (a.mon !== 'wisp') shadow(a.at.x * T, a.at.y * T, fw === 50 ? 14 : fly ? 4 : 7);
+          // 32×32는 사람처럼, 옛 대장 그림(50×50)은 발밑 칸 가운데에
+          if (fw === CC) put(`actor:${a.id}`, tex, a.at.x * T + CHAR_DX, Math.round(a.at.y * T + CHAR_DY - fly), order(a.at.y));
+          else put(`actor:${a.id}`, tex, a.at.x * T + (fw > T ? T / 2 - 25 : 0), a.at.y * T + (fw > T ? T - 50 : 0), order(a.at.y));
         }
       }
       pos.forEach((q, k) => {

@@ -1,7 +1,8 @@
 // 아래 판과 알림들: 대화, 선택, 선물, 받아내기, 장터, 합류, 패배, 빚 글씨
 import { useEffect, useRef, useState } from 'react';
 import { play } from '../ui/sound';
-import { CHARS, FACES, type CharName, type FaceName } from './atlas';
+import { FACES, type FaceName } from './atlas';
+import { CHARS32, type CharName } from './atlas32';
 import { ITEMS, MEMBER_NAME, SHOP, priceOf } from './data';
 import { drawChar, drawFace } from './draw';
 import { SD_OF } from './pixi';
@@ -29,9 +30,9 @@ export function speakerName(who: string) {
   return MEMBER_NAME[who as MemberId] ?? who;
 }
 
-function faceOf(l: Line): FaceName | null {
+function faceOf(l: Line): string | null {
   if (l.face) return l.face;
-  return l.who in FACES ? (l.who as FaceName) : null;
+  return l.who in FACES || l.who in SD_OF ? l.who : null;
 }
 
 /** SD가 있으면 SD 머리, 없으면 도트 얼굴(일러스트를 고른 경우) */
@@ -65,7 +66,7 @@ export function Sprite({ c, scale = 2, className }: { c: CharName; scale?: numbe
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current;
-    if (!cv || !(c in CHARS)) return;
+    if (!cv || !(c in CHARS32)) return;
     const ctx = cv.getContext('2d')!;
     ctx.imageSmoothingEnabled = false;
     ctx.clearRect(0, 0, cv.width, cv.height);
