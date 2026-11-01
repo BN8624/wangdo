@@ -75,4 +75,6 @@ export const SD_OF: Partial<Record<string, string>> = {
   yunseo: 'yunseo',
   namjihu: 'namjihu',
   doksa: 'doksa',
+  meoksoe: 'meoksoe',
+  cheolgom: 'cheolgom',
 };

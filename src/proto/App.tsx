@@ -138,7 +138,7 @@ export function App() {
           <p className="sub">
             빚 받으러 왕까지
             <br />
-            시제품 · 1부 1~7화 (65분 안팎)
+            시제품 · 1부 1~8화 (75분 안팎)
           </p>
           {!adult ? (
             <div className="opts">
@@ -177,7 +177,7 @@ export function App() {
                 처음부터
               </button>
               <button className="opt" onClick={() => run(trialStart())}>
-                4화부터 <small>협상 판·작전·5~7화(1~3화는 건너뜀)</small>
+                4화부터 <small>협상 판·작전·5~8화(1~3화는 건너뜀)</small>
               </button>
               {hasSave && (
                 <button className="opt" onClick={() => run(load() ?? newGame())}>
@@ -198,7 +198,7 @@ export function App() {
       <div className="app">
         <div className="end">
           <h2>시제품은 여기까지</h2>
-          <p className="gear">1부 7화 '강으로 간 곡식'까지 왔습니다.</p>
+          <p className="gear">1부 8화 '흑운채의 맹세'까지 왔습니다.</p>
           <h3 className="name" style={{ marginTop: 16 }}>
             내가 고른 길
           </h3>
@@ -210,9 +210,9 @@ export function App() {
           <PartyList party={g.party} />
           <p className="coin">엽전 {g.coin}냥</p>
           <div className="next">
-            <b>다음 화 · 흑운채의 맹세</b>
+            <b>다음 화 · 비어 있는 인장</b>
             <br />
-            흑운채로 가는 고갯길에서 무영이 털어놓는다. 겨울 곡식을 받는 대가로 눈감았던 일을.
+            한밤중, 송채령이 상류 별창의 열쇠를 들고 찾아온다.
           </div>
           <div className="opts">
             <button

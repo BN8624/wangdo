@@ -86,6 +86,17 @@ export const FOES: Record<string, FoeGroup> = {
       [thug(19), { name: '독사', char: 'doksa', level: 25, role: 'attack', element: 'dark', kind: 'elite', power: 1.7 }, pick(19)],
     ],
   },
+  gateTrain: { name: '흑운채 보초', ground: 'dirt', waves: [[gob(19), gob2(19)]] },
+  cheolgom: {
+    name: '흑운채 선봉장 철곰',
+    ground: 'dirt',
+    boss: true,
+    waves: [
+      [gob(19), gob2(19)],
+      // 쇠비늘이 단단해 버티기만 하면 못 쓰러뜨린다(몰아쳐라·기술이 맞다)
+      [gob(19), { name: '철곰', char: 'cheolgom', level: 22, role: 'defense', element: 'wood', kind: 'elite', power: 1.2 }],
+    ],
+  },
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
   village: { name: '도깨비불', ground: 'grass', waves: [[wisp(1), wisp(2)]] },
