@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 4,
- "nextobjectid": 56,
+ "nextobjectid": 57,
  "properties": [
   {
    "name": "name",
@@ -1482,6 +1482,40 @@
        "name": "hidden",
        "type": "bool",
        "value": true
+      }
+     ]
+    },
+    {
+     "id": 56,
+     "name": "chae_night",
+     "type": "actor",
+     "point": true,
+     "x": 264,
+     "y": 312,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "chaeryeong"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "lantern"
       }
      ]
     }

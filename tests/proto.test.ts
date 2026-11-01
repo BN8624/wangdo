@@ -293,6 +293,23 @@ describe('8화', () => {
   });
 });
 
+describe('9화', () => {
+  for (const pick of [0, 1])
+    it(`채령에게 ${pick ? '백설의 담보를' : '장부를'} 묻고 끝까지 간다`, () => {
+      const r = playthrough({ picks: { ask9: pick, count9: pick }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      expect(r.g.done).toBe(true);
+      expect(r.losses).toBe(0);
+      expect(r.g.flags).toContain(pick ? 'bs_name_hint' : 'asked_ledger');
+      expect(r.g.flags).toContain(pick ? 'rested_bs' : 'counted_alone');
+      expect(r.g.flags.some((f) => f === 'butler_named' || f === 'private_silent')).toBe(true);
+    });
+
+  it('이름 칸이 빈 빚은 방망이로도 받아내지 못한다(금 가는 연출)', () => {
+    const cut = SCRIPT.find((b) => b.t === 'cutscene' && b.lines.some((l) => l.includes('이름 칸이 비어')));
+    expect(cut).toMatchObject({ broken: true });
+  });
+});
+
 describe('협상 판과 작전', () => {
   const ctx = (flags: string[] = []) => ({ flags, party: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[], skills: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[] });
   const boss = SCRIPT.find((b) => b.t === 'nego' && b.id === 'meo_boss') as NegoBeat;
