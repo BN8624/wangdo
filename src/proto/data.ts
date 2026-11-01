@@ -29,6 +29,7 @@ const gob = (level: number) => ({ name: '흑운채 졸개', char: 'bandit' as co
 const gob2 = (level: number) => ({ name: '흑운채 졸개', char: 'bandit2' as const, level, role: 'defense' as const, element: 'wood' as const, kind: 'grunt' as const, power: 0.9 });
 const pick = (level: number, role: 'attack' | 'defense' = 'attack') => ({ name: '소매치기', char: 'pickpocket' as const, level, role, element: 'dark' as const, kind: 'grunt' as const, power: 0.9 });
 const sol = (level: number, role: 'attack' | 'defense' = 'attack') => ({ name: '송씨 사병', char: 'soldier' as const, level, role, element: 'dark' as const, kind: 'grunt' as const, power: 0.95 });
+const asn = (level: number, role: 'attack' | 'defense' = 'attack') => ({ name: '자객', char: 'assassin' as const, level, role, element: 'dark' as const, kind: 'grunt' as const, power: 1.0 });
 const thug = (level: number, role: 'attack' | 'defense' = 'attack') => ({ name: '송씨 머슴', char: 'thug' as const, level, role, element: 'fire' as const, kind: 'grunt' as const, power: 0.85 });
 const bat = (level: number) => ({ name: '굴 박쥐', mon: 'bat' as const, level, role: 'attack' as const, element: 'dark' as const, kind: 'grunt' as const, power: 0.8 });
 
@@ -104,6 +105,16 @@ export const FOES: Record<string, FoeGroup> = {
     name: '원본 장부를 노린 매수된 아전',
     ground: 'dirt',
     waves: [[{ name: '매수된 아전', char: 'ajeon', level: 23, role: 'support', element: 'water', kind: 'grunt', power: 0.95 }, { name: '매수된 아전', char: 'ajeon', level: 23, role: 'support', element: 'water', kind: 'grunt', power: 0.95 }, { name: '아전 우두머리', char: 'ajeon', level: 24, role: 'attack', element: 'water', kind: 'elite', power: 1.0 }]],
+  },
+  asnTrain: { name: '자객', ground: 'dirt', waves: [[asn(23), asn(23)]] },
+  assassins: {
+    name: '채권 사본을 노린 자객',
+    ground: 'dirt',
+    boss: true,
+    waves: [
+      [asn(25), asn(25), asn(25, 'defense')],
+      [{ name: '자객 우두머리', char: 'assassin', level: 29, role: 'attack', element: 'dark', kind: 'elite', power: 1.8 }, asn(25)],
+    ],
   },
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
