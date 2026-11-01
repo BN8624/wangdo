@@ -204,14 +204,23 @@ function blockedBy(g: Game) {
 }
 
 /** 맵에 들어설 때 식객들을 뒤에 세운다 */
+/** 지나온 칸을 이만큼 기억한다: 파티 넷이 1.5칸씩 떨어져 따라오려면 4.5칸 */
+const TRAIL = 5;
+
 function behind(map: MapId, at: Pt, dir: Dir, n: number): Pt[] {
   const gr = grid(map);
   const back: Record<Dir, [number, number]> = { 0: [0, -1], 1: [0, 1], 2: [1, 0], 3: [-1, 0] };
   const out: Pt[] = [];
+  const seen = new Set([`${at.x},${at.y}`]);
   let cur = at;
   for (let i = 0; i < n; i++) {
-    const nx = { x: cur.x + back[dir][0], y: cur.y + back[dir][1] };
-    if (walkable(gr, nx)) cur = nx;
+    // 뒤가 막혔으면 옆으로라도 비켜 선다(한 칸에 겹치지 않게)
+    const tries = [back[dir], ...Object.values(back).filter((d) => d !== back[dir])];
+    const nx = tries.map(([dx, dy]) => ({ x: cur.x + dx, y: cur.y + dy })).find((p) => walkable(gr, p) && !seen.has(`${p.x},${p.y}`));
+    if (nx) {
+      cur = nx;
+      seen.add(`${nx.x},${nx.y}`);
+    }
     out.push(cur);
   }
   return out;
@@ -406,7 +415,7 @@ function resolve(game: Game, input: Input): Game {
   switch (b.t) {
     case 'map': {
       const at = pointOf(b.map, b.at);
-      return { ...next, map: b.map, pos: at, dir: b.dir, trail: behind(b.map, at, b.dir, 3) };
+      return { ...next, map: b.map, pos: at, dir: b.dir, trail: behind(b.map, at, b.dir, TRAIL) };
     }
     case 'walk': {
       const path = findPath(grid(g.map), g.pos, pointOf(g.map, b.to), blockedBy(g)) ?? [];
@@ -414,7 +423,7 @@ function resolve(game: Game, input: Input): Game {
       const end = seq[seq.length - 1];
       const prev = seq.length > 1 ? seq[seq.length - 2] : end;
       const dir = b.face ?? (path.length ? dirTo(prev, end) : g.dir);
-      return { ...next, pos: end, dir, trail: seq.slice(0, -1).reverse().slice(0, 3) };
+      return { ...next, pos: end, dir, trail: seq.slice(0, -1).reverse().slice(0, TRAIL) };
     }
     case 'choice': {
       const i = input.k === 'pick' ? input.i : 0;
@@ -447,7 +456,7 @@ function resolve(game: Game, input: Input): Game {
       // 지면 마지막 쉼터로. 얻은 경험치는 남는다
       const c = g.check;
       if (!c) return { ...g, defeat: true, wins: g.wins + 1 };
-      return { ...g, pc: c.pc, map: c.map, pos: c.pos, dir: c.dir, night: c.night, trail: behind(c.map, c.pos, c.dir, 3), defeat: true, wins: g.wins + 1, stack: [] };
+      return { ...g, pc: c.pc, map: c.map, pos: c.pos, dir: c.dir, night: c.night, trail: behind(c.map, c.pos, c.dir, TRAIL), defeat: true, wins: g.wins + 1, stack: [] };
     }
     case 'chest': {
       const ch = MAPS[g.map].chests.find((c) => c.id === b.id)!;
@@ -509,8 +518,11 @@ export function save(g: Game) {
 }
 
 /** 시험판: 처음부터 기본 선택으로 순식간에 진행해 4화(그린 지도) 첫머리에 세운다 */
+/** 4화 첫 비트(오두막으로 옮기는 map)의 자리: 4화 첫 목표 바로 앞 */
+export const ep4Start = () => SCRIPT.findIndex((b) => b.t === 'goal' && b.text === '밥상 차린 사람 찾기') - 1;
+
 export function trialStart(): Game {
-  const first4 = SCRIPT.findIndex((b) => b.t === 'map' && b.map === 'village_p');
+  const first4 = ep4Start();
   let r = step(newGame());
   for (let i = 0; i < 5000 && r.g.pc < first4 - 1; i++) {
     const b = SCRIPT[r.g.pc];

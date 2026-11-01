@@ -511,8 +511,8 @@ button {
   word-break: keep-all;
 }
 .card .big-sprite {
-  width: 96px;
-  height: 120px;
+  width: 128px;
+  height: 128px;
   margin: 4px auto 8px;
   display: block;
 }

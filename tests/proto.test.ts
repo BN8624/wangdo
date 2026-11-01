@@ -7,7 +7,7 @@ import { MAPS, grid, walkable, type MapId } from '../src/proto/maps';
 import { battleSetup, giveExp, overwhelms } from '../src/proto/party';
 import { negoApply, negoOptions, type NegoBeat } from '../src/proto/nego';
 import type { MemberId } from '../src/proto/types';
-import { buy, labelAt, newGame, revive, step, trialStart, visibleLines, type Game, type Input } from '../src/proto/runner';
+import { buy, ep4Start, labelAt, newGame, revive, step, trialStart, visibleLines, type Game, type Input } from '../src/proto/runner';
 import { SCRIPT } from '../src/proto/story';
 import { CUTIN_MS } from '../src/proto/Battle';
 
@@ -367,12 +367,12 @@ describe('진행기', () => {
     expect([...r.g.skills].sort()).toEqual(['baekseol', 'me', 'muyeong', 'sodam']);
   });
 
-  it('4화 시험판은 4화 첫머리(그린 지도)에서 시작하고 끝까지 간다', () => {
+  it('4화 시험판은 4화 첫머리에서 시작하고 끝까지 간다', () => {
     const g = trialStart();
     let r = step(g);
-    expect(r.fx).toMatchObject({ k: 'warp', map: 'village_p' });
+    expect(r.fx).toMatchObject({ k: 'warp', map: 'village' });
     r = step(r.g, { k: 'ok' });
-    expect(r.g.map).toBe('village_p');
+    expect(r.g.map).toBe('village');
     expect(r.g.party.map((m) => m.id)).toEqual(['me', 'baekseol', 'muyeong']);
     for (let i = 0; i < 2000 && r.fx.k !== 'end'; i++) {
       const b = SCRIPT[r.g.pc];
@@ -382,7 +382,8 @@ describe('진행기', () => {
   });
 
   it('3화까지 끝낸 저장은 새로 붙은 4화부터 이어 간다', () => {
-    const first4 = SCRIPT.findIndex((b) => b.t === 'map' && b.map === 'village_p' && b.at === '오두막');
+    const first4 = ep4Start();
+    expect(SCRIPT[first4]).toMatchObject({ t: 'map', map: 'village', at: '오두막' });
     // 예전 저장: 끝(end)에 닿아 done인데, 그 자리에 이제 4화 첫 비트가 있다
     const old: Game = { ...newGame(), pc: first4 - 1, done: true };
     const g = revive(old);
