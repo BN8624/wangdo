@@ -71,6 +71,8 @@ CHARS = {
                 'Meoksoe, the old chief of the Heugun-chae dokkaebi (Korean goblin) clan: a huge broad man with two long curved black horns, dark indigo skin, a shaggy grey beard, a worn dark-red fur coat, a thick rope belt with a big string of coins, heavy dignified posture.'),
     'cheolgom': ([],
                  'Cheolgom ("Iron Bear"), vanguard general of the Heugun-chae dokkaebi: a bear-like hulking man with one short horn, brown furry arms, an iron scale-armor vest, a giant iron hammer held in both hands, snarling teeth.'),
+    'soldier': ([],
+                'a Song family private soldier: a black cloth mask over the lower face, a black felt beonggeoji hat, a dark grey padded uniform with a red sash, a short spear, leg wraps.'),
     'pickpocket': ([],
                    'a Joseon market pickpocket thug: a tilted bamboo paerangi hat, a black cloth over his nose and mouth, ragged grey-brown clothes with leg wraps, a short knife in one hand.'),
     'mokso': ([],

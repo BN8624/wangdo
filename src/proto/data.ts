@@ -28,6 +28,7 @@ const wisp = (level: number) => ({ name: '도깨비불', mon: 'wisp' as const, l
 const gob = (level: number) => ({ name: '흑운채 졸개', char: 'bandit' as const, level, role: 'attack' as const, element: 'dark' as const, kind: 'grunt' as const, power: 0.9 });
 const gob2 = (level: number) => ({ name: '흑운채 졸개', char: 'bandit2' as const, level, role: 'defense' as const, element: 'wood' as const, kind: 'grunt' as const, power: 0.9 });
 const pick = (level: number, role: 'attack' | 'defense' = 'attack') => ({ name: '소매치기', char: 'pickpocket' as const, level, role, element: 'dark' as const, kind: 'grunt' as const, power: 0.9 });
+const sol = (level: number, role: 'attack' | 'defense' = 'attack') => ({ name: '송씨 사병', char: 'soldier' as const, level, role, element: 'dark' as const, kind: 'grunt' as const, power: 0.95 });
 const thug = (level: number, role: 'attack' | 'defense' = 'attack') => ({ name: '송씨 머슴', char: 'thug' as const, level, role, element: 'fire' as const, kind: 'grunt' as const, power: 0.85 });
 const bat = (level: number) => ({ name: '굴 박쥐', mon: 'bat' as const, level, role: 'attack' as const, element: 'dark' as const, kind: 'grunt' as const, power: 0.8 });
 
@@ -97,6 +98,8 @@ export const FOES: Record<string, FoeGroup> = {
       [gob(19), { name: '철곰', char: 'cheolgom', level: 22, role: 'defense', element: 'wood', kind: 'elite', power: 1.2 }],
     ],
   },
+  privates: { name: '별창을 지키던 송씨 사병', ground: 'dirt', waves: [[sol(21), sol(21, 'defense'), sol(22)]] },
+  privTrain: { name: '송씨 사병', ground: 'dirt', waves: [[sol(19), sol(19)]] },
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
   village: { name: '도깨비불', ground: 'grass', waves: [[wisp(1), wisp(2)]] },

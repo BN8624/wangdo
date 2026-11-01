@@ -399,6 +399,134 @@
     },
     {
      "id": 15,
+     "name": "별창 앞",
+     "type": "point",
+     "point": true,
+     "x": 168,
+     "y": 88,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 16,
+     "name": "sol1",
+     "type": "actor",
+     "point": true,
+     "x": 152,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "soldier"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 17,
+     "name": "sol2",
+     "type": "actor",
+     "point": true,
+     "x": 184,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "soldier"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 18,
+     "name": "sol3",
+     "type": "actor",
+     "point": true,
+     "x": 184,
+     "y": 88,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "soldier"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 19,
+     "name": "yunseo3",
+     "type": "actor",
+     "point": true,
+     "x": 200,
+     "y": 104,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "yunseo"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 20,
      "name": "주막 등잔",
      "type": "light",
      "point": true,
@@ -422,7 +550,7 @@
      ]
     },
     {
-     "id": 16,
+     "id": 21,
      "name": "나루 등잔",
      "type": "light",
      "point": true,
@@ -446,7 +574,7 @@
      ]
     },
     {
-     "id": 17,
+     "id": 22,
      "name": "창고 등잔",
      "type": "light",
      "point": true,
@@ -470,7 +598,7 @@
      ]
     },
     {
-     "id": 18,
+     "id": 23,
      "name": "주막 굴뚝",
      "type": "smoke",
      "point": true,
@@ -490,7 +618,7 @@
   }
  ],
  "nextlayerid": 4,
- "nextobjectid": 19,
+ "nextobjectid": 24,
  "orientation": "orthogonal",
  "properties": [
   {
