@@ -73,4 +73,6 @@ export const SD_OF: Partial<Record<string, string>> = {
   innkeeper: 'innkeeper',
   chaeryeong: 'chaeryeong',
   yunseo: 'yunseo',
+  namjihu: 'namjihu',
+  doksa: 'doksa',
 };

@@ -7,7 +7,7 @@
 | 파일 | 내용 |
 | --- | --- |
 | `src/proto/maps/<id>.tmj` | 맵 한 장(backhill·village·pass·cave1·cave2) |
-| `src/proto/maps/terrain.tsj`, `terrain.png` | 땅 타일셋. 풀·흙길·동굴 바닥·동굴 벽·어둠 다섯 가지 '뜻'만 담는다. 실제 그림(흙길 가장자리, 풀 무늬 등)은 코드가 이웃 칸을 보고 고른다 |
+| `src/proto/maps/terrain.tsj`, `terrain.png` | 땅 타일셋. 풀·흙길·동굴 바닥·동굴 벽·어둠·물·나루 판자 일곱 가지 '뜻'만 담는다(물 `~`은 막힘, 나루 판자 `=`는 물 위에 깐 판자라 걸을 수 있다. 물 가장자리도 흙길처럼 코드가 고른다). 실제 그림(흙길 가장자리, 풀 무늬 등)은 코드가 이웃 칸을 보고 고른다 |
 | `src/proto/maps/deco.tsj` | 장식 타일셋. `public/proto/tiles.png`를 16칸 격자로 쓴다. 막히는 칸은 타일 속성 `solid` |
 
 ## 층
@@ -36,7 +36,7 @@
 
 ## 새 맵
 
-1. Tiled에서 새 맵(직교, 16×16 타일, 고정 크기)을 만들고 `terrain.tsj`, `deco.tsj`를 이 순서로 넣는다.
+1. Tiled에서 새 맵(직교, 16×16 타일, 고정 크기)을 만들고 `terrain.tsj`, `deco.tsj`를 이 순서로 넣는다(firstgid 1과 8. 2026-11-02에 땅 타일이 일곱 개가 되어 deco는 8부터다).
 2. 층 `terrain`, `deco`, `objects`를 만든다.
 3. `src/proto/maps.ts`의 `MapId`와 `RAW`에 더한다.
 4. 형식은 JSON 맵 파일(`.tmj`), 타일셋은 외부 `.tsj`로 둔다.

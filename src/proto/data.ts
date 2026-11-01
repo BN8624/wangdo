@@ -74,6 +74,18 @@ export const FOES: Record<string, FoeGroup> = {
   pickTrain: { name: '장터 왈패', ground: 'dirt', waves: [[pick(13), pick(13)]] },
   oilmen: { name: '송씨 일꾼', ground: 'dirt', waves: [[thug(16), thug(16, 'defense'), thug(17)]] },
   oilTrain: { name: '송씨 일꾼', ground: 'dirt', waves: [[thug(14), thug(14)]] },
+  ferryThugs: { name: '나루 왈패', ground: 'dirt', waves: [[thug(18), thug(18, 'defense'), pick(19)]] },
+  ferryTrain: { name: '나루 왈패', ground: 'dirt', waves: [[thug(16), pick(16)]] },
+  doksa: {
+    name: '밀수 상단 행수 독사',
+    ground: 'dirt',
+    boss: true,
+    waves: [
+      [thug(19), thug(19, 'defense')],
+      // 작전 없이 가면 지기 쉽다(몰아쳐라·목숨부터가 잘 먹힌다)
+      [thug(19), { name: '독사', char: 'doksa', level: 25, role: 'attack', element: 'dark', kind: 'elite', power: 1.7 }, pick(19)],
+    ],
+  },
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
   village: { name: '도깨비불', ground: 'grass', waves: [[wisp(1), wisp(2)]] },

@@ -63,7 +63,7 @@ describe('맵(Tiled)', () => {
       expect(def.ground.length).toBe(def.h);
       for (const row of def.ground) {
         expect(row.length).toBe(def.w);
-        for (const c of row) expect('.:_# ').toContain(c);
+        for (const c of row) expect('.:_# ~=').toContain(c);
       }
       for (const d of def.deco) expect(d.x < def.w && d.y < def.h, `${id} 장식 ${d.x},${d.y}`).toBe(true);
       for (const l of def.lights) expect(l.x >= 0 && l.y >= 0 && l.x <= def.w && l.y <= def.h && l.radius > 0, `${id} 불빛 ${l.name}`).toBe(true);
@@ -255,6 +255,23 @@ describe('6화', () => {
     const i = SCRIPT.findIndex((b) => b.t === 'pay');
     const r = step({ ...newGame(), pc: i, coin: 5 });
     expect(r.g.coin).toBe(0);
+  });
+});
+
+describe('7화', () => {
+  for (const pick of [0, 1])
+    it(`거적 밑에서 ${pick ? '똑똑히 보고' : '꼼짝 않고'} 증인에게 ${pick ? '약속만' : '품삯까지'} 해도 끝까지 간다`, () => {
+      const r = playthrough({ picks: { peek7: pick, witness7: pick, tactic7: 1 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      expect(r.g.done).toBe(true);
+      expect(r.g.flags).toContain(pick ? 'peeked' : 'hid_still');
+      expect(r.g.flags).toContain(pick ? 'witness_shaky' : 'witness_safe');
+      expect(r.g.flags.some((f) => f === 'jihu_fair' || f === 'jihu_promised')).toBe(true);
+    });
+
+  it('독사 대장전은 작전에 따라 결과가 갈릴 만큼 세다', () => {
+    const results = [0, 1, 2].map((t) => playthrough({ picks: { tactic7: t }, visits: [0, 1, 0, 0, 1], collect: ['wages'] }).losses);
+    // 적어도 한 작전은 한 번에 이긴다
+    expect(Math.min(...results)).toBe(0);
   });
 });
 

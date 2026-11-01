@@ -12,9 +12,10 @@ import village from './maps/village.tmj?raw';
 import pass from './maps/pass.tmj?raw';
 import cave1 from './maps/cave1.tmj?raw';
 import cave2 from './maps/cave2.tmj?raw';
+import ferry from './maps/ferry.tmj?raw';
 
-export type MapId = 'backhill' | 'village' | 'pass' | 'cave1' | 'cave2';
-const RAW: Record<MapId, string> = { backhill, village, pass, cave1, cave2 };
+export type MapId = 'backhill' | 'village' | 'pass' | 'cave1' | 'cave2' | 'ferry';
+const RAW: Record<MapId, string> = { backhill, village, pass, cave1, cave2, ferry };
 
 export interface ChestDef {
   id: string;
@@ -53,7 +54,7 @@ export interface MapDef {
   h: number;
   /** 한 칸 크기(픽셀). Tiled의 tilewidth(늘 16) */
   tile: number;
-  /** 땅 글자: . 풀 · : 흙길 · _ 동굴 바닥 · # 동굴 벽 · (빈칸) 어둠 */
+  /** 땅 글자: . 풀 · : 흙길 · _ 동굴 바닥 · # 동굴 벽 · ~ 물 · = 나루 판자(물 위, 걸을 수 있음) · (빈칸) 어둠 */
   ground: string[][];
   deco: DecoCell[];
   /** 굴처럼 바닥이 기본으로 동굴인 맵 */
@@ -175,7 +176,7 @@ export function pointOf(map: MapId, at: string | [number, number]): Pt {
 export interface Grid {
   w: number;
   h: number;
-  /** 땅 글자(. : _ # 빈칸) */
+  /** 땅 글자(. : _ # ~ = 빈칸) */
   ground: string[][];
   solid: boolean[][];
 }
@@ -187,7 +188,7 @@ export function grid(id: MapId): Grid {
   const hit = cache.get(id);
   if (hit) return hit;
   const def = MAPS[id];
-  const solid = def.ground.map((r) => r.map((c) => c === '#' || c === ' '));
+  const solid = def.ground.map((r) => r.map((c) => c === '#' || c === ' ' || c === '~'));
   for (const d of def.deco) if (d.solid) solid[d.y][d.x] = true;
   for (const ch of def.chests) solid[ch.at.y][ch.at.x] = true;
   const g = { w: def.w, h: def.h, ground: def.ground, solid };
