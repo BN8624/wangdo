@@ -103,7 +103,7 @@ function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
 /** 사람(짐승·도깨비불은 같은 시트에 있어도 몬스터로 그린다: 떠 있게) */
 const isChar = (art: string): art is CharName => art in CHARS32 && !(art in MONS);
 /** 크게 그리는 대장: 몬스터 대장 그림, 또는 사람 도트를 BIG_K배로 그리는 흑운채 두목 */
-const BIG_CHAR: string[] = ['mokso'];
+const BIG_CHAR: string[] = ['mokso', 'cheolgom', 'meoksoe'];
 const BIG_K = 1.25;
 const isBig = (art: string) => art === 'boss_gob' || BIG_CHAR.includes(art);
 const isMon = (art: string): art is MonName => art in MONS;

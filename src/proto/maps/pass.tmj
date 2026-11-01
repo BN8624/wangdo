@@ -11,7 +11,7 @@
  "tilewidth": 16,
  "tileheight": 16,
  "nextlayerid": 4,
- "nextobjectid": 25,
+ "nextobjectid": 27,
  "properties": [
   {
    "name": "name",
@@ -512,6 +512,47 @@
      "height": 0,
      "rotation": 0,
      "visible": true
+    },
+    {
+     "id": 25,
+     "name": "목책 앞",
+     "type": "point",
+     "point": true,
+     "x": 136,
+     "y": 56,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 26,
+     "name": "cheolgom",
+     "type": "actor",
+     "point": true,
+     "x": 152,
+     "y": 40,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "cheolgom"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
     }
    ]
   }

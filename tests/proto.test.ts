@@ -275,6 +275,24 @@ describe('7화', () => {
   });
 });
 
+describe('8화', () => {
+  for (const pick of [0, 1, 2])
+    it(`무영의 고백에 ${['나눠 적겠다', '반을 지겠다', '왜 이제야'][pick]}고 해도 끝까지 간다`, () => {
+      const r = playthrough({ picks: { mu8: pick, tea8: pick % 2 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      expect(r.g.done).toBe(true);
+      expect(r.g.flags).toContain(['mu_fair', 'mu_share', 'mu_hurt'][pick]);
+      expect(r.g.flags.some((f) => f === 'meok_sealed' || f === 'meok_copy')).toBe(true);
+    });
+
+  it('철곰은 버티기만 해서는 못 이기고, 몰아치면 이긴다', () => {
+    const push = playthrough({ picks: { tactic8: 0 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+    const safe = playthrough({ picks: { tactic8: 1 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+    expect(push.losses).toBe(0);
+    expect(safe.losses).toBeGreaterThan(0);
+    expect(safe.g.done).toBe(true); // 지면 다시 하기로 이어 갈 수 있다
+  });
+});
+
 describe('협상 판과 작전', () => {
   const ctx = (flags: string[] = []) => ({ flags, party: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[], skills: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[] });
   const boss = SCRIPT.find((b) => b.t === 'nego' && b.id === 'meo_boss') as NegoBeat;
