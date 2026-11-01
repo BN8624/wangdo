@@ -310,6 +310,48 @@ describe('9화', () => {
   });
 });
 
+describe('10화', () => {
+  for (const pick of [0, 1, 2])
+    it(`잔치에서 ${['떡', '차', '빈 잔'][pick]}부터 골라도 끝까지 간다`, () => {
+      const r = playthrough({ picks: { feast10: pick, stand10: pick % 2 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      expect(r.g.done).toBe(true);
+      expect(r.losses).toBe(0);
+      expect(r.g.flags).toContain(['feast_sodam', 'feast_mu', 'feast_bs'][pick]);
+      expect(r.g.flags.some((f) => f === 'hearing_full' || f === 'hearing_part')).toBe(true);
+    });
+
+  /** 단서 없이 수단만으로 낼 수 있는 가장 센 조합(욕심껏 고르기) */
+  const best = (b: NegoBeat, flags: string[]) => {
+    let st = { id: b.id, left: b.resolve, turn: 0, used: [] as string[] };
+    const c = { flags, party: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[], skills: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[] };
+    for (let i = 0; i < b.turns && st.left > 0; i++) {
+      const opts = negoOptions(b, st, c).filter((o) => !o.disabled);
+      let pick = opts[0].id;
+      let left = Infinity;
+      for (const o of opts) {
+        const l = negoApply(b, st, o.id).st.left;
+        if (l < left) [left, pick] = [l, o.id];
+      }
+      st = negoApply(b, st, pick).st;
+    }
+    return st.left;
+  };
+
+  it('공개 심리는 수단만으로는 못 이기고, 모은 증거가 있어야 이긴다', () => {
+    const hearing = SCRIPT.find((b) => b.t === 'nego' && b.id === 'hearing') as NegoBeat;
+    expect(best(hearing, ['clue_ledger'])).toBeGreaterThan(0);
+    expect(best(hearing, ['clue_ledger', 'meok_sealed', 'witness_safe'])).toBe(0);
+  });
+
+  it('같은 수단을 다시 쓰면 약해진다', () => {
+    const hearing = SCRIPT.find((b) => b.t === 'nego' && b.id === 'hearing') as NegoBeat;
+    const st = { id: hearing.id, left: hearing.resolve, turn: 0, used: [] as string[] };
+    const once = negoApply(hearing, st, 'ledger');
+    const twice = negoApply(hearing, once.st, 'ledger');
+    expect(once.st.left - twice.st.left).toBeLessThan(hearing.resolve - once.st.left);
+  });
+});
+
 describe('협상 판과 작전', () => {
   const ctx = (flags: string[] = []) => ({ flags, party: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[], skills: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[] });
   const boss = SCRIPT.find((b) => b.t === 'nego' && b.id === 'meo_boss') as NegoBeat;

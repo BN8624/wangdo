@@ -4,6 +4,7 @@
 //  - 무영 위협: 세지만 마을 평판이 깎인다
 //  - 소담 장부 대조: 장부(깃발)가 있어야 쓰고, 아주 세다
 //  - 단서: 조사에서 모은 것. 한 번씩만 쓴다
+//  - 같은 수단을 다시 쓰면 상대가 익숙해져 세기가 0.6배씩 줄어든다(섞어 써야 한다)
 // 상대마다 잘 먹히는(배율 > 1) 수단과 안 먹히는(< 1) 수단이 있다.
 import type { Line, MemberId } from './types';
 
@@ -101,6 +102,10 @@ interface Ctx {
   skills: MemberId[];
 }
 
+/** 같은 수단을 다시 쓸 때마다 곱하는 값 */
+export const REPEAT = 0.6;
+const toolPower = (b: NegoBeat, st: NegoState, id: ToolId) => Math.round(TOOLS[id].power * (b.mods?.[id] ?? 1) * REPEAT ** st.used.filter((u) => u === id).length);
+
 const strength = (p: number): NegoView['options'][number]['strength'] => (p >= 40 ? '세게' : p >= 25 ? '보통' : '약하게');
 
 /** 지금 쓸 수 있는 수단과 그 세기 */
@@ -108,7 +113,7 @@ export function negoOptions(b: NegoBeat, st: NegoState, ctx: Ctx): NegoView['opt
   const out: NegoView['options'] = [];
   for (const id of b.tools) {
     const t = TOOLS[id];
-    const p = Math.round(t.power * (b.mods?.[id] ?? 1));
+    const p = toolPower(b, st, id);
     let disabled: string | undefined;
     if (t.needs && !(ctx.skills.includes(t.needs) && (ctx.party.includes(t.needs) || t.needs === 'me'))) disabled = '아직 힘이 돌아오지 않았다';
     if (t.needFlag && !ctx.flags.includes(t.needFlag)) disabled = '쓸 거리가 없다';
@@ -125,9 +130,10 @@ export function negoOptions(b: NegoBeat, st: NegoState, ctx: Ctx): NegoView['opt
 export function negoApply(b: NegoBeat, st: NegoState, pick: string) {
   const tool = TOOLS[pick as ToolId];
   const clue = b.clues?.find((c) => c.flag === pick);
-  const power = tool ? Math.round(tool.power * (b.mods?.[pick as ToolId] ?? 1)) : (clue?.power ?? 0);
+  const power = tool ? toolPower(b, st, pick as ToolId) : (clue?.power ?? 0);
   const left = Math.max(0, st.left - power);
-  const next: NegoState = { ...st, left, turn: st.turn + 1, used: clue ? [...st.used, pick] : st.used };
+  // 쓴 수단·단서는 모두 적는다(단서는 한 번만, 수단은 다시 쓸수록 약해진다)
+  const next: NegoState = { ...st, left, turn: st.turn + 1, used: [...st.used, pick] };
   const ratio = left / b.resolve;
   const react = left <= 0 ? [] : [b.react[ratio > 0.6 ? 0 : ratio > 0.25 ? 1 : 2]];
   return {

@@ -100,6 +100,11 @@ export const FOES: Record<string, FoeGroup> = {
   },
   privates: { name: '별창을 지키던 송씨 사병', ground: 'dirt', waves: [[sol(21), sol(21, 'defense'), sol(22)]] },
   privTrain: { name: '송씨 사병', ground: 'dirt', waves: [[sol(19), sol(19)]] },
+  bribed: {
+    name: '원본 장부를 노린 매수된 아전',
+    ground: 'dirt',
+    waves: [[{ name: '매수된 아전', char: 'ajeon', level: 23, role: 'support', element: 'water', kind: 'grunt', power: 0.95 }, { name: '매수된 아전', char: 'ajeon', level: 23, role: 'support', element: 'water', kind: 'grunt', power: 0.95 }, { name: '아전 우두머리', char: 'ajeon', level: 24, role: 'attack', element: 'water', kind: 'elite', power: 1.0 }]],
+  },
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
   village: { name: '도깨비불', ground: 'grass', waves: [[wisp(1), wisp(2)]] },
