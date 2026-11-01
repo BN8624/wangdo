@@ -10,8 +10,8 @@ import { dirname, join, resolve } from 'node:path';
 
 const ROOT = resolve(dirname(new URL(import.meta.url).pathname), '..');
 
-type Who = '백설' | '무영' | '소담';
-const REF: Record<Who, string> = { 백설: 'art/ref/baekseol.webp', 무영: 'art/ref/muyeong.webp', 소담: 'art/ref/sodam.webp' };
+type Who = '백설' | '무영' | '소담' | '송채령';
+const REF: Record<Who, string> = { 백설: 'art/ref/baekseol.webp', 무영: 'art/ref/muyeong.webp', 소담: 'art/ref/sodam.webp', 송채령: 'art/ref/chaeryeong.webp' };
 
 export interface V3Art {
   id: string;
@@ -53,6 +53,45 @@ const SD = (id: string, who: Who[], body: string, style?: Who): V3Art => ({
 });
 
 export const V3_ART: V3Art[] = [
+  // ── 5화 '이름의 담보' ──
+  {
+    // 송채령 기준 그림(아직 없으니 화풍만 백설에게서 따온다). 이걸 만든 뒤로는 who: ['송채령']으로 쓴다
+    id: 'ref-chaeryeong',
+    who: [],
+    style: '백설',
+    width: 900,
+    height: 1350,
+    transparent: true,
+    out: 'art/ref/chaeryeong.webp',
+    scene:
+      "[이번 그림] 인물 기준 그림: 송채령(송 대감의 딸이자 계약 실무자, 서른둘, 사람 여성). 투명 배경, 세로 2:3, 머리부터 발끝까지 정면에 가까운 3/4 전신. 칠흑 같은 긴 머리를 낮게 쪽져 옥비녀 하나로 고정, 가늘고 긴 검은 눈, 옅은 화장, 붉은 입술, 웃어도 눈은 웃지 않는 차가운 미소. 깃을 단정히 여민 짙은 자주색 비단 당의에 금박 꽃무늬, 흰 동정, 남색 긴 치마, 허리에 작은 인장 주머니와 옥 노리개. 한 손에 접은 부채, 다른 팔에 계약 장부를 낀 꼿꼿한 자세. 단정하고 지적인 미인. 1인칭 시점 규칙은 이 그림에는 적용하지 않는다.",
+  },
+  SD('chaeryeong', ['송채령'], '[송채령] 접은 부채를 입가에 대고 새침하게 웃는다. 자주 당의와 남색 치마, 옥비녀.'),
+  {
+    id: 'e5-chaeryeong',
+    who: ['송채령'],
+    ...SCENE,
+    out: 'public/proto/scene/e5-chaeryeong.webp',
+    scene:
+      "[이번 장면] 5화 아침, 북적이는 시골 장날 장터 한가운데. 송채령이 '나'를 정면으로 마주 서서, 펼친 부채로 입가를 가린 채 가늘게 뜬 눈으로 웃는다. 그녀 뒤로 쌀가마와 엽전 궤짝을 진 짐꾼 여섯이 줄지어 멈춰 서 있다. 주위 장꾼들이 숨죽이고 구경한다. 밝은 아침 햇살, 차갑고 팽팽한 긴장. 1인칭 시점, 세로 2:3.",
+  },
+  {
+    id: 'e5-confess',
+    who: ['백설'],
+    ...SCENE,
+    out: 'public/proto/scene/e5-confess.webp',
+    scene:
+      "[이번 장면] 5화 밤, 초가 오두막 툇마루. 달빛이 마당의 장독 위로 하얗게 내려앉았다. 백설이 툇마루 끝에 홀로 앉아, 무릎 위에 접힌 계약서 사본을 펼쳐 두고(이름 칸에 먹 대신 붉은 인주만 번져 있다, 읽을 수 있는 글자는 쓰지 않는다) 금테 손거울을 꼭 쥔 채 '나'를 올려다본다. 웃으려다 실패한 얼굴, 젖은 눈가. 늘 장난스럽던 꼬리 아홉 개가 툇마루 아래로 힘없이 늘어졌다. 얇은 속저고리 차림, 한쪽 어깨가 흘러내려 드러난 하얀 어깨. 푸른 달빛과 방 안에서 새어 나오는 등잔빛. 1인칭 시점, 세로 2:3.",
+  },
+  {
+    id: 'e5-shoulder',
+    who: ['백설'],
+    ...SCENE,
+    out: 'public/proto/scene/e5-shoulder.webp',
+    scene:
+      "[이번 장면] 5화 밤, 툇마루에 나란히 앉은 초근접 장면. 백설이 '나' 쪽으로 머리를 기울여 기대 온다(기대는 '나'의 어깨는 화면 밖). 화면 가득 그녀의 얼굴과 목선: 감은 눈, 젖은 속눈썹, 살짝 벌어진 붉은 입술, 뺨의 홍조. 은빛 머리칼이 화면 앞으로 흘러내리고, 흘러내린 옷깃 사이로 쇄골과 가슴골이 보인다. 흰 꼬리 하나가 화면 아래쪽을 감싸 온다. 달빛, 숨소리가 들릴 듯한 거리, 애틋하고 관능적인 분위기. 1인칭 시점, 세로 2:3.",
+  },
+
   // ── B안 시안(2026-10-29): 그린 큰 지도 + SD 캐릭터 ──
   {
     id: 'map-village',

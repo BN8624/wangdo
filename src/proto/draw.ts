@@ -1,5 +1,6 @@
 // 도트 그리기: 그림 불러오기, 맵 미리 굽기, 캐릭터·몬스터 한 칸 그리기
-import { FACES, FX, MONS, TILES, type CharName, type FaceName, type MonName, type Rect, type TileName } from './atlas';
+import type { CharName } from './atlas32';
+import { FACES, FX, MONS, TILES, type FaceName, type MonName, type Rect, type TileName } from './atlas';
 import { CHAR_CELL, CHARS32 } from './atlas32';
 import { MAPS, grid, type MapId } from './maps';
 import type { Dir } from './types';

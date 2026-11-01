@@ -2,7 +2,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CombatEvent, UnitInit } from '../core/combat';
 import { play } from '../ui/sound';
-import { CHARS, FX, MONS, type CharName, type MonName, type TileName } from './atlas';
+import { FX, MONS, type MonName, type TileName } from './atlas';
+import { CHARS32, type CharName } from './atlas32';
 import { MEMBER_NAME } from './data';
 import { CutIn } from './Panels';
 import { Application, Container, Graphics, Sprite, Text } from 'pixi.js';
@@ -99,7 +100,8 @@ function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
   return c;
 }
 
-const isChar = (art: string): art is CharName => art in CHARS;
+/** 사람(짐승·도깨비불은 같은 시트에 있어도 몬스터로 그린다: 떠 있게) */
+const isChar = (art: string): art is CharName => art in CHARS32 && !(art in MONS);
 /** 크게 그리는 대장: 몬스터 대장 그림, 또는 사람 도트를 BIG_K배로 그리는 흑운채 두목 */
 const BIG_CHAR: string[] = ['mokso'];
 const BIG_K = 1.25;
@@ -490,7 +492,7 @@ export function Battle({
         // 날아다니는 것(도깨비불·박쥐)은 그림자 없이. 크게 그리는 대장은 그림자도 크게
         if (art !== 'wisp' && art !== 'bat') {
           const wide = isBig(art);
-          shadows.ellipse(x + T / 2, y + T - 1 + (wide ? 2 : 0), wide ? 14 : 5, wide ? 3 : 2).fill({ color: 0x000000, alpha: 0.3 });
+          shadows.ellipse(x + T / 2, y + T - 1 + (wide ? 2 : 0), wide ? 14 : 7, wide ? 3 : 2).fill({ color: 0x000000, alpha: 0.3 });
         }
         sp.zIndex = u.y;
         sp.scale.set(1);
@@ -505,9 +507,11 @@ export function Battle({
           } else sp.position.set(x + CHAR_DX, y + CHAR_DY);
         } else if (isMon(art)) {
           const tex = monTex(art, dir, Math.floor(now / 220));
-          const boss = tex.frame.width > T;
+          const w = tex.frame.width;
           sp.texture = tex;
-          sp.position.set(x + (boss ? T / 2 - 25 : 0), y + (boss ? T - 50 : 0));
+          const fly = art === 'wisp' || art === 'bat' ? Math.round(4 + Math.sin(now / 300 + u.slot) * 1.5) : 0;
+          if (w === CC) sp.position.set(x + CHAR_DX, y + CHAR_DY - fly);
+          else sp.position.set(x + (w > T ? T / 2 - 25 : 0), y + (w > T ? T - 50 : 0));
         }
         if (u.side === 1) {
           const big = isBig(art);

@@ -59,9 +59,21 @@ CHARS = {
                "a Heugun-chae mountain bandit who is a dokkaebi (Korean goblin) man: two short horns on his head, wild black hair, red-brown skin, a black headband, a ragged black vest over bare arms, dark baggy trousers with leg wraps, a curved short sword. Black and dark red colors."),
     'bandit2': ([],
                 "a big sturdy Heugun-chae mountain bandit who is a dokkaebi (Korean goblin) man: one thick horn on his forehead, bald head, grey-green skin, a fur shoulder cape, dark brown clothes with a rope belt, a heavy wooden shield and a club. Dark green and brown colors."),
+    'chaeryeong': ([],
+                   'Song Chaeryeong, a cool and elegant noble lady of thirty-two: jet-black hair in a low bun with a jade binyeo pin, narrow dark eyes, red lips, a deep purple silk dangui jacket with gold pattern, a navy long skirt, a folded fan in one hand.'),
+    'pickpocket': ([],
+                   'a Joseon market pickpocket thug: a tilted bamboo paerangi hat, a black cloth over his nose and mouth, ragged grey-brown clothes with leg wraps, a short knife in one hand.'),
     'mokso': ([],
               "the chief of the Heugun-chae mountain bandits, a huge dokkaebi (Korean goblin) man: two long curved black horns, a wild mane of grey hair, dark red skin, a scarred face with a fierce grin, black lamellar armor with a tiger-pelt cape, a giant iron goblin club. Black, dark red and gold colors."),
 }
+
+# 짐승·도깨비불: 사람보다 작게. 이름 → (기준 그림, 설명, 키, 너비)
+CREATURES = {
+    'racoon': ([], 'a mischievous Korean raccoon dog (neoguri) on four legs: brown-grey fur, a dark eye mask, a bushy striped tail, small round ears, sharp little teeth bared. A wild animal, not a person, no clothes.', 16, 22),
+    'wisp': ([], 'a dokkaebi-bul (Korean goblin fire wisp): a floating teardrop-shaped blue-white flame with a pale cyan core, two small mischievous black eyes, a wispy tail of fire curling below. No body, no legs. The four poses differ only by which way the eyes and the flame tip lean.', 18, 16),
+    'bat': ([], 'a cave bat with wings spread: dark purple-grey fur, leathery wings with a lighter membrane, big pointed ears, tiny red eyes and two small fangs. Seen from slightly above, flying.', 14, 24),
+}
+ALL = {**{n: (r, d, 24, 20) for n, (r, d) in CHARS.items()}, **CREATURES}
 
 STYLE_REF = 'art/pixel/style-baekseol.png'
 TEMPLATE = 'art/pixel/grid-template.png'
@@ -81,7 +93,8 @@ def make_template():
 
 
 def prompt(name):
-    refs, desc = CHARS[name]
+    refs, desc, tall, wide = ALL[name]
+    creature = name in CREATURES
     lines = [
         'Use your built-in image generation tool to create exactly one image using the first attached image as the exact canvas template (1024x1024): '
         'a magenta canvas with a faint grid. Each small grid square is ONE game pixel (16x16 screen pixels). The dark lines split it into a 2x2 layout of cells, each 32x32 game pixels.',
@@ -94,8 +107,9 @@ def prompt(name):
         f'Draw: {desc}',
         'Pixel art game sprite, 4 standing poses in the 2x2 layout: top-left facing DOWN toward the viewer, top-right facing LEFT, bottom-left facing RIGHT, bottom-right facing UP (back view). '
         'Top-down three-quarter JRPG field view.',
-        'The character must be exactly 24 game pixels tall in each cell (fit within 24 grid squares vertically and at most 20 horizontally, including any weapon or prop), '
-        'big head about 11 pixels tall, eyes 2 pixels tall. Every grid square is filled with exactly ONE flat color (never part of a square). '
+        f'The character must be exactly {tall} game pixels tall in each cell (fit within {tall} grid squares vertically and at most {wide} horizontally, including any weapon or prop), '
+        + ('cute but a little menacing, eyes 1-2 pixels. ' if creature else 'big head about 11 pixels tall, eyes 2 pixels tall. ')
+        + 'Every grid square is filled with exactly ONE flat color (never part of a square). '
         'Dark plum 1-pixel outline around the silhouette. Max 16 colors. No anti-aliasing, no gradients, no blur, no ground shadow.',
         'Remove the grid lines in the final image: the background must be flat solid pure magenta #FF00FF. No text, no borders.',
         'Save exactly one generated image as out.png in the current working directory. Do not write code or create other files.',
@@ -106,7 +120,7 @@ def prompt(name):
 def gen(name):
     os.makedirs(RAW, exist_ok=True)
     work = tempfile.mkdtemp(prefix=f'px-{name}-')
-    refs, _ = CHARS[name]
+    refs = ALL[name][0]
     imgs = [TEMPLATE, STYLE_REF, *refs]
     args = [os.environ.get('CODEX_BIN', 'codex'), 'exec', '--skip-git-repo-check', '--sandbox', 'workspace-write', '-C', work]
     for p in imgs:
@@ -314,7 +328,7 @@ def lunge(piece, dir_):
 
 
 def build():
-    names = [n for n in CHARS if os.path.exists(os.path.join(RAW, f'{n}.webp'))]
+    names = [n for n in ALL if os.path.exists(os.path.join(RAW, f'{n}.webp'))]
     per_row = 4
     rows = (len(names) + per_row - 1) // per_row
     sheet = np.zeros((rows * 5 * C, per_row * 4 * C, 4), np.uint8)
@@ -335,7 +349,7 @@ def build():
         f.write('export const CHAR_CELL = 32;\n\nexport const CHARS32 = {\n')
         for n in sorted(atlas):
             f.write(f'  {n}: [{atlas[n][0]}, {atlas[n][1]}] as [number, number],\n')
-        f.write('} as const;\n\nexport type Char32Name = keyof typeof CHARS32;\n')
+        f.write('} as const;\n\n/** 캐릭터(사람·짐승) 이름 */\nexport type CharName = keyof typeof CHARS32;\n')
     print('→', os.path.relpath(OUT_PNG, ROOT), os.path.relpath(OUT_TS, ROOT))
 
 
@@ -350,7 +364,7 @@ if __name__ == '__main__':
     cmd = sys.argv[1] if len(sys.argv) > 1 else ''
     if cmd == 'gen':
         make_template()
-        names = sys.argv[2:] or list(CHARS)
+        names = sys.argv[2:] or list(ALL)
         with ThreadPoolExecutor(int(os.environ.get('JOBS', '3'))) as ex:
             for r in ex.map(gen, names):
                 print(r, flush=True)
