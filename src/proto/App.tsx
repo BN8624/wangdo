@@ -138,7 +138,7 @@ export function App() {
           <p className="sub">
             빚 받으러 왕까지
             <br />
-            시제품 · 1부 1~10화 (95분 안팎)
+            시제품 · 1부 전체 1~11화 (1시간 40분 안팎)
           </p>
           {!adult ? (
             <div className="opts">
@@ -177,7 +177,7 @@ export function App() {
                 처음부터
               </button>
               <button className="opt" onClick={() => run(trialStart())}>
-                4화부터 <small>협상 판·작전·5~10화(1~3화는 건너뜀)</small>
+                4화부터 <small>협상 판·작전·5~11화(1~3화는 건너뜀)</small>
               </button>
               {hasSave && (
                 <button className="opt" onClick={() => run(load() ?? newGame())}>
@@ -197,8 +197,8 @@ export function App() {
     return (
       <div className="app">
         <div className="end">
-          <h2>시제품은 여기까지</h2>
-          <p className="gear">1부 10화 '누구의 빚인가'까지 왔습니다.</p>
+          <h2>1부 「방망이 주인」 끝</h2>
+          <p className="gear">나무꾼에서 달골 현감까지 왔습니다.</p>
           <h3 className="name" style={{ marginTop: 16 }}>
             내가 고른 길
           </h3>
@@ -210,9 +210,9 @@ export function App() {
           <PartyList party={g.party} />
           <p className="coin">엽전 {g.coin}냥</p>
           <div className="next">
-            <b>다음 화 · 현감의 첫 빚 (1부 마지막 화)</b>
+            <b>2부 · 한빛성</b>
             <br />
-            왕명으로 현감이 된 날, 송 대감이 호위도 없이 찾아와 종이 한 장을 두고 간다.
+            방망이 손잡이와 같은 인장, 지워진 전 주인의 이름. 그리고 사흘 남은 백설의 기한. 도성에서는 빈칸에도 값이 붙는다.
           </div>
           <div className="opts">
             <button

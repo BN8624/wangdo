@@ -352,6 +352,22 @@ describe('10화', () => {
   });
 });
 
+describe('11화(1부 끝)', () => {
+  for (const pick of [0, 1])
+    it(`관복 고름에서 ${pick ? '물러서도' : '손을 잡아도'} 1부 끝까지 간다`, () => {
+      const r = playthrough({ picks: { robe11: pick, tactic11: pick }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      expect(r.g.done).toBe(true);
+      expect(r.losses).toBe(0);
+      expect(r.g.flags).toContain(pick ? 'robe_stepback' : 'robe_held');
+      expect(r.g.flags.some((f) => f === 'song_shaken' || f === 'song_smiling')).toBe(true);
+    });
+
+  it('1부 마지막 줄이 있다', () => {
+    const last = SCRIPT.flatMap((b) => (b.t === 'talk' ? b.lines : [])).at(-1);
+    expect(last?.text).toContain('1부');
+  });
+});
+
 describe('협상 판과 작전', () => {
   const ctx = (flags: string[] = []) => ({ flags, party: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[], skills: ['me', 'baekseol', 'muyeong', 'sodam'] as MemberId[] });
   const boss = SCRIPT.find((b) => b.t === 'nego' && b.id === 'meo_boss') as NegoBeat;
