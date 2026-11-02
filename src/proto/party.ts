@@ -80,12 +80,22 @@ function applyTactic(u: UnitInit, t?: Tactic): UnitInit {
   return u;
 }
 
+/** 정(호감) 단계: 0 낯섦 · 1 가까움 · 2 깊은 정 · 3 연모 */
+export const BOND_STEPS = [20, 45, 70];
+export const BOND_NAME = ['낯섦', '가까움', '깊은 정', '연모'];
+export const bondTier = (v = 0) => BOND_STEPS.filter((s) => v >= s).length;
+/** 정이 깊을수록 그 식객이 조금 더 버티고, 기술이 세진다(단계마다 체력·공격 4%, 기술 10%) */
+function applyBond(u: UnitInit, t: number): UnitInit {
+  if (!t) return u;
+  return { ...u, hp: Math.round(u.hp * (1 + 0.04 * t)), atk: Math.round(u.atk * (1 + 0.04 * t)), ...(u.skill ? { skillBoost: (u.skillBoost ?? 0) + 0.1 * t } : {}) };
+}
+
 /** 기력이 빠진 사람: 체력은 반쯤, 공격은 일곱 할로(6화 창고 문을 연 뒤의 나) */
 const weaken = (u: UnitInit): UnitInit => ({ ...u, hp: Math.round(u.hp * 0.5), atk: Math.round(u.atk * 0.7) });
 
-export function battleSetup(party: Member[], g: FoeGroup, skills: MemberId[], fresh: MemberId[] = [], tactic?: Tactic, weak: MemberId[] = []): CombatSetup {
+export function battleSetup(party: Member[], g: FoeGroup, skills: MemberId[], fresh: MemberId[] = [], tactic?: Tactic, weak: MemberId[] = [], bond: Partial<Record<MemberId, number>> = {}): CombatSetup {
   const allies: (UnitInit | null)[] = party.slice(0, PARTY_MAX).map((m) => {
-    const u = applyTactic(heroUnit(m, skills, fresh), tactic);
+    const u = applyBond(applyTactic(heroUnit(m, skills, fresh), tactic), bondTier(bond[m.id]));
     return weak.includes(m.id) ? weaken(u) : u;
   });
   while (allies.length < 5) allies.push(null);

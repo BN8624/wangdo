@@ -17,10 +17,24 @@ export const ITEMS: Record<string, ItemDef> = {
   amulet: { id: 'amulet', name: '과부댁 부적', slot: 'charm', def: 15, hp: 8, price: 0, desc: '방어 +15%, 체력 +8%' },
   flail: { id: 'flail', name: '쇠도리깨', slot: 'weapon', atk: 32, price: 0, desc: '공격 +32%' },
   norigae: { id: 'norigae', name: '산호 노리개', slot: 'charm', atk: 10, hp: 10, price: 0, desc: '공격 +10%, 체력 +10%' },
+  // 5화부터 장터에 들어오는 물건(엽전이 쌓이기만 하지 않게)
+  steelclub: { id: 'steelclub', name: '무쇠 방망이', slot: 'weapon', atk: 26, price: 150, desc: '공격 +26%' },
+  jadepin: { id: 'jadepin', name: '옥비녀', slot: 'weapon', atk: 20, spd: 8, price: 170, desc: '공격 +20%, 속도 +8' },
+  silkband: { id: 'silkband', name: '비단 허리띠', slot: 'charm', hp: 20, def: 10, price: 140, desc: '체력 +20%, 방어 +10%' },
+  mituri: { id: 'mituri', name: '가죽 미투리', slot: 'charm', spd: 14, hp: 6, price: 160, desc: '속도 +14, 체력 +6%' },
+  // 7화 강나루 소금 배 상인
+  ironfan: { id: 'ironfan', name: '쇠부채', slot: 'weapon', atk: 38, price: 320, desc: '공격 +38%' },
+  tigervest: { id: 'tigervest', name: '범가죽 조끼', slot: 'charm', hp: 30, def: 22, price: 300, desc: '체력 +30%, 방어 +22%' },
+  // 10화 반환 잔치 장터
+  dragonpin: { id: 'dragonpin', name: '용머리 비녀', slot: 'weapon', atk: 34, spd: 10, price: 420, desc: '공격 +34%, 속도 +10' },
+  jadering: { id: 'jadering', name: '옥가락지', slot: 'charm', atk: 14, hp: 18, def: 12, price: 380, desc: '공격 +14%, 체력 +18%, 방어 +12%' },
 };
 
-/** 장터에서 파는 것 */
+/** 장터에서 파는 것(화가 지날수록 물건이 바뀐다) */
 export const SHOP = ['oakclub', 'ironpin', 'straw', 'cotton'];
+export const SHOP5 = ['steelclub', 'jadepin', 'silkband', 'mituri'];
+export const SHOP7 = ['ironfan', 'tigervest', 'jadepin', 'silkband', 'mituri'];
+export const SHOP10 = ['dragonpin', 'jadering', 'ironfan', 'tigervest'];
 
 const raccoon = (level: number) => ({ name: '뒷산 너구리', mon: 'racoon' as const, level, role: 'attack' as const, element: 'wood' as const, kind: 'grunt' as const, power: 0.75 });
 const wisp = (level: number) => ({ name: '도깨비불', mon: 'wisp' as const, level, role: 'support' as const, element: 'fire' as const, kind: 'grunt' as const, power: 0.8 });

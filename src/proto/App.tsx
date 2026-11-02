@@ -207,7 +207,7 @@ export function App() {
               <li key={i}>{l}</li>
             ))}
           </ul>
-          <PartyList party={g.party} />
+          <PartyList party={g.party} bond={g.bond} />
           <p className="coin">엽전 {g.coin}냥</p>
           <div className="next">
             <b>2부 · 한빛성</b>
@@ -251,6 +251,7 @@ export function App() {
         return (
           <Shop
             g={g}
+            items={fx.items}
             onBuy={(item, who) => {
               const next = buy(g, item, who);
               setG(next);
@@ -319,7 +320,7 @@ export function App() {
             </button>
           </div>
           <div style={{ marginTop: 10 }}>
-            <PartyList party={g.party} />
+            <PartyList party={g.party} bond={g.bond} />
           </div>
           <h3>진행</h3>
           <div className="row" style={{ flexWrap: 'wrap' }}>

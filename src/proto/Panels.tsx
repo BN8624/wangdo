@@ -3,10 +3,10 @@ import { useEffect, useRef, useState } from 'react';
 import { play } from '../ui/sound';
 import { FACES, type FaceName } from './atlas';
 import { CHARS32, type CharName } from './atlas32';
-import { ITEMS, MEMBER_NAME, SHOP, priceOf } from './data';
+import { ITEMS, MEMBER_NAME, priceOf } from './data';
 import { drawChar, drawFace } from './draw';
 import { SD_OF } from './pixi';
-import { memberStats } from './party';
+import { BOND_NAME, bondTier, memberStats } from './party';
 import type { Effect, Game } from './runner';
 import type { ItemDef, Line, Member, MemberId } from './types';
 
@@ -158,7 +158,7 @@ export function Dialogue({ lines, speed, auto, portraits, onDone }: { lines: Lin
   );
 }
 
-export function PartyList({ party, compact = false }: { party: Member[]; compact?: boolean }) {
+export function PartyList({ party, bond = {}, compact = false }: { party: Member[]; bond?: Partial<Record<MemberId, number>>; compact?: boolean }) {
   return (
     <div className="party">
       {party.map((m) => {
@@ -175,6 +175,13 @@ export function PartyList({ party, compact = false }: { party: Member[]; compact
             <div style={{ flex: 1, minWidth: 0 }}>
               <div>
                 {MEMBER_NAME[m.id]} <span className="lv">Lv{m.level}</span>
+                {m.id !== 'me' && (
+                  <span className="bond" title={`정: ${BOND_NAME[bondTier(bond[m.id])]}`}>
+                    {' '}
+                    {'♥'.repeat(bondTier(bond[m.id]))}
+                    <span className="bond-empty">{'♡'.repeat(3 - bondTier(bond[m.id]))}</span>
+                  </span>
+                )}
                 {!compact && (
                   <span className="gear">
                     {' '}
@@ -197,7 +204,7 @@ export function Choice({ fx, g, onPick }: { fx: Extract<Effect, { k: 'choice' }>
   return (
     <div className="sheet">
       <p className="prompt">{fx.prompt}</p>
-      {fx.party && <PartyList party={g.party} />}
+      {fx.party && <PartyList party={g.party} bond={g.bond} />}
       <div className="opts">
         {fx.options.map((o, i) => (
           <button
@@ -292,7 +299,7 @@ export function Collect({ fx, onDone }: { fx: Extract<Effect, { k: 'collect' }>;
   );
 }
 
-export function Shop({ g, onBuy, onDone }: { g: Game; onBuy: (item: string, who: MemberId) => void; onDone: () => void }) {
+export function Shop({ g, items, onBuy, onDone }: { g: Game; items: string[]; onBuy: (item: string, who: MemberId) => void; onDone: () => void }) {
   const [pick, setPick] = useState<string | null>(null);
   return (
     <div className="sheet">
@@ -326,7 +333,7 @@ export function Shop({ g, onBuy, onDone }: { g: Game; onBuy: (item: string, who:
         </div>
       ) : (
         <div className="opts">
-          {SHOP.map((id) => {
+          {items.map((id) => {
             const it = ITEMS[id];
             return (
               <button key={id} className="opt" disabled={g.coin < priceOf(it.price, g.party)} onClick={() => setPick(id)}>

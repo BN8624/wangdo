@@ -2,9 +2,9 @@
 // 순수 함수다. 화면은 Effect를 보여 준 뒤 결과(Input)를 넣어 step을 다시 부른다.
 // 비트의 결과는 Input을 받을 때 상태에 반영하므로, 저장을 불러오면 지금 비트부터 그대로 다시 시작한다.
 import { runCombat, type CombatEvent, type CombatResult, type CombatSetup } from '../core/combat';
-import { FOES, ITEMS, priceOf } from './data';
+import { FOES, ITEMS, MEMBER_NAME, SHOP, priceOf } from './data';
 import { MAPS, dirTo, findPath, grid, pointOf, walkable, type MapId } from './maps';
-import { battleSetup, giveExp, groupCoin, groupExp, overwhelms, type Tactic } from './party';
+import { BOND_NAME, battleSetup, bondTier, giveExp, groupCoin, groupExp, overwhelms, type Tactic } from './party';
 import { negoApply, negoOptions, type NegoBeat, type NegoState, type NegoView } from './nego';
 import { SCRIPT } from './story';
 import type { Dir, FoeGroup, ItemDef, Line, Member, MemberId, Pt } from './types';
@@ -51,7 +51,8 @@ export type Beat =
   | { t: 'battle'; foe: string; hide?: string[]; /** 기력이 빠져 약해진 사람 */ weak?: MemberId[] }
   | { t: 'chest'; id: string }
   | { t: 'give'; item: string; from: string }
-  | { t: 'shop' }
+  /** 장터. items가 없으면 처음 장터 물건 */
+  | { t: 'shop'; items?: string[] }
   | { t: 'join'; who: MemberId }
   /** 이야기 속에서 기술을 얻는다. 다음 전투에서는 첫 차례부터 쓴다 */
   | { t: 'skill'; who: MemberId; text: string }
@@ -136,7 +137,7 @@ export type Effect =
   | { k: 'swift'; group: FoeGroup; reward: Reward }
   | { k: 'defeat' }
   | { k: 'gift'; title: string; item?: ItemDef; coin: number }
-  | { k: 'shop' }
+  | { k: 'shop'; items: string[] }
   | { k: 'join'; who: MemberId }
   | { k: 'skill'; who: MemberId; text: string }
   | { k: 'cutscene'; id: 'debt'; lines: string[]; broken?: boolean }
@@ -191,7 +192,7 @@ export const labelAt = (name: string) => {
 
 const has = (g: Game, f: string) => g.flags.includes(f);
 export const visibleLines = (g: Game, lines: Line[]) =>
-  lines.filter((l) => (!l.if || has(g, l.if)) && (!l.unless || !has(g, l.unless)) && (!l.with || g.party.some((m) => m.id === l.with)));
+  lines.filter((l) => (!l.if || has(g, l.if)) && (!l.unless || !has(g, l.unless)) && (!l.with || g.party.some((m) => m.id === l.with)) && (!l.bond || (g.bond[l.bond[0]] ?? 0) >= l.bond[1]));
 
 /** 지금 맵에 서 있는 사람·짐승(숨김·옮김 반영) */
 export function actorsOn(g: Game, map: MapId = g.map) {
@@ -204,6 +205,9 @@ function blockedBy(g: Game) {
   const cells = new Set(actorsOn(g).map((a) => `${a.at.x},${a.at.y}`));
   return (p: Pt) => cells.has(`${p.x},${p.y}`);
 }
+
+/** 받침이 있는 글자로 끝나는지(조사 고르기) */
+const hasBatchim = (w: string) => ((w.charCodeAt(w.length - 1) - 0xac00) % 28) > 0;
 
 /** 맵에 들어설 때 식객들을 뒤에 세운다 */
 /** 지나온 칸을 이만큼 기억한다: 파티 넷이 1.5칸씩 떨어져 따라오려면 4.5칸 */
@@ -260,14 +264,14 @@ function train(g: Game): { g: Game; text: string } {
   let exp = 0;
   let won = 0;
   for (let i = 0; i < 3; i++) {
-    const { result } = runCombat(battleSetup(cur.party, group, cur.skills), seedOf(cur) + i * 17, true);
+    const { result } = runCombat(battleSetup(cur.party, group, cur.skills, [], undefined, [], cur.bond), seedOf(cur) + i * 17, true);
     if (result.won) {
       won++;
       exp += groupExp(group);
       cur = { ...cur, party: giveExp(cur.party, groupExp(group)).party };
     }
   }
-  const ups = cur.party.filter((m, i) => m.level > g.party[i].level).map((m) => `${m.id === 'me' ? '나' : m.id === 'baekseol' ? '백설' : '무영'} Lv${m.level}`);
+  const ups = cur.party.filter((m, i) => m.level > g.party[i].level).map((m) => `${MEMBER_NAME[m.id]} Lv${m.level}`);
   return { g: cur, text: `근처에서 세 판 수련했다. ${won}판 이겨 경험치 +${exp}${ups.length ? ` · ${ups.join(', ')}` : ''}` };
 }
 
@@ -358,7 +362,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'battle': {
         const group = FOES[b.foe];
         if (overwhelms(g.party, group)) return { g, fx: { k: 'swift', group, reward: reward(g, group) } };
-        const setup = battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined, b.weak);
+        const setup = battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined, b.weak, g.bond);
         const { events, result } = runCombat(setup, seedOf(g), true);
         return { g, fx: { k: 'battle', group, setup, events, result, reward: result.won ? reward(g, group) : null } };
       }
@@ -374,7 +378,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'give':
         return { g, fx: { k: 'gift', title: b.from, item: ITEMS[b.item], coin: 0 } };
       case 'shop':
-        return { g, fx: { k: 'shop' } };
+        return { g, fx: { k: 'shop', items: b.items ?? SHOP } };
       case 'join':
         if (g.party.some((m) => m.id === b.who)) {
           g = { ...g, pc: g.pc + 1 };
@@ -394,7 +398,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'nego': {
         const st = g.nego?.id === b.id ? g.nego : { id: b.id, left: b.resolve, turn: 0, used: [] };
         if (g.nego?.id !== b.id) g = { ...g, nego: st };
-        const options = negoOptions(b, st, { flags: g.flags, party: g.party.map((m) => m.id), skills: g.skills });
+        const options = negoOptions(b, st, { flags: g.flags, party: g.party.map((m) => m.id), skills: g.skills, coin: g.coin });
         return { g, fx: { k: 'nego', who: b.who, face: b.face, prompt: b.prompt, left: st.left, max: b.resolve, turn: st.turn, turns: b.turns, options } };
       }
       case 'end':
@@ -435,6 +439,10 @@ function resolve(game: Game, input: Input): Game {
       const o = b.options[i];
       const bond = { ...g.bond };
       for (const [k, v] of Object.entries(o.bond ?? {})) bond[k as MemberId] = (bond[k as MemberId] ?? 0) + (v ?? 0);
+      // 정이 한 단계 깊어지면 한 줄로 알린다(파티 목록의 ♥도 는다)
+      const deeper: Line[] = (Object.keys(o.bond ?? {}) as MemberId[])
+        .filter((k) => bondTier(bond[k]) > bondTier(g.bond[k]))
+        .map((k) => ({ who: 'narration', text: `${MEMBER_NAME[k]}${hasBatchim(MEMBER_NAME[k]) ? '과' : '와'}의 정이 깊어졌다 — ${BOND_NAME[bondTier(bond[k])]} ${'♥'.repeat(bondTier(bond[k]))}` }));
       return {
         ...next,
         pc: o.goto ? labelAt(o.goto) : g.pc + 1,
@@ -442,7 +450,7 @@ function resolve(game: Game, input: Input): Game {
         bond,
         coin: g.coin + (o.coin ?? 0),
         log: o.log ? [...g.log, o.log] : g.log,
-        reply: o.reply ? visibleLines(g, o.reply) : null,
+        reply: o.reply || deeper.length ? [...(o.reply ? visibleLines(g, o.reply) : []), ...deeper] : null,
         ...(o.tactic ? { tactic: o.tactic } : {}),
       };
     }
@@ -456,7 +464,7 @@ function resolve(game: Game, input: Input): Game {
       const group = FOES[b.foe];
       const hide = (x: Game) => ({ ...x, hidden: [...new Set([...x.hidden, ...(b.hide ?? [])])] });
       if (overwhelms(g.party, group)) return hide(applyReward({ ...next, wins: g.wins + 1 }, reward(g, group)));
-      const { result } = runCombat(battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined, b.weak), seedOf(g), true);
+      const { result } = runCombat(battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined, b.weak, g.bond), seedOf(g), true);
       if (result.won) return hide(applyReward({ ...next, wins: g.wins + 1, fresh: [], tactic: null }, reward(g, group)));
       // 지면 마지막 쉼터로. 얻은 경험치는 남는다
       const c = g.check;
@@ -479,12 +487,12 @@ function resolve(game: Game, input: Input): Game {
     }
     case 'nego': {
       const st = g.nego?.id === b.id ? g.nego : { id: b.id, left: b.resolve, turn: 0, used: [] };
-      const options = negoOptions(b, st, { flags: g.flags, party: g.party.map((m) => m.id), skills: g.skills });
+      const options = negoOptions(b, st, { flags: g.flags, party: g.party.map((m) => m.id), skills: g.skills, coin: g.coin });
       const want = input.k === 'nego' ? input.pick : options.find((o) => !o.disabled)?.id;
       const pick = options.find((o) => o.id === want && !o.disabled) ?? options.find((o) => !o.disabled);
       if (!pick) throw new Error('협상에 쓸 수단이 없어요');
       const r = negoApply(b, st, pick.id);
-      const used = { ...g, rep: (g.rep ?? 0) + r.rep, bsDebt: (g.bsDebt ?? 0) + r.bsDebt, flags: r.bsDebt && !has(g, 'bs_debt') ? [...g.flags, 'bs_debt'] : g.flags };
+      const used = { ...g, coin: Math.max(0, g.coin - r.coin), rep: (g.rep ?? 0) + r.rep, bsDebt: (g.bsDebt ?? 0) + r.bsDebt, flags: r.bsDebt && !has(g, 'bs_debt') ? [...g.flags, 'bs_debt'] : g.flags };
       const withRep = used.rep < 0 && !used.flags.includes('rep_down') ? { ...used, flags: [...used.flags, 'rep_down'] } : used;
       if (!r.over) return { ...withRep, nego: r.st, reply: visibleLines(g, r.say) };
       const end = r.won ? b.win : b.lose;
@@ -493,7 +501,7 @@ function resolve(game: Game, input: Input): Game {
         nego: null,
         pc: g.pc + 1,
         flags: withRep.flags.includes(end.flag) ? withRep.flags : [...withRep.flags, end.flag],
-        coin: g.coin + (end.coin ?? 0),
+        coin: withRep.coin + (end.coin ?? 0),
         log: [...g.log, end.log],
         reply: [...visibleLines(g, r.say), ...visibleLines(g, end.lines)],
       };

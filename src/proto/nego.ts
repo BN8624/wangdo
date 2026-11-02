@@ -3,12 +3,13 @@
 //  - 백설 홀림: 세지만 백설에게 빚이 하나 쌓인다
 //  - 무영 위협: 세지만 마을 평판이 깎인다
 //  - 소담 장부 대조: 장부(깃발)가 있어야 쓰고, 아주 세다
+//  - 엽전 쥐여 주기: 엽전이 들고 평판도 깎인다. 장사꾼·노름꾼에겐 잘 먹히고, 부자·관아에는 안 먹힌다
 //  - 단서: 조사에서 모은 것. 한 번씩만 쓴다
 //  - 같은 수단을 다시 쓰면 상대가 익숙해져 세기가 0.6배씩 줄어든다(섞어 써야 한다)
 // 상대마다 잘 먹히는(배율 > 1) 수단과 안 먹히는(< 1) 수단이 있다.
 import type { Line, MemberId } from './types';
 
-export type ToolId = 'bat' | 'charm' | 'threat' | 'ledger';
+export type ToolId = 'bat' | 'charm' | 'threat' | 'ledger' | 'coin';
 
 export interface ToolDef {
   label: string;
@@ -21,6 +22,8 @@ export interface ToolDef {
   /** 대가: 백설에게 진 빚 · 평판 */
   bsDebt?: number;
   rep?: number;
+  /** 대가: 엽전 */
+  coin?: number;
   say: Line[];
 }
 
@@ -48,6 +51,13 @@ export const TOOLS: Record<ToolId, ToolDef> = {
     power: 55,
     needFlag: 'clue_ledger',
     say: [{ who: 'sodam', text: '장부에 다 있어요. 날짜, 끼니, 쌀 한 되까지.' }, n('소담이 장부를 펼쳐 한 줄씩 짚었다. 숫자 앞에서는 둘러댈 말이 없었다.')],
+  },
+  coin: {
+    label: '엽전을 쥐여 준다',
+    power: 35,
+    coin: 60,
+    rep: -1,
+    say: [me('이거면 입이 좀 풀리겠소?'), n('엽전 꾸러미가 상대의 소매 속으로 사라졌다. 지켜보던 사람들이 수군거렸다.')],
   },
 };
 
@@ -100,6 +110,8 @@ interface Ctx {
   flags: string[];
   party: MemberId[];
   skills: MemberId[];
+  /** 가진 엽전(엽전 수단을 쓸 수 있는지) */
+  coin?: number;
 }
 
 /** 같은 수단을 다시 쓸 때마다 곱하는 값 */
@@ -113,12 +125,15 @@ export function negoOptions(b: NegoBeat, st: NegoState, ctx: Ctx): NegoView['opt
   const out: NegoView['options'] = [];
   for (const id of b.tools) {
     const t = TOOLS[id];
+    // 배율이 0이면 이 상대에겐 아예 꺼낼 수 없는 수단(관아 심리에서 돈 주기 등)
+    if (b.mods?.[id] === 0) continue;
     const p = toolPower(b, st, id);
     let disabled: string | undefined;
+    if (t.coin && (ctx.coin ?? 0) < t.coin) disabled = '엽전이 모자라다';
     if (t.needs && !(ctx.skills.includes(t.needs) && (ctx.party.includes(t.needs) || t.needs === 'me'))) disabled = '아직 힘이 돌아오지 않았다';
     if (t.needFlag && !ctx.flags.includes(t.needFlag)) disabled = '쓸 거리가 없다';
-    if (disabled && id !== 'bat') continue;
-    const cost = t.bsDebt ? `백설에게 빚 +${t.bsDebt}` : t.rep ? `평판 ${t.rep}` : undefined;
+    if (disabled && id !== 'bat' && id !== 'coin') continue;
+    const cost = t.coin ? `엽전 ${t.coin}냥 · 평판 ${t.rep}` : t.bsDebt ? `백설에게 빚 +${t.bsDebt}` : t.rep ? `평판 ${t.rep}` : undefined;
     out.push({ id, label: t.label, strength: strength(p), cost, disabled });
   }
   for (const c of b.clues ?? [])
@@ -141,6 +156,7 @@ export function negoApply(b: NegoBeat, st: NegoState, pick: string) {
     say: [...(tool?.say ?? clue?.say ?? []), ...react],
     bsDebt: tool?.bsDebt ?? 0,
     rep: tool?.rep ?? 0,
+    coin: tool?.coin ?? 0,
     won: left <= 0,
     over: left <= 0 || next.turn >= b.turns,
   };

@@ -1,6 +1,7 @@
 // 시제품 대본: 1부 1~2화(content/story/s1/s1e01·s1e02)를 걷고 싸우는 길 위에 펼쳤다. 성인 대상, 원고 수위 그대로.
 // 1화와 무영 화 사이에 백설 화(2화)를 새로 넣어, 원고 2화는 3화, 원고 3화(우렁각시)는 4화가 되었다.
 // 좌표는 src/proto/maps.ts의 글자 맵 기준(x, y).
+import { SHOP10, SHOP5, SHOP7 } from './data';
 import type { Beat } from './runner';
 import type { Line } from './types';
 
@@ -884,8 +885,8 @@ export const SCRIPT: Beat[] = [
     prompt: '생선 장수가 입을 다문다. 세 번 안에 입을 열게 하자.',
     resolve: 50,
     turns: 3,
-    tools: ['bat', 'charm', 'threat'],
-    mods: { charm: 1.3, threat: 0.8 },
+    tools: ['bat', 'charm', 'threat', 'coin'],
+    mods: { charm: 1.3, threat: 0.8, coin: 1.4 },
     react: [
       npc('생선 장수', 'worker2', '모, 몰라. 나는 생선만 팔아.'),
       npc('생선 장수', 'worker2', '……이거 내가 말했다고 하면 안 돼.'),
@@ -1086,8 +1087,8 @@ export const SCRIPT: Beat[] = [
     prompt: '머슴 대장이 버틴다. 네 번 안에 소담의 빚을 받아내자.',
     resolve: 110,
     turns: 4,
-    tools: ['bat', 'charm', 'threat', 'ledger'],
-    mods: { charm: 0.6, threat: 1.3 },
+    tools: ['bat', 'charm', 'threat', 'ledger', 'coin'],
+    mods: { charm: 0.6, threat: 1.3, coin: 0.6 },
     clues: [
       { flag: 'clue_note', label: '현상 쪽지를 들이민다', power: 35, say: [me('사람 잡아 오면 쌀 한 섬. 이 쪽지가 관아에 들어가면 어찌 될까.'), n('머슴 대장의 얼굴에서 핏기가 가셨다.')] },
       { flag: 'clue_well', label: '우물가 아낙들의 증언', power: 25, say: [me('밤마다 소담 씨 끼니를 빼앗아 먹은 거, 우물가에서 다 봤다더군.'), sd('……다 봤대요?')] },
@@ -1360,8 +1361,8 @@ export const SCRIPT: Beat[] = [
     prompt: '채령은 사본 없이는 지급 확인서에 인장을 못 찍겠다고 버틴다. 네 번 안에 사본은 지키고 인장까지 받아내자.',
     resolve: 120,
     turns: 4,
-    tools: ['bat', 'charm', 'threat', 'ledger'],
-    mods: { charm: 0.5, threat: 0.6, ledger: 1.2 },
+    tools: ['bat', 'charm', 'threat', 'ledger', 'coin'],
+    mods: { charm: 0.5, threat: 0.6, ledger: 1.2, coin: 0.3 },
     clues: [
       { flag: 'clue_heir', label: '송채령의 사정', power: 40, say: [me('아버지 장부를 정리해야 가주 자리를 물려받으신다면서요. 분쟁이 길어지면 누가 제일 곤란하겠소.'), n('부채를 쥔 채령의 손가락이 처음으로 멈칫했다.')] },
       { flag: 'clue_twelve', label: '짐꾼들의 술주정', power: 30, say: [me('봉투는 열일곱인데 쌀은 열두 집 몫만 실었다더군. 짐꾼들 입이 가볍던데.'), npc('송채령', 'chaeryeong', '……술자리 말을 증거로 쓰시게요?')] },
@@ -1403,9 +1404,11 @@ export const SCRIPT: Beat[] = [
       npc('송채령', 'chaeryeong', '그럼 당사자에게 들으시지요, 참봉 나리. 저는 사람을 데려가러 온 게 아닙니다. 아직은요.'),
       n('채령은 돌아섰다. 장터의 소란이 다시 밀려왔지만, 백설은 한동안 거울만 들여다보았다.', { scene: null }),
       sd('지급 내역부터 세어 보겠습니다. 나리는 백설 씨 곁에 계세요. 이런 건 제가 더 빨라요.'),
+      sd('……아, 그리고 오늘 장터엔 도성 물건이 들어왔대요. 필요한 거 있으면 지금 사 두세요. 값은 제가 깎을게요.'),
     ],
   },
   { t: 'hide', ids: ['chaeryeong'] },
+  { t: 'shop', items: SHOP5 },
   { t: 'show', ids: ['pick1', 'pick2', 'pick3'] },
   {
     t: 'talk',
@@ -1501,6 +1504,7 @@ export const SCRIPT: Beat[] = [
       n('백설이 거울을 닫고, 내 어깨에 가만히 머리를 기댔다. 은빛 머리칼에서 밤꽃 냄새가 났다.', { scene: 'e5-shoulder' }),
       bs('가벼운 말인데…… 이상하게 믿고 싶네요, 나리.'),
       bs('이름 얘기는 진짜로 하네요. 그날 숲에서 물어봐 주셔서, 고마웠어요.'),
+      bs('……나리, 알아요? 아랫목에서 빚 받는다고 한 거, 처음엔 반쯤 농담이었어요. 이젠 아니에요.', { bond: ['baekseol', 70] }),
       n('꼬리 하나가 내 허리를 감아 왔다. 이어서 또 하나, 또 하나. 아홉 개가 다 감기자 툇마루의 밤바람이 들어올 틈이 없었다.'),
       bs('나리, 장터에서 저 대신 여우불 빌려 쓰셨죠. 그 빚, 오늘 받을게요.', { if: 'bs_debt' }),
       bs('오늘은 아랫목 말고 여기서 자도 돼요? 나리 옆에서요.', { unless: 'bs_debt' }),
@@ -1649,8 +1653,8 @@ export const SCRIPT: Beat[] = [
     prompt: '관리인은 열쇠도, 곡식이 어디 갔는지도 모른다고 버틴다. 세 번 안에 입을 열게 하자.',
     resolve: 90,
     turns: 3,
-    tools: ['bat', 'charm', 'threat', 'ledger'],
-    mods: { bat: 1.8, threat: 1.2 },
+    tools: ['bat', 'charm', 'threat', 'ledger', 'coin'],
+    mods: { bat: 1.8, threat: 1.2, coin: 1.5 },
     clues: [
       { flag: 'clue_twelve', label: '짐꾼들의 술주정', power: 30, say: [me('짐꾼들 말로는 봉투는 열일곱인데 쌀은 열두 집 몫뿐이었다더군. 나머지 쌀은 어디 있소?')] },
       { flag: 'chae_sealed', label: '송씨 댁 인장 찍힌 확인서', power: 35, say: [sd('송채령 아가씨가 인장까지 찍어 준 확인서예요. 다 지급했다면서 다섯 집 몫이 비었어요.'), n('관리인의 얼굴이 하얗게 질렸다.')] },
@@ -1764,6 +1768,7 @@ export const SCRIPT: Beat[] = [
       sd('손이 떨리는데요. 숟가락 놓치면 이불 빨래는 누가 해요? 저예요.'),
       n('소담이 젖은 수건으로 내 이마를 닦았다. 손끝이 오래 머물렀다. 수건은 이마에서 목으로, 목에서 풀어 헤친 앞섶 안으로 천천히 내려갔다.'),
       sd('식은땀이 많이 나요. 다 닦아야 해요. ……가만히 계세요.'),
+      sd('(아주 작게) ……나리가 쓰러질 때, 장부고 뭐고 다 놓치는 줄 알았어요.', { bond: ['sodam', 30] }),
       sd('방망이 값은 장부에 적을 수 있어요. 그런데 나리 기력 값은 어디에 적어야 할지 모르겠어요. 그러니 함부로 쓰지 마세요.'),
       bs('어머, 소담 씨. 그 말은 거의 고백인데요.'),
       sd('살림 얘기예요.'),
@@ -1845,8 +1850,8 @@ export const SCRIPT: Beat[] = [
     prompt: '남지후는 영수증 값으로 낙찰 약속까지 받아 내려 한다. 세 번 안에 입찰 참가만으로 영수증을 받아내자.',
     resolve: 95,
     turns: 3,
-    tools: ['bat', 'charm', 'threat', 'ledger'],
-    mods: { bat: 0.6, charm: 1.3, threat: 0.7 },
+    tools: ['bat', 'charm', 'threat', 'ledger', 'coin'],
+    mods: { bat: 0.6, charm: 1.3, threat: 0.7, coin: 1.2 },
     clues: [
       { flag: 'steward_talked', label: '창고 관리인의 밤배 진술', power: 35, say: [me('송씨 창고 관리인이 밤배 이야기를 다 했소. 영수증이 없어도 배 이름은 곧 나오겠지.'), npc('남지후', 'namjihu', '……그럼 제 영수증 값이 떨어지는데요.')] },
       { flag: 'clue_twelve', label: '짐꾼들의 술주정', power: 25, say: [sd('달골 짐꾼들도 쌀이 열두 집 몫뿐이었다고 했어요. 숫자는 이미 맞춰 봤어요.')] },
@@ -1902,6 +1907,8 @@ export const SCRIPT: Beat[] = [
       npc('남지후', 'namjihu', '낙찰 약속, 잊지 않으셨지요? 오늘 목숨값까지 얹어 두겠습니다.', { if: 'jihu_promised' }),
     ],
   },
+  { t: 'talk', lines: [npc('남지후', 'namjihu', '참, 제 소금 배에 도성 물건이 좀 실렸습니다. 나리께는 입찰 손님 값으로 드리지요.')] },
+  { t: 'shop', items: SHOP7 },
   { t: 'hide', ids: ['jihu'] },
 
   // 밤: 거적 밑
@@ -1978,6 +1985,7 @@ export const SCRIPT: Beat[] = [
       sd('……나리. 심장이 너무 커요. 송씨 사람들한테 들리겠어요.'),
       me('누구 심장 얘기요.'),
       sd('……둘 다요.'),
+      n('소담이 내 손을 찾아 손가락을 하나씩 깍지 꼈다. 계산할 때처럼 꼼꼼하게, 하나도 빠뜨리지 않고.', { bond: ['sodam', 40] }),
       n('거적 밖으로 나오는 순간, 뱃머리에 서 있던 사내가 우리를 내려다보았다.'),
       npc('독사', 'doksa', '장부는 숫자를 믿는 자를 속이지요. 거적 밑의 생쥐들도요.'),
       npc('독사', 'doksa', '아까부터 거적이 숨을 쉬더군. 생쥐 치고는 겁이 없어.', { if: 'peeked' }),
@@ -2212,8 +2220,8 @@ export const SCRIPT: Beat[] = [
     prompt: '먹쇠는 원본 문서를 내놓으면 산채가 쫓겨날까 버틴다. 네 번 안에 원본을 함께 봉인하자고 설득하자.',
     resolve: 130,
     turns: 4,
-    tools: ['bat', 'charm', 'threat', 'ledger'],
-    mods: { bat: 1.4, threat: 0.4, ledger: 1.2 },
+    tools: ['bat', 'charm', 'threat', 'ledger', 'coin'],
+    mods: { bat: 1.4, threat: 0.4, ledger: 1.2, coin: 0.8 },
     clues: [
       { flag: 'peeked', label: '쇠 상자의 송씨 인장', power: 35, say: [me('나루에서 그 상자를 봤소. 검은 구름 밑에 송씨 인장까지. 송씨는 당신들을 방패로 쓰고 있소.'), npc('먹쇠', 'meoksoe', '……송씨 인장이 상자에?')] },
       { flag: 'witness_safe', label: '나루 인부의 증언', power: 30, say: [sd('나루 인부가 날짜와 배 이름까지 증언하기로 했어요. 무기 상자는 송씨 배가 날랐다고요.')] },
@@ -2263,6 +2271,7 @@ export const SCRIPT: Beat[] = [
       mu('……임자가 옆에 있어서 물을 수 있었소.'),
       n('무영이 찻잔을 내려놓고, 이마를 내 어깨에 툭 기댔다. 단단한 사람이 기대는 무게는 생각보다 가벼웠다.', { scene: 'e8-tea' }),
       mu('잠깐만 이러고 있겠소. 남들 보기 전에.'),
+      mu('……임자 냄새가 나오. 장작 냄새. 처음 고갯마루에서 맡았던.', { bond: ['muyeong', 40] }),
       mu('그날 주막에서 첫 잔을 내게 줬을 때부터, 임자는 내 편이라고 정했소.', { if: 'first_cup_muyeong' }),
       mu('첫 잔은 백설 씨한테 줬지만…… 그래도 임자는 내 편이라고 정했소. 내 맘대로.', { unless: 'first_cup_muyeong' }),
     ],
@@ -2393,8 +2402,8 @@ export const SCRIPT: Beat[] = [
     prompt: '사병 우두머리는 입을 꾹 다물었다. 세 번 안에 누가 시켰는지 듣자.',
     resolve: 100,
     turns: 3,
-    tools: ['bat', 'charm', 'threat', 'ledger'],
-    mods: { threat: 1.4, charm: 1.1, ledger: 0.7 },
+    tools: ['bat', 'charm', 'threat', 'ledger', 'coin'],
+    mods: { threat: 1.4, charm: 1.1, ledger: 0.7, coin: 1.3 },
     clues: [
       { flag: 'meok_sealed', label: '먹쇠와 함께 봉인한 원본', power: 35, say: [me('흑운채 먹쇠가 원본을 내놨소. 송씨 대리인 인장까지. 너희 대감 댁은 이제 숨을 데가 없소.')] },
       { flag: 'witness_safe', label: '나루 인부의 증언', power: 30, say: [sd('나루 인부가 배 이름과 날짜를 다 말했어요. 이 수레도 곧 장부에 올라가요.')] },
@@ -2467,6 +2476,8 @@ export const SCRIPT: Beat[] = [
       bs('어머. 감독님이 근무 중에 무슨 일이세요.'),
       n('등불을 든 백설이 문간에 서 있었다. 그녀는 혀를 차더니, 하얀 꼬리 하나를 길게 뻗어 소담의 어깨를 덮었다.'),
       bs('오늘만 빌려 드리는 거예요. 꼬리도, 나리 어깨도요.'),
+      bs('……거짓말이에요. 오늘만은 아니에요.', { bond: ['baekseol', 70] }),
+      sd('(잠꼬대처럼) ……나리, 이백열여섯……', { bond: ['sodam', 45] }),
       n('백설은 반대편에 앉아 내 다른 쪽 어깨에 머리를 기댔다.'),
     ],
   },
@@ -2655,8 +2666,10 @@ export const SCRIPT: Beat[] = [
       me('제 도끼질 경력으로도 되겠습니까?'),
       npc('윤서경', 'yunseo', '도끼질은 심사하지 않습니다. 앞으로 거둘 세금이 더 중요하지요.'),
       sd('그 심사라면 오늘도 장부를 늦게까지 봐야겠네요.'),
+      n('반환 곡식이 풀리자 장터에 오랜만에 좋은 물건이 들어왔다. 상인들이 현감 후보 일행에게 먼저 보따리를 풀었다.'),
     ],
   },
+  { t: 'shop', items: SHOP10 },
 
   // 밤: 잔치
   { t: 'night', on: true },
@@ -2737,6 +2750,7 @@ export const SCRIPT: Beat[] = [
       sd('어깨 펴세요. 현감이 구부정하면 고을 장부도 구부정해져요.'),
       me('그런 법이 어디 있소.'),
       sd('방금 제가 만들었어요. ……다 됐어요. 잘 어울려요, 나리.'),
+      sd('……이 관복, 치수는 제 손이 기억해요. 다른 사람한테는 못 맡겨요.', { bond: ['sodam', 70] }),
       n('고름을 다 매고도 소담의 손은 한참 내 가슴께에 머물렀다.'),
     ],
   },
@@ -2901,6 +2915,7 @@ export const SCRIPT: Beat[] = [
       me('잊을 것 같으면 불러 주시오. 현감 말고, 늘 부르던 대로.'),
       bs('……나리.'),
       n('그 한 마디가, 그날 받은 임명장보다 무거웠다.'),
+      bs('나리. 제 진짜 이름 찾으면, 제일 먼저 나리한테 불러 달라고 할 거예요. 그 이름으로 부르는 첫 사람이 나리였으면 해요.', { bond: ['baekseol', 70] }),
       bs('나리. 그 이름, 기한 안에 받아 오겠다고 했죠. 보름이 이제 사흘 남았어요.', { if: 'bs_vow_name' }),
       bs('그래도 괜찮아요. 오늘 밤은, 백설로만 있을게요.', { if: 'bs_vow_name' }),
       n('그녀가 내 소매를 끌어당겼다. 관복 고름이 풀리는 소리가 툇마루의 밤공기에 작게 번졌다. 이번엔 아무도 헛기침을 하지 않았다.'),
@@ -2916,6 +2931,7 @@ export const SCRIPT: Beat[] = [
       n('새벽. 사립문 밖에 상소 꾸러미가 한가득 쌓여 있었다. 달골뿐 아니라 이웃 고을에서 보낸 것도 섞여 있었다.', { scene: null }),
       sd('오늘 접수할 것만 서른두 건이에요. 아침은 먹고 시작하세요.'),
       mu('호위 허가가 나왔소. 오늘부터 임자 옆은 내가 맡겠소.'),
+      mu('……호위라는 건 핑계요. 그냥 옆에 있고 싶소.', { bond: ['muyeong', 70] }),
       bs('저는 아랫목을 맡을게요. 현감이 됐다고 빚이 없어지진 않으니까요.'),
       n('나는 상소 꾸러미 하나를 집어 들었다. 맨 위에 적힌 주소는 도성, 한빛성이었다.'),
       me('나무값도 못 깎던 사람이 나라 값을 흥정하게 생겼군.'),
