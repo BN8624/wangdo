@@ -54,6 +54,8 @@ function along(track: Pt[], i: number): { p: Pt; dir: Dir | null } {
 export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; speed: number; onWalked: () => void }) {
   const wrap = useRef<HTMLDivElement>(null);
   const bubble = useRef<HTMLDivElement>(null);
+  /** 사람마다 지난번 걸음 칸(발 디딜 때를 알아낸다) */
+  const stepRow = useRef<number[]>([]);
   const walk = useRef<Walk | null>(null);
   const live = useRef({ g, speed, onWalked });
   live.current = { g, speed, onWalked };
@@ -223,11 +225,24 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
           else put(`actor:${a.id}`, tex, a.at.x * T + (fw > T ? T / 2 - 25 : 0), a.at.y * T + (fw > T ? T - 50 : 0), order(a.at.y));
         }
       }
+      // 걷는 느낌은 코드로: 걸음마다 통통 튀고(최대 2px), 튈 때 진행 방향으로 1px 쏠리고, 그림자가 줄었다 커지고, 발 디딜 때 발밑 먼지
+      const stepMs = TILE_MS / 2 / live.current.speed;
       pos.forEach((q, k) => {
-        const row = q.moving ? Math.floor((now / (TILE_MS / 2 / live.current.speed)) % 4) : 0;
-        shadow(q.p.x * T, q.p.y * T);
+        // 사람마다 박자를 조금 어긋나게
+        const ph = now / stepMs + k * 0.45;
+        const row = q.moving ? Math.floor(ph % 4) : 0;
+        const hop = q.moving ? Math.round(Math.abs(Math.sin((ph / 2) * Math.PI)) * 2) : 0;
+        const lean = q.moving && hop === 2 ? ([0, 0, -1, 1] as const)[q.dir] : 0;
+        shadow(q.p.x * T, q.p.y * T, 7 - hop);
         const z = order(q.p.y + 0.01 * (members.length - k));
-          put(`party:${k}`, charTex(members[k], q.dir, row), q.p.x * T + CHAR_DX, q.p.y * T + CHAR_DY + (q.moving ? 0 : breath(now, k * 2.7)), z);
+        put(`party:${k}`, charTex(members[k], q.dir, row), Math.round(q.p.x * T + CHAR_DX + lean), Math.round(q.p.y * T + CHAR_DY - hop + (q.moving ? 0 : breath(now, k * 2.7))), z);
+        // 발이 땅에 닿는 순간(걸음 칸이 바뀔 때) 발밑에 먼지·풀잎
+        if (q.moving && row !== stepRow.current[k]) {
+          const g = gr.ground[Math.round(q.p.y)]?.[Math.round(q.p.x)];
+          const color = g === ':' ? 0xc9a77a : g === '_' ? 0x8a7f88 : g === '=' ? 0xb08a5a : 0x7fa04e;
+          if (row === 1 || row === 3) particles.footstep(q.p.x * T + T / 2, q.p.y * T + T - 2, now, color, k);
+        }
+        stepRow.current[k] = q.moving ? row : -1;
       });
       for (const [key, sp] of sprites) if (!seen.has(key)) sp.visible = false;
 
@@ -250,10 +265,6 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
         }
       }
       lighting.update(app.renderer, cw, chh, now, sky, lamps);
-      // 흙길을 걷는 동안 이끄는 사람 발밑에 먼지
-      const lp = pos[0];
-      const onDirt = gr.ground[Math.round(lp.p.y)]?.[Math.round(lp.p.x)] === ':';
-      if (lp.moving && onDirt) particles.footstep(lp.p.x * T + T / 2, lp.p.y * T + T - 2, now);
       particles.update(now, MAPS[game.map], game.night, T, { x: camX, y: camY, w: vw, h: vh }, s, (x, y) => [(x - camX) * s, (y - camY) * s]);
 
       app.render();
