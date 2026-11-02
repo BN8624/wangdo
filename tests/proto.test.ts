@@ -368,6 +368,31 @@ describe('11화(1부 끝)', () => {
   });
 });
 
+describe('3화 다듬기', () => {
+  const nego = (id: string) => SCRIPT.find((b) => b.t === 'nego' && b.id === id) as NegoBeat;
+  const run = (b: NegoBeat, picks: string[]) => picks.reduce((st, p) => negoApply(b, st, p).st, { id: b.id, left: b.resolve, turn: 0, used: [] as string[] });
+
+  it('통행세 패거리는 말로 비켜 세울 수 있고, 방망이만으로는 안 된다', () => {
+    const b = nego('toll2');
+    expect(run(b, ['bat', 'bat', 'bat']).left).toBeGreaterThan(0);
+    expect(run(b, ['charm', 'coin']).left).toBe(0);
+  });
+
+  it('두목에게는 졸개들의 하소연이 단서가 된다', () => {
+    const b = nego('mokso');
+    expect(run(b, ['bat', 'charm', 'bat', 'charm']).left).toBeGreaterThan(0);
+    expect(run(b, ['threat', 'toll2_talked', 'charm']).left).toBe(0);
+  });
+
+  it('두목전 직전에 작전을 고른다(두 갈래 모두)', () => {
+    for (const id of ['tactic3', 'tactic3s']) {
+      const i = SCRIPT.findIndex((b) => b.t === 'choice' && b.id === id);
+      expect(SCRIPT[i + 1]).toMatchObject({ t: 'battle' });
+      expect((SCRIPT[i + 1] as { foe: string }).foe).toMatch(/^boss/);
+    }
+  });
+});
+
 describe('정과 엽전', () => {
   it('정이 단계를 넘으면 알리고, 그 단계만큼 전투에서 세진다', () => {
     const party = newGame().party;
