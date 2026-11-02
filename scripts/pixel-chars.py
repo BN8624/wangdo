@@ -284,11 +284,14 @@ def poses(path):
     hh, ww = a.shape[:2]
     h, w = hh // 2, ww // 2
     quad = [a[:h, :w], a[:h, w:], a[h:, :w], a[h:, w:]]  # 아래, 왼, 오른, 위
+    qs = [trim(q.astype(int)) for q in (quad[0], quad[3], quad[1], quad[2])]
+    # GPT는 거의 늘 키 40~50칸으로 그린다(칸을 크게 그리라 해도, 상자를 그려 줘도 픽셀을 더 잘게 쪼갤 뿐).
+    # 세로만 31칸으로 줄이면 몸이 납작해지니 가로도 같은 비율로 줄인다. 네 방향 모두 같은 비율
+    f = min(1.0, *(FIT / q.shape[0] for q in qs), *(C / q.shape[1] for q in qs))
     out = []
-    for q in (quad[0], quad[3], quad[1], quad[2]):
-        q = trim(q.astype(int))
-        q = squeeze(q, 0, FIT)
-        q = squeeze(q, 1, C)
+    for q in qs:
+        q = squeeze(q, 0, min(FIT, round(q.shape[0] * f)))
+        q = squeeze(q, 1, min(C, round(q.shape[1] * f)))
         out.append(q.astype(np.uint8))
     return out, outline
 
