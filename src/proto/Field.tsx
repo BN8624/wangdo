@@ -10,8 +10,8 @@ import { MAPS, dirTo, grid } from './maps';
 import { actorsOn, type Effect, type Game } from './runner';
 import type { Dir, Line, Pt } from './types';
 
-/** 화면 1픽셀(CSS)당 도트 크기 */
-const ZOOM = 3;
+/** 화면 배율(도트 한 칸이 CSS 픽셀 몇 개). 실제로는 기기 픽셀 배율에 맞춰 정수로 반올림한다 */
+const ZOOM = 1.5;
 const TILE_MS = 250;
 const LINE_MS = 1900;
 
@@ -176,8 +176,8 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
       const mh = gr.h * T;
       const lead = pos[0].p;
       const fitX = (target: number) => (mw <= vw ? (mw - vw) / 2 : Math.max(0, Math.min(mw - vw, target - vw / 2)));
-      // 세로: 아래 판(대화·선택)에 가리지 않게 이끄는 사람을 화면 위쪽 38% 높이에 둔다. 맵 아래 끝을 넘어가면 어둠으로 채운다
-      const fitY = (target: number) => Math.max(Math.min(0, mh - vh), Math.min(mh - vh * 0.72, target - vh * 0.38));
+      // 세로: 아래 판(대화·선택)에 가리지 않게 이끄는 사람을 화면 위쪽 38% 높이에 둔다. 맵이 작으면 맵 아래 끝을 대화창 위(화면 84%)에 맞춘다
+      const fitY = (target: number) => Math.max(Math.min(0, mh - vh), Math.min(mh - vh * 0.84, target - vh * 0.38));
       const camX = Math.round(fitX(lead.x * T + T / 2) * s) / s;
       const camY = Math.round(fitY(lead.y * T + T / 2) * s) / s;
       world.scale.set(s);
