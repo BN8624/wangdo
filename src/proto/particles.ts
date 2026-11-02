@@ -24,7 +24,7 @@ const RATE: Record<Kind, { perSec: number; max: number }> = {
   dust: { perSec: 3, max: 26 },
   smoke: { perSec: 2.2, max: 40 },
   firefly: { perSec: 2.4, max: 18 },
-  step: { perSec: 0, max: 12 },
+  step: { perSec: 0, max: 24 },
 };
 
 export class Particles {
@@ -36,15 +36,15 @@ export class Particles {
   private last = 0;
   private map = '';
   private acc: Partial<Record<string, number>> = {};
-  private lastStep = 0;
+  private lastStep: number[] = [];
 
-  /** 걷는 발밑 먼지(맵 좌표). 너무 잦지 않게 */
-  footstep(x: number, y: number, now: number) {
-    if (now - this.lastStep < 180) return;
-    this.lastStep = now;
+  /** 발 디딜 때 발밑 먼지(맵 좌표). 흙은 흙빛, 풀밭은 풀잎 빛. who: 사람 번호(사람마다 너무 잦지 않게) */
+  footstep(x: number, y: number, now: number, color = 0xc9a77a, who = 0) {
+    if (now - (this.lastStep[who] ?? 0) < 150) return;
+    this.lastStep[who] = now;
     if (this.list.filter((p) => p.kind === 'step').length >= RATE.step.max) return;
     for (const dir of [-1, 1])
-      this.list.push({ kind: 'step', x: x + dir * 2, y, vx: dir * (3 + Math.random() * 3), vy: -2 - Math.random() * 2, age: 0, life: 0.45, seed: 0, color: 0xc9a77a });
+      this.list.push({ kind: 'step', x: x + dir * 2, y, vx: dir * (3 + Math.random() * 3), vy: -2 - Math.random() * 2, age: 0, life: 0.4, seed: 0, color });
   }
 
   private spawn(kind: Kind, n: number, make: () => P) {
