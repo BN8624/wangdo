@@ -89,7 +89,7 @@ function grassAt(x: number, y: number): TileName {
 }
 
 /** 이웃 네 방향의 흙길 여부로 고르는 흙길 타일(물도 같은 칸 배치라 앞글자만 바꿔 쓴다) */
-function dirtAt(isDirt: (x: number, y: number) => boolean, x: number, y: number, kind: 'd' | 'w' = 'd'): TileName {
+export function dirtAt(isDirt: (x: number, y: number) => boolean, x: number, y: number, kind: 'd' | 'w' = 'd'): TileName {
   const t = dirtKey(isDirt, x, y);
   return (kind === 'd' ? t : t.replace(/^d_/, 'w_').replace(/^w_c[23]$/, 'w_c')) as TileName;
 }
