@@ -2,12 +2,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { CombatEvent, UnitInit } from '../core/combat';
 import { play } from '../ui/sound';
-import { FX, MONS, type MonName, type TileName } from './atlas';
+import { FX, MONS, TILES, type MonName, type TileName } from './atlas';
 import { CHARS32, type CharName } from './atlas32';
 import { MEMBER_NAME } from './data';
 import { CutIn } from './Panels';
 import { Application, ColorMatrixFilter, Container, Graphics, Sprite, Text } from 'pixi.js';
-import { CC, CHAR_DX, CHAR_DY, HEAD_DY, T, drawTile } from './draw';
+import { CC, CHAR_DX, CHAR_DY, HEAD_DY, T, dirtAt, drawTile } from './draw';
+import type { MapId } from './maps';
 import { softTexture } from './light';
 import { canvasTexture, charTex, cut as cutTex, monTex } from './pixi';
 import type { Effect } from './runner';
@@ -85,8 +86,9 @@ function place(side: 0 | 1, slot: number, n: number, boss: boolean, h: number) {
 
 /** 전투 배경: 바닥 타일, 위쪽 바위벽 또는 나무 줄, 위아래 그늘. 도트 크기 그대로 한 장에 굽는다 */
 const bgCache = new Map<string, HTMLCanvasElement>();
-function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
-  const key = `${ground}:${H}`;
+/** 싸우는 곳: 마을·나루·고갯길·뒷산마다 무대 위·아래 가장자리를 그곳답게 꾸민다(가운데 싸우는 자리는 비운다) */
+function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number, place: MapId | null = null, night = false) {
+  const key = `${ground}:${H}:${place}:${night}`;
   const hit = bgCache.get(key);
   if (hit) return hit;
   const c = document.createElement('canvas');
@@ -117,7 +119,15 @@ function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
   const busy = (x: number, y: number) => x > 30 && x < W - 40 && y > mid - 90 && y < mid + 70;
   // 작은 것(돌·풀·꽃): 바닥 전체에 흩뿌린다. 싸우는 자리엔 드문드문만
   const small: TileName[] =
-    ground === 'cave' ? ['stone', 'rock', 'rock2'] : ground === 'dirt' ? ['leafy', 'leafy', 'clover', 'clover', 'bush2', 'stone'] : ['flower_y', 'flower_r', 'flower_w', 'clover', 'clover', 'leafy'];
+    ground === 'cave'
+      ? ['stone', 'rock', 'rock2']
+      : place === 'pass'
+        ? ['stone', 'stone', 'leafy', 'clover']
+        : place === 'ferry'
+          ? ['stone', 'clover', 'leafy', 'clover']
+          : ground === 'dirt'
+            ? ['leafy', 'leafy', 'clover', 'clover', 'bush2', 'stone']
+            : ['flower_y', 'flower_r', 'flower_w', 'clover', 'clover', 'leafy'];
   for (let i = 0; i < 26; i++) {
     const x = Math.floor(rnd() * (W - 16));
     const y = top + Math.floor(rnd() * (H - top - 16));
@@ -125,7 +135,16 @@ function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
     drawTile(ctx, pick(small), x, y);
   }
   // 큰 것(바위·그루터기·덤불): 양옆과 아래 가장자리에만
-  const big: TileName[] = ground === 'cave' ? ['boulder', 'rock', 'rock2'] : ['stump', 'bush', 'bush', 'bush2'];
+  const big: TileName[] =
+    ground === 'cave'
+      ? ['boulder', 'rock', 'rock2']
+      : place === 'village'
+        ? ['straw', 'jar_red', 'straw', 'bush', 'stump']
+        : place === 'ferry'
+          ? ['stump', 'straw', 'bush2', 'bush']
+          : place === 'pass'
+            ? ['stump', 'tree_dead', 'bush2', 'stone']
+            : ['stump', 'bush', 'bush', 'bush2'];
   for (let i = 0; i < 8; i++) {
     const side = rnd() < 0.5;
     const x = side ? (rnd() < 0.5 ? -10 + Math.floor(rnd() * 22) : W - 24 + Math.floor(rnd() * 16)) : Math.floor(rnd() * (W - 24));
@@ -138,6 +157,45 @@ function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
       drawTile(ctx, 'wall', x, 16);
       drawTile(ctx, 'wall_foot', x, 32);
     }
+  } else if (place === 'village') {
+    // 위: 초가·기와집 지붕이 늘어선 골목, 집 사이는 돌담. 아래: 울타리와 덤불
+    for (let x = 0; x < W; x += 16) drawTile(ctx, 'stonewall', x, 28);
+    const houses: TileName[] = ['house_thatch', 'house_tile', 'house_thatch', 'jumak', 'house_thatch'];
+    for (let i = 0, x = -18 + Math.floor(rnd() * 10); x < W; i++, x += 66 + Math.floor(rnd() * 12)) {
+      const h = houses[i % houses.length];
+      drawTile(ctx, h, x, 44 - TILES[h][3]);
+    }
+    drawTile(ctx, 'jar_red', 8, 46);
+    drawTile(ctx, 'jar_red', 20, 50);
+    drawTile(ctx, 'straw', W - 22, 48);
+    drawTile(ctx, 'clothesline', W - 56, 26);
+    for (let x = -6; x < W; x += 16) drawTile(ctx, 'fence', x, H - 22);
+    for (let x = -4; x < W; x += 40) drawTile(ctx, pick(['bush', 'bush2'] as TileName[]), x + Math.floor(rnd() * 16), H - 14);
+  } else if (place === 'ferry') {
+    // 위: 강물(물가에서 위로 세 줄), 나루 판자와 매어 둔 배, 물가 갈대. 아래: 갈대와 덤불
+    const rows = 3;
+    const isWater = (_x: number, y: number) => y < rows;
+    for (let y = 0; y < rows + 1; y++)
+      for (let x = 0; x < Math.ceil(W / 16); x++) {
+        if (y === rows) continue;
+        drawTile(ctx, dirtAt(isWater, x, y, 'w'), x * 16, y * 16);
+      }
+    const px = 16 * Math.floor(W / 16 / 2 + 2);
+    for (let y = 0; y < rows; y++) drawTile(ctx, 'pier', px, y * 16);
+    drawTile(ctx, 'pier', px, rows * 16);
+    drawTile(ctx, 'boat', px - 34, 14);
+    drawTile(ctx, 'boat', 30, 4);
+    for (let x = 0; x < W; x += 18) if (Math.abs(x - px) > 22 && rnd() < 0.45) drawTile(ctx, pick(['leafy', 'bush2', 'clover'] as TileName[]), x + Math.floor(rnd() * 6), rows * 16 + 2 + Math.floor(rnd() * 4));
+    for (let x = -6; x < W; x += 26) drawTile(ctx, pick(['bush', 'bush2', 'bush2'] as TileName[]), x + Math.floor(rnd() * 8), H - 16 + Math.floor(rnd() * 4));
+  } else if (place === 'pass') {
+    // 위: 바위 벼랑 앞에 소나무·마른 나무. 아래: 그루터기와 덤불
+    for (let x = 0; x < W; x += 16) {
+      drawTile(ctx, 'wall', x, 0);
+      drawTile(ctx, 'wall_foot', x, 16);
+    }
+    for (let x = -16; x < W; x += 34) drawTile(ctx, rnd() < 0.65 ? 'tree_pine' : 'tree_dead', x + Math.floor(rnd() * 12), 6 + Math.floor(rnd() * 8));
+    for (let x = -10; x < W; x += 26) drawTile(ctx, pick(['stump', 'bush2', 'bush', 'tree_dead'] as TileName[]), x + Math.floor(rnd() * 10), H - 22 + Math.floor(rnd() * 8));
+    drawTile(ctx, 'sotdae', W - 30, 22);
   } else {
     // 위: 나무 두 줄(뒷줄은 반쯤 가려지게), 덤불
     for (let x = -20; x < W; x += 26) drawTile(ctx, (x / 2) % 3 === 0 ? 'tree_round' : 'tree_pine', x, -14);
@@ -152,6 +210,13 @@ function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
   grad.addColorStop(1, 'rgba(10,8,14,0.35)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
+  if (night) {
+    // 밤: 푸르스름하게 가라앉힌다
+    ctx.globalCompositeOperation = 'multiply';
+    ctx.fillStyle = '#5a6a9e';
+    ctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'source-over';
+  }
   bgCache.set(key, c);
   return c;
 }
@@ -170,14 +235,23 @@ export function Battle({
   cutins,
   onSpeed,
   onDone,
+  where = null,
+  night = false,
 }: {
   fx: Extract<Effect, { k: 'battle' }>;
+  /** 싸우는 곳(맵)과 밤인지: 무대 배경을 그곳답게 */
+  where?: MapId | null;
+  night?: boolean;
   speed: number;
   cutins: boolean;
   onSpeed: (s: number) => void;
   onDone: () => void;
 }) {
   const units = useRef<U[]>([]);
+  const placeRef = useRef(where);
+  const nightRef = useRef(night);
+  placeRef.current = where;
+  nightRef.current = night;
   const pops = useRef<Pop[]>([]);
   const fxAt = useRef<{ x: number; y: number; t: number } | null>(null);
   /** 화면 흔들림(도트 단위 세기, 끝나는 시각)과 치명타 번쩍임 */
@@ -513,10 +587,10 @@ export function Battle({
       raf = requestAnimationFrame(draw);
       const H = hRef.current;
       if (app.renderer.width !== W * K || app.renderer.height !== H * K) app.renderer.resize(W * K, H * K);
-      const key = `${fx.group.ground}:${H}`;
+      const key = `${fx.group.ground}:${H}:${placeRef.current}:${nightRef.current}`;
       if (bgKey !== key) {
         bgKey = key;
-        bg.texture = canvasTexture(`battle:${key}`, battleBackground(fx.group.ground, H));
+        bg.texture = canvasTexture(`battle:${key}`, battleBackground(fx.group.ground, H, placeRef.current, nightRef.current));
       }
       const lungeMs = BASE[2] / speedRef.current;
       // 흔들림: 끝날수록 잦아든다
