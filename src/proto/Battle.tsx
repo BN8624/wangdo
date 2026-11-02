@@ -6,7 +6,7 @@ import { FX, MONS, type MonName, type TileName } from './atlas';
 import { CHARS32, type CharName } from './atlas32';
 import { MEMBER_NAME } from './data';
 import { CutIn } from './Panels';
-import { Application, Container, Graphics, Sprite, Text } from 'pixi.js';
+import { Application, ColorMatrixFilter, Container, Graphics, Sprite, Text } from 'pixi.js';
 import { CC, CHAR_DX, CHAR_DY, HEAD_DY, T, drawTile } from './draw';
 import { softTexture } from './light';
 import { canvasTexture, charTex, cut as cutTex, monTex } from './pixi';
@@ -31,10 +31,22 @@ interface U {
   alive: boolean;
   x: number;
   y: number;
-  flash: number;
   lunge: number;
   lungeTo: { x: number; y: number } | null;
+  /** 맞은 순간(공격이 닿는 때)과 밀려나는 방향·세기 */
+  hitAt: number;
+  push: number;
+  /** 쓰러진 때: 잠깐 깜빡이다 가라앉으며 사라진다 */
+  downAt: number;
 }
+/** 공격 동작: 뒤로 살짝 뺐다가(준비) 뛰어들어(돌진) 닿은 자리에 멈칫(타격 정지) 했다가 돌아온다 */
+const WIND = 0.16;
+const DASH = 0.4;
+const HOLD = 0.55;
+/** 맞은 쪽 반응 시간(×1 속도): 하얗게 번쩍, 밀려났다 돌아옴 */
+const HURT_MS = 260;
+const WHITE_MS = 90;
+const DOWN_MS = 520;
 type BurstKind = 'foxfire' | 'dust' | 'ink' | 'red';
 interface Burst {
   kind: BurstKind;
@@ -169,7 +181,7 @@ export function Battle({
   const pops = useRef<Pop[]>([]);
   const fxAt = useRef<{ x: number; y: number; t: number } | null>(null);
   /** 화면 흔들림(도트 단위 세기, 끝나는 시각)과 치명타 번쩍임 */
-  const shake = useRef({ mag: 0, until: 0, flash: 0 });
+  const shake = useRef({ mag: 0, from: 0, until: 0, flash: 0 });
   /** 기술 효과: 맞은 자리에서 잠깐 피었다 진다 */
   const bursts = useRef<Burst[]>([]);
   /** 방금 쓴 기술(다음 맞음·버프가 이 기술의 것) */
@@ -198,14 +210,14 @@ export function Battle({
       ...allies(),
       ...list.map((init, slot) => {
         const boss = !!init.boss && isBig(init.art);
-        return { init, side: 1 as const, slot, hp: init.hp, max: init.hp, alive: true, ...place(1, slot, list.length, boss, hRef.current), flash: 0, lunge: 0, lungeTo: null };
+        return { init, side: 1 as const, slot, hp: init.hp, max: init.hp, alive: true, ...place(1, slot, list.length, boss, hRef.current), lunge: 0, lungeTo: null, hitAt: 0, push: 0, downAt: 0 };
       }),
     ];
   };
 
   if (!units.current.length) {
     const al = fx.setup.allies.filter((a): a is UnitInit => !!a);
-    units.current = al.map((init, slot) => ({ init, side: 0 as const, slot, hp: init.hp, max: init.hp, alive: true, ...place(0, slot, al.length, false, hRef.current), flash: 0, lunge: 0, lungeTo: null }));
+    units.current = al.map((init, slot) => ({ init, side: 0 as const, slot, hp: init.hp, max: init.hp, alive: true, ...place(0, slot, al.length, false, hRef.current), lunge: 0, lungeTo: null, hitAt: 0, push: 0, downAt: 0 }));
     foeWave(1);
   }
 
@@ -245,24 +257,27 @@ export function Battle({
         if (!t) break;
         t.hp = e.hp;
         if (!quiet) {
+          // 공격이 닿는 때: 돌진이 끝나는 순간(멀리서 쏘는 쪽은 바로)
+          const contact = a ? (BASE[2] / speedRef.current) * DASH : 0;
           if (a) {
             a.lunge = now;
             a.lungeTo = { x: t.x, y: t.y };
           }
-          t.flash = now + 120;
-          fxAt.current = { x: t.x - 8, y: t.y - 12, t: now + 120 };
+          t.hitAt = now + contact;
+          t.push = (t.side === 0 ? -1 : 1) * (e.crit ? 5 : e.skill ? 4 : 3);
+          fxAt.current = { x: t.x - 8, y: t.y - 12, t: now + contact };
           // 흔들림: 치명타·기술일수록 세게
           const sk = e.skill ? lastSkill.current : null;
           const mag = sk?.kind === 'strike' && sk.side === 0 ? 3 : e.crit ? 2.5 : e.skill ? 1.6 : 0.8;
-          shake.current = { mag, until: now + (e.crit || sk ? 260 : 140) / speedRef.current, flash: e.crit ? now : shake.current.flash };
+          shake.current = { mag, from: now + contact, until: now + contact + (e.crit || sk ? 260 : 140) / speedRef.current, flash: e.crit ? now + contact : shake.current.flash };
           if (sk) {
             const kind: BurstKind = sk.side === 1 ? 'red' : sk.art === 'baekseol' ? 'foxfire' : sk.kind === 'strike' ? 'dust' : 'red';
             bursts.current.push({ kind, x: t.x + T / 2, y: t.y + T / 2, t: now, seed: Math.random() * 10 });
           }
           setTimeout(() => {
             pop(t, String(e.dmg), e.crit ? '#ffe066' : '#ffffff', e.crit);
-          }, 120 / speedRef.current);
-          play(e.crit ? 'crit' : e.skill ? 'heavy' : 'hit');
+            play(e.crit ? 'crit' : e.skill ? 'heavy' : 'hit');
+          }, contact);
         }
         break;
       }
@@ -305,6 +320,7 @@ export function Battle({
         if (u) {
           u.alive = false;
           u.hp = 0;
+          u.downAt = quiet ? 0 : now;
         }
         break;
       }
@@ -405,6 +421,9 @@ export function Battle({
     const flash = new Graphics();
     const inkTexts = new Map<Burst, Text>();
     const sprites = new Map<U, Sprite>();
+    // 맞은 순간 몸 전체를 하얗게(투명한 곳은 그대로)
+    const whiteFilter = new ColorMatrixFilter();
+    whiteFilter.matrix = [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0];
     const popTexts = new Map<Pop, Text>();
     let bgKey = '';
 
@@ -503,7 +522,7 @@ export function Battle({
       // 흔들림: 끝날수록 잦아든다
       const sh = shake.current;
       const left = sh.until - now;
-      const amp = left > 0 ? sh.mag * Math.min(1, left / (180 / speedRef.current)) : 0;
+      const amp = left > 0 && now >= sh.from ? sh.mag * Math.min(1, left / (180 / speedRef.current)) : 0;
       world.position.set(Math.round((Math.random() * 2 - 1) * amp * K), Math.round((Math.random() * 2 - 1) * amp * K));
       const flashAge = now - sh.flash;
       flash.clear();
@@ -518,32 +537,72 @@ export function Battle({
           sprites.set(u, sp);
           world.addChild(sp);
         }
-        sp.visible = u.alive;
-        if (!u.alive) continue;
+        // 쓰러진 쪽: 두 번 하얗게 깜빡이고 가라앉으며 흐려진다
+        const downAge = (now - u.downAt) * speedRef.current;
+        const dying = !u.alive && u.downAt > 0 && downAge < DOWN_MS;
+        sp.visible = u.alive || dying;
+        if (!sp.visible) continue;
         let dx = 0;
         let dy = 0;
         const since = now - u.lunge;
+        let pose = -1;
         if (u.lungeTo && since < lungeMs) {
-          const k = since < lungeMs * 0.4 ? since / (lungeMs * 0.4) : 1 - (since - lungeMs * 0.4) / (lungeMs * 0.6);
-          dx = (u.lungeTo.x - u.x) * 0.55 * k;
-          dy = (u.lungeTo.y - u.y) * 0.55 * k;
+          const s = since / lungeMs;
+          const tx = (u.lungeTo.x - u.x) * 0.55;
+          const ty = (u.lungeTo.y - u.y) * 0.55;
+          const back = tx > 0 ? -1 : 1;
+          if (s < WIND) {
+            // 준비: 뒤로 2px, 몸을 1px 낮춘다
+            const k = Math.sin((s / WIND) * Math.PI * 0.5);
+            dx = back * 2 * k;
+            dy = 1 * k;
+            pose = 1;
+          } else if (s < DASH) {
+            // 돌진: 빠르게 들어가며 살짝 뛴다
+            const k = (s - WIND) / (DASH - WIND);
+            const e = 1 - (1 - k) * (1 - k);
+            dx = back * 2 * (1 - e) + tx * e;
+            dy = ty * e - Math.sin(k * Math.PI) * 3;
+            pose = 4;
+          } else if (s < HOLD) {
+            // 타격 정지: 닿은 자리에서 멈칫
+            dx = tx;
+            dy = ty;
+            pose = 4;
+          } else {
+            const k = (s - HOLD) / (1 - HOLD);
+            const e = k * k * (3 - 2 * k);
+            dx = tx * (1 - e);
+            dy = ty * (1 - e);
+            pose = 0;
+          }
         }
+        // 맞은 쪽: 공격 반대쪽으로 밀렸다가 돌아온다
+        const hurt = (now - u.hitAt) * speedRef.current;
+        const white = (hurt >= 0 && hurt < WHITE_MS) || (dying && (downAge < 70 || (downAge > 140 && downAge < 210)));
+        if (hurt >= 0 && hurt < HURT_MS) {
+          const k = hurt / HURT_MS;
+          dx += u.push * (k < 0.25 ? k / 0.25 : 1 - (k - 0.25) / 0.75);
+        }
+        if (dying) dy += Math.round((downAge / DOWN_MS) * 3);
         const x = Math.round(u.x + dx);
         const y = Math.round(u.y + dy);
+        const fade = dying ? Math.max(0, 1 - Math.max(0, downAge - 210) / (DOWN_MS - 210)) : 1;
         const dir: Dir = u.side === 0 ? 3 : 2;
         const art = u.init.art;
-        sp.alpha = u.flash > now - 140 && u.flash < now + 20 ? 0.45 : 1;
+        sp.alpha = fade;
+        sp.filters = white ? [whiteFilter] : null;
         // 날아다니는 것(도깨비불·박쥐)은 그림자 없이. 크게 그리는 대장은 그림자도 크게
         if (art !== 'wisp' && art !== 'bat') {
           const wide = isBig(art);
-          shadows.ellipse(x + T / 2, y + T - 1 + (wide ? 2 : 0), wide ? 14 : 7, wide ? 3 : 2).fill({ color: 0x000000, alpha: 0.3 });
+          shadows.ellipse(x + T / 2, y + T - 1 + (wide ? 2 : 0), wide ? 14 : 7, wide ? 3 : 2).fill({ color: 0x000000, alpha: 0.3 * fade });
         }
         sp.zIndex = u.y;
         sp.scale.set(1);
         sp.anchor.set(0);
         if (isChar(art)) {
           const big = BIG_CHAR.includes(art);
-          sp.texture = charTex(art, dir, since < lungeMs ? 4 : Math.floor(now / 400) % 2);
+          sp.texture = charTex(art, dir, pose >= 0 ? pose : Math.floor(now / 400) % 2);
           // 두목은 1.25배(40×40), 발밑 칸 가운데 아래에 맞춘다
           if (big) {
             sp.scale.set(BIG_K);
