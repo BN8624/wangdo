@@ -4,3 +4,6 @@ test-results
 playwright-report
 *.log
 .DS_Store
+
+# 파이썬 스크립트를 불러올 때 생기는 캐시
+__pycache__/
