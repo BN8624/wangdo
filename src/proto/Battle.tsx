@@ -13,10 +13,14 @@ import { canvasTexture, charTex, cut as cutTex, monTex } from './pixi';
 import type { Effect } from './runner';
 import type { Dir, MemberId } from './types';
 
-/** 무대 너비(도트 픽셀). 높이는 화면에 남는 만큼(H0 이상) 늘리고, 그림은 화면 너비에 맞춰 키운다 */
-const W = 132;
-const H0 = 120;
-const K = 4;
+/** 무대 너비(도트 픽셀). 높이는 화면에 남는 만큼(H0 이상) 늘리고, 그림은 화면 너비에 맞춰 키운다.
+ *  2026-11-02: 캐릭터가 크다고 해서 무대를 두 배로 넓히고 배율 K를 절반으로(도트 32px는 그대로) */
+const W = 264;
+const H0 = 240;
+const H_MAX = 336;
+const K = 2;
+/** 글자(피해 숫자·'빚')는 예전 크기 그대로 */
+const TK = 4;
 
 interface U {
   init: UnitInit;
@@ -57,14 +61,14 @@ const DELAY: Partial<Record<CombatEvent['t'], number>> = { wave: 700, skill: 650
 export const CUTIN_MS = 450;
 
 function place(side: 0 | 1, slot: number, n: number, boss: boolean, h: number) {
-  const gap = n > 2 ? 24 : 30;
+  const gap = n > 2 ? 40 : 52;
   const mid = Math.round(h * 0.58);
   const y = Math.round(mid + (slot - (n - 1) / 2) * gap);
   // 우리 편은 왼쪽에서 오른쪽을 보고, 적은 오른쪽에 선다
-  if (side === 0) return { x: 14 + (slot % 2) * 12, y };
+  if (side === 0) return { x: 52 + (slot % 2) * 22, y };
   // 대장은 보초들보다 앞(왼쪽)에 서서 겹치지 않게
-  if (boss) return { x: 60, y: mid + 14 };
-  return { x: 104 - (slot % 2) * 14, y };
+  if (boss) return { x: 150, y: mid + 16 };
+  return { x: 200 - (slot % 2) * 24, y };
 }
 
 /** 전투 배경: 바닥 타일, 위쪽 바위벽 또는 나무 줄, 위아래 그늘. 도트 크기 그대로 한 장에 굽는다 */
@@ -310,7 +314,7 @@ export function Battle({
     if (!el) return;
     const fit = () => {
       const r = el.getBoundingClientRect();
-      if (r.width > 0) setH(Math.max(H0, Math.min(168, Math.round((W * r.height) / r.width))));
+      if (r.width > 0) setH(Math.max(H0, Math.min(H_MAX, Math.round((W * r.height) / r.width))));
     };
     fit();
     const ro = new ResizeObserver(fit);
@@ -434,7 +438,7 @@ export function Battle({
         if (b.kind !== 'ink') continue;
         let t = inkTexts.get(b);
         if (!t) {
-          t = new Text({ text: '빚', style: { fontFamily: '"Gowun Batang", serif', fontWeight: '700', fontSize: 12 * K, fill: '#16121a', stroke: { color: '#e8c873', width: 1.5 * K } } });
+          t = new Text({ text: '빚', style: { fontFamily: '"Gowun Batang", serif', fontWeight: '700', fontSize: 12 * TK, fill: '#16121a', stroke: { color: '#e8c873', width: 1.5 * TK } } });
           t.anchor.set(0.5);
           inkTexts.set(b, t);
           texts.addChild(t);
@@ -541,7 +545,7 @@ export function Battle({
         if (!t) {
           t = new Text({
             text: p.text,
-            style: { fontFamily: '"Gowun Batang", serif', fontSize: (p.big ? 9 : 7) * K, fill: p.color, stroke: { color: 'rgba(0,0,0,0.8)', width: 2 * K }, align: 'center' },
+            style: { fontFamily: '"Gowun Batang", serif', fontSize: (p.big ? 9 : 7) * TK, fill: p.color, stroke: { color: 'rgba(0,0,0,0.8)', width: 2 * TK }, align: 'center' },
           });
           // 캔버스 글자처럼 가운데 정렬, 글자 바닥선이 그 자리에
           t.anchor.set(0.5, 0.8);
