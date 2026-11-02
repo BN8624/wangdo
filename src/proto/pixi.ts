@@ -78,4 +78,12 @@ export const SD_OF: Partial<Record<string, string>> = {
   meoksoe: 'meoksoe',
   cheolgom: 'cheolgom',
   songdaegam: 'songdaegam',
+  widow: 'widow',
+  keeper: 'keeper',
+  mokso: 'mokso',
+  bandit: 'bandit',
+  bandit2: 'bandit',
+  pickpocket: 'pickpocket',
+  soldier: 'soldier',
+  assassin: 'assassin',
 };
