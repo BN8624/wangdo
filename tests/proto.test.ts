@@ -5,7 +5,7 @@ import { MONS, TILES } from '../src/proto/atlas';
 import { CHARS32 } from '../src/proto/atlas32';
 import { FOES, ITEMS } from '../src/proto/data';
 import { MAPS, grid, walkable, type MapId } from '../src/proto/maps';
-import { battleSetup, giveExp, overwhelms } from '../src/proto/party';
+import { battleSetup, bondTier, giveExp, overwhelms } from '../src/proto/party';
 import { negoApply, negoOptions, type NegoBeat } from '../src/proto/nego';
 import type { MemberId } from '../src/proto/types';
 import { buy, ep4Start, labelAt, newGame, revive, step, trialStart, visibleLines, type Game, type Input } from '../src/proto/runner';
@@ -365,6 +365,45 @@ describe('11화(1부 끝)', () => {
   it('1부 마지막 줄이 있다', () => {
     const last = SCRIPT.flatMap((b) => (b.t === 'talk' ? b.lines : [])).at(-1);
     expect(last?.text).toContain('1부');
+  });
+});
+
+describe('정과 엽전', () => {
+  it('정이 단계를 넘으면 알리고, 그 단계만큼 전투에서 세진다', () => {
+    const party = newGame().party;
+    const base = battleSetup(party, FOES.meoNight, ['me']).allies[0]!;
+    // 주인공은 정이 없지만, 정 값만큼 버프가 붙는지 같은 계산을 확인한다
+    const lover = battleSetup(party, FOES.meoNight, ['me'], [], undefined, [], { me: 80 }).allies[0]!;
+    expect(lover.hp).toBeGreaterThan(base.hp);
+    expect(bondTier(19)).toBe(0);
+    expect(bondTier(45)).toBe(2);
+    expect(bondTier(80)).toBe(3);
+  });
+
+  it('정이 깊을 때만 나오는 대사가 있다', () => {
+    const lines = SCRIPT.flatMap((b) => (b.t === 'talk' ? b.lines : [])).filter((l) => l.bond);
+    expect(lines.length).toBeGreaterThanOrEqual(6);
+    const g = newGame();
+    expect(visibleLines({ ...g, bond: { baekseol: 10 } }, lines).length).toBeLessThan(visibleLines({ ...g, bond: { baekseol: 99, sodam: 99, muyeong: 99 } }, lines).length);
+  });
+
+  it('엽전 쥐여 주기는 엽전과 평판이 들고, 모자라면 못 쓴다', () => {
+    const fish = SCRIPT.find((b) => b.t === 'nego' && b.id === 'fish') as NegoBeat;
+    const st = { id: fish.id, left: fish.resolve, turn: 0, used: [] as string[] };
+    const ctx = (coin: number) => ({ flags: [], party: ['me', 'baekseol', 'muyeong'] as MemberId[], skills: ['me', 'baekseol', 'muyeong'] as MemberId[], coin });
+    expect(negoOptions(fish, st, ctx(10)).find((o) => o.id === 'coin')?.disabled).toBeTruthy();
+    expect(negoOptions(fish, st, ctx(100)).find((o) => o.id === 'coin')?.disabled).toBeFalsy();
+    const r = negoApply(fish, st, 'coin');
+    expect(r.coin).toBe(60);
+    expect(r.rep).toBe(-1);
+    // 공개 심리에서는 돈을 꺼낼 수 없다
+    const hearing = SCRIPT.find((b) => b.t === 'nego' && b.id === 'hearing') as NegoBeat;
+    expect(negoOptions(hearing, { ...st, id: 'hearing', left: hearing.resolve }, ctx(999)).map((o) => o.id)).not.toContain('coin');
+  });
+
+  it('화가 지나면 장터 물건이 바뀐다', () => {
+    const shops = SCRIPT.filter((b) => b.t === 'shop').map((b) => (b.t === 'shop' ? (b.items ?? []).join(',') : ''));
+    expect(new Set(shops).size).toBeGreaterThanOrEqual(4);
   });
 });
 

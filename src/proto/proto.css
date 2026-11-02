@@ -897,3 +897,13 @@ button {
   margin: 0 -10px;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 }
+
+/* 정(호감): 파티 목록의 하트 */
+.bond {
+  color: #e8728a;
+  font-size: 0.85em;
+  letter-spacing: 1px;
+}
+.bond-empty {
+  color: rgba(232, 114, 138, 0.35);
+}
