@@ -82,8 +82,44 @@ function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
   c.height = H;
   const ctx = c.getContext('2d')!;
   ctx.imageSmoothingEnabled = false;
-  const floor: TileName = ground === 'cave' ? 'cave' : ground === 'dirt' ? 'd_c' : 'grass';
-  for (let y = 0; y < H; y += 16) for (let x = 0; x < W; x += 16) drawTile(ctx, floor, x, y);
+  // 늘 같은 배경이 나오게 무대마다 정해진 난수
+  let seed = [...key].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7);
+  const rnd = () => {
+    seed = (seed + 0x6d2b79f5) >>> 0;
+    let t = seed;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const pick = <T,>(xs: T[]) => xs[Math.floor(rnd() * xs.length)];
+  // 바닥: 같은 타일만 깔면 밋밋하니 무늬 있는 칸을 섞는다
+  for (let y = 0; y < H; y += 16)
+    for (let x = 0; x < W; x += 16) {
+      const r = rnd();
+      const t: TileName = ground === 'cave' ? 'cave' : ground === 'dirt' ? (r < 0.12 ? 'd_c3' : r < 0.2 ? 'd_c2' : 'd_c') : r < 0.55 ? 'grass' : pick(['grass2', 'grass3', 'grass4', 'grass5', 'grass6', 'grass7'] as TileName[]);
+      drawTile(ctx, t, x, y);
+    }
+  const top = ground === 'cave' ? 48 : 46;
+  const mid = Math.round(H * 0.58);
+  /** 싸우는 자리(사람이 서는 띠)인지 */
+  const busy = (x: number, y: number) => x > 30 && x < W - 40 && y > mid - 90 && y < mid + 70;
+  // 작은 것(돌·풀·꽃): 바닥 전체에 흩뿌린다. 싸우는 자리엔 드문드문만
+  const small: TileName[] =
+    ground === 'cave' ? ['stone', 'rock', 'rock2'] : ground === 'dirt' ? ['leafy', 'leafy', 'clover', 'clover', 'bush2', 'stone'] : ['flower_y', 'flower_r', 'flower_w', 'clover', 'clover', 'leafy'];
+  for (let i = 0; i < 26; i++) {
+    const x = Math.floor(rnd() * (W - 16));
+    const y = top + Math.floor(rnd() * (H - top - 16));
+    if (busy(x, y) && rnd() < 0.85) continue;
+    drawTile(ctx, pick(small), x, y);
+  }
+  // 큰 것(바위·그루터기·덤불): 양옆과 아래 가장자리에만
+  const big: TileName[] = ground === 'cave' ? ['boulder', 'rock', 'rock2'] : ['stump', 'bush', 'bush', 'bush2'];
+  for (let i = 0; i < 8; i++) {
+    const side = rnd() < 0.5;
+    const x = side ? (rnd() < 0.5 ? -10 + Math.floor(rnd() * 22) : W - 24 + Math.floor(rnd() * 16)) : Math.floor(rnd() * (W - 24));
+    const y = side ? top + 10 + Math.floor(rnd() * (H - top - 40)) : H - 30 + Math.floor(rnd() * 14);
+    drawTile(ctx, pick(big), x, y);
+  }
   if (ground === 'cave') {
     for (let x = 0; x < W; x += 16) {
       drawTile(ctx, 'wall', x, 0);
@@ -91,8 +127,12 @@ function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number) {
       drawTile(ctx, 'wall_foot', x, 32);
     }
   } else {
-    for (let x = -8; x < W; x += 30) drawTile(ctx, (x / 2) % 3 === 0 ? 'tree_round' : 'tree_pine', x, 0);
-    for (let x = 6; x < W; x += 44) drawTile(ctx, 'bush', x, 30);
+    // 위: 나무 두 줄(뒷줄은 반쯤 가려지게), 덤불
+    for (let x = -20; x < W; x += 26) drawTile(ctx, (x / 2) % 3 === 0 ? 'tree_round' : 'tree_pine', x, -14);
+    for (let x = -8; x < W; x += 30) drawTile(ctx, (x / 2) % 3 === 0 ? 'tree_round' : 'tree_pine', x, 2);
+    for (let x = 6; x < W; x += 34) drawTile(ctx, pick(['bush', 'bush2', 'leafy'] as TileName[]), x + Math.floor(rnd() * 10), 30 + Math.floor(rnd() * 6));
+    // 아래: 화면 끝에 걸친 나무 줄로 테두리
+    for (let x = -14; x < W; x += 28) drawTile(ctx, rnd() < 0.5 ? 'tree_round' : 'tree_pine', x + Math.floor(rnd() * 8), H - 18 + Math.floor(rnd() * 6));
   }
   const grad = ctx.createLinearGradient(0, 0, 0, H);
   grad.addColorStop(0, 'rgba(10,8,14,0.7)');
