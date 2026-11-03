@@ -47,7 +47,8 @@ export type Beat =
   | { t: 'label'; name: string }
   | { t: 'goto'; label: string }
   | { t: 'ret' }
-  | { t: 'if'; flag: string; goto: string; not?: boolean }
+  /** flag가 있으면(not이면 없으면), bond면 그 식객의 정이 그만큼 쌓였으면 goto로 */
+  | { t: 'if'; flag?: string; bond?: [MemberId, number]; goto: string; not?: boolean }
   | { t: 'battle'; foe: string; hide?: string[]; /** 기력이 빠져 약해진 사람 */ weak?: MemberId[] }
   | { t: 'chest'; id: string }
   | { t: 'give'; item: string; from: string }
@@ -293,7 +294,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
         g = { ...g, pc: labelAt(b.label) };
         continue;
       case 'if':
-        g = { ...g, pc: has(g, b.flag) !== !!b.not ? labelAt(b.goto) : g.pc + 1 };
+        g = { ...g, pc: (b.bond ? (g.bond[b.bond[0]] ?? 0) >= b.bond[1] : has(g, b.flag ?? '')) !== !!b.not ? labelAt(b.goto) : g.pc + 1 };
         continue;
       case 'ret': {
         const stack = [...g.stack];
@@ -448,7 +449,7 @@ function resolve(game: Game, input: Input): Game {
         pc: o.goto ? labelAt(o.goto) : g.pc + 1,
         flags: o.flag && !has(g, o.flag) ? [...g.flags, o.flag] : g.flags,
         bond,
-        coin: g.coin + (o.coin ?? 0),
+        coin: Math.max(0, g.coin + (o.coin ?? 0)),
         log: o.log ? [...g.log, o.log] : g.log,
         reply: o.reply || deeper.length ? [...(o.reply ? visibleLines(g, o.reply) : []), ...deeper] : null,
         ...(o.tactic ? { tactic: o.tactic } : {}),
