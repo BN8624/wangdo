@@ -3,7 +3,7 @@
 import { Graphics } from 'pixi.js';
 import type { MapDef } from './maps';
 
-type Kind = 'leaf' | 'dust' | 'smoke' | 'firefly' | 'step';
+type Kind = 'leaf' | 'dust' | 'smoke' | 'firefly' | 'step' | 'glint';
 interface P {
   kind: Kind;
   x: number;
@@ -25,11 +25,28 @@ const RATE: Record<Kind, { perSec: number; max: number }> = {
   smoke: { perSec: 2.2, max: 40 },
   firefly: { perSec: 2.4, max: 18 },
   step: { perSec: 0, max: 24 },
+  glint: { perSec: 0, max: 40 },
+};
+
+/** 풀숲: 풀밭 칸 가운데 이만큼에 바람에 흔들리는 풀 포기를 심는다 */
+const TUFT_EVERY = 5;
+const TUFT = { dark: 0x7f9a2c, mid: 0x94ad33, tip: 0xc8d65a };
+const GLINT = 0xe6fbff;
+/** 칸마다 정해진 난수(같은 칸은 늘 같은 값) */
+const cellHash = (x: number, y: number) => {
+  let h = (x * 374761393 + y * 668265263) >>> 0;
+  h = Math.imul(h ^ (h >>> 13), 1274126177) >>> 0;
+  return (h ^ (h >>> 16)) >>> 0;
 };
 
 export class Particles {
   /** 맵 좌표 층(world에 넣는다) */
   readonly world = new Graphics();
+  /** 바닥 층: 땅 위·사람 아래(풀 포기, 물 반짝임) */
+  readonly floor = new Graphics();
+  private cellsOf = '';
+  private tufts: { x: number; y: number; h: number }[] = [];
+  private water: { x: number; y: number }[] = [];
   /** 화면 좌표 층(조명 위에 넣는다) */
   readonly glow = new Graphics();
   private list: P[] = [];
@@ -56,6 +73,79 @@ export class Particles {
       if (have < RATE[kind].max) this.list.push(make());
     }
   }
+
+  /** 맵이 바뀌면 풀 포기 자리와 물 칸을 다시 고른다(집·나무·꽃 같은 장식 칸은 비운다) */
+  private cells(def: MapDef) {
+    if (this.cellsOf === def.id) return;
+    this.cellsOf = def.id;
+    const taken = new Set(def.deco.map((d) => `${d.x},${d.y}`));
+    this.tufts = [];
+    this.water = [];
+    def.ground.forEach((row, y) =>
+      row.forEach((c, x) => {
+        if (c === '~') this.water.push({ x, y });
+        else if (c === '.' && !taken.has(`${x},${y}`) && !taken.has(`${x},${y + 1}`)) {
+          const h = cellHash(x, y);
+          if (h % TUFT_EVERY === 0) this.tufts.push({ x: x * T + 3 + ((h >>> 4) % 9), y: y * T + 8 + ((h >>> 8) % 7), h });
+        }
+      }),
+    );
+  }
+
+  /** 바닥 층: 바람 결을 따라 흔들리는 풀 포기(사람이 지나가면 옆으로 눕는다), 물 위 반짝임. people: 사람들 발밑(도트) */
+  floorUpdate(now: number, def: MapDef, view: { x: number; y: number; w: number; h: number }, people: { x: number; y: number }[]) {
+    this.floor.clear();
+    if (def.cave || def.tile !== T) return;
+    this.cells(def);
+    const t = now / 1000;
+    const inView = (x: number, y: number, m: number) => x > view.x - m && x < view.x + view.w + m && y > view.y - m && y < view.y + view.h + m;
+    for (const f of this.tufts) {
+      if (!inView(f.x, f.y, 8)) continue;
+      // 바람이 왼쪽 위에서 오른쪽 아래로 물결처럼 지나간다
+      const wave = Math.sin(t * 1.6 - f.x * 0.045 - f.y * 0.02 + (f.h % 7) * 0.15);
+      let sway = wave > 0.55 ? 1 : wave < -0.75 ? -1 : 0;
+      let low = 0;
+      for (const p of people)
+        if (Math.abs(p.x - f.x) < 9 && Math.abs(p.y - f.y) < 6) {
+          sway = f.x >= p.x ? 2 : -2;
+          low = 1;
+        }
+      const tall = 3 + (f.h % 2) - low;
+      // 세 가닥: 가운데가 가장 길고, 끝으로 갈수록 바람 쪽으로 기운다
+      ([[-2, tall - 1], [0, tall + 1], [2, tall]] as const).forEach(([dx, hgt], i) => {
+        for (let k = 0; k < hgt; k++) {
+          const lean = Math.round((sway * k) / hgt);
+          const c = k === hgt - 1 ? TUFT.tip : k === 0 ? TUFT.dark : i === 1 ? TUFT.mid : TUFT.dark;
+          this.floor.rect(f.x + dx + lean, f.y - k, 1, 1).fill(c);
+        }
+      });
+    }
+    // 물 반짝임: 보이는 물 칸 위에 짧은 흰 줄이 잠깐 떴다 진다
+    const seen = this.water.filter((w) => inView(w.x * T, w.y * T, 0));
+    const dt = this.lastGlint ? Math.min(0.1, (now - this.lastGlint) / 1000) : 0;
+    this.lastGlint = now;
+    if (seen.length) {
+      this.glintAcc += seen.length * 0.35 * dt;
+      while (this.glintAcc >= 1) {
+        this.glintAcc -= 1;
+        if (this.glints.length >= RATE.glint.max) break;
+        const w = seen[Math.floor(Math.random() * seen.length)];
+        this.glints.push({ x: w.x * T + 2 + Math.floor(Math.random() * 10), y: w.y * T + 2 + Math.floor(Math.random() * 12), age: 0, life: 0.8 + Math.random() * 0.8, len: 2 + Math.floor(Math.random() * 3) });
+      }
+    }
+    for (const g of this.glints) g.age += dt;
+    this.glints = this.glints.filter((g) => g.age < g.life);
+    for (const g of this.glints) {
+      const k = g.age / g.life;
+      const a = Math.sin(Math.PI * k);
+      const x = Math.round(g.x + k * 2);
+      this.floor.rect(x, g.y, g.len, 1).fill({ color: GLINT, alpha: 0.75 * a });
+      if (a > 0.7) this.floor.rect(x + Math.floor(g.len / 2), g.y - 1, 1, 1).fill({ color: GLINT, alpha: 0.5 * a });
+    }
+  }
+  private glints: { x: number; y: number; age: number; life: number; len: number }[] = [];
+  private glintAcc = 0;
+  private lastGlint = 0;
 
   /** view: 지금 보이는 맵 영역(도트), toScreen: 맵 좌표 → 화면 픽셀 */
   update(now: number, def: MapDef, night: boolean, tile: number, view: { x: number; y: number; w: number; h: number }, scale: number, toScreen: (x: number, y: number) => [number, number]) {

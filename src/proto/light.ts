@@ -16,9 +16,10 @@ export interface Lamp {
 
 /** 종류별 색과 세기, 일렁임 */
 const LOOK: Record<LightKind, { color: number; glow: number; flicker: number; pulse: number }> = {
-  lamp: { color: 0xffb35c, glow: 0.2, flicker: 0.05, pulse: 0 },
+  // 풀밭 위에서 연둣빛으로 뜨지 않게 주황 쪽으로
+  lamp: { color: 0xff9440, glow: 0.24, flicker: 0.05, pulse: 0 },
   torch: { color: 0xff8a3a, glow: 0.3, flicker: 0.1, pulse: 0 },
-  lantern: { color: 0xffd08a, glow: 0.08, flicker: 0.03, pulse: 0 },
+  lantern: { color: 0xffb070, glow: 0.1, flicker: 0.03, pulse: 0 },
   wisp: { color: 0x7fc8ff, glow: 0.45, flicker: 0, pulse: 0.12 },
   foxfire: { color: 0x6aa8ff, glow: 0.38, flicker: 0, pulse: 0.1 },
 };

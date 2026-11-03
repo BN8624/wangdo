@@ -48,16 +48,21 @@ const HOLD = 0.55;
 const HURT_MS = 260;
 const WHITE_MS = 90;
 const DOWN_MS = 520;
-type BurstKind = 'foxfire' | 'dust' | 'ink' | 'red';
+type BurstKind = 'foxfire' | 'dust' | 'ink' | 'red' | 'hit' | 'heal';
 interface Burst {
   kind: BurstKind;
   x: number;
   y: number;
   t: number;
   seed: number;
+  /** 'hit' 불똥 색(때린 사람마다) */
+  color?: number;
+  big?: boolean;
 }
 /** 효과가 피었다 지는 시간(×1 속도) */
-const BURST_MS: Record<BurstKind, number> = { foxfire: 700, dust: 600, ink: 1000, red: 450 };
+const BURST_MS: Record<BurstKind, number> = { foxfire: 700, dust: 600, ink: 1000, red: 450, hit: 300, heal: 900 };
+/** 맨손 공격이 닿을 때 튀는 불똥 색: 우리 편은 사람마다, 적은 흰빛 */
+const HIT_COLOR: Partial<Record<string, number>> = { me: 0xe0b070, baekseol: 0x9cc8ff, muyeong: 0xff8a3a, sodam: 0x7fe0c8 };
 
 interface Pop {
   x: number;
@@ -344,6 +349,8 @@ export function Battle({
           const sk = e.skill ? lastSkill.current : null;
           const mag = sk?.kind === 'strike' && sk.side === 0 ? 3 : e.crit ? 2.5 : e.skill ? 1.6 : 0.8;
           shake.current = { mag, from: now + contact, until: now + contact + (e.crit || sk ? 260 : 140) / speedRef.current, flash: e.crit ? now + contact : shake.current.flash };
+          if (!sk && a)
+            bursts.current.push({ kind: 'hit', x: t.x + T / 2, y: t.y + T / 2 - 4, t: now + contact, seed: Math.random() * 10, color: HIT_COLOR[a.init.art] ?? 0xfff0d0, big: e.crit });
           if (sk) {
             const kind: BurstKind = sk.side === 1 ? 'red' : sk.art === 'baekseol' ? 'foxfire' : sk.kind === 'strike' ? 'dust' : 'red';
             bursts.current.push({ kind, x: t.x + T / 2, y: t.y + T / 2, t: now, seed: Math.random() * 10 });
@@ -361,6 +368,8 @@ export function Battle({
           t.hp = e.hp;
           if (!quiet) {
             pop(t, `+${e.amount}`, '#7fcf7a');
+            // 우렁이 밥상: 김이 오르듯 따뜻한 빛 알갱이가 솟는다
+            bursts.current.push({ kind: 'heal', x: t.x + T / 2, y: t.y + T / 2, t: now, seed: Math.random() * 10 });
             play('heal');
           }
         }
@@ -533,7 +542,34 @@ export function Battle({
       dustRings.clear();
       for (const b of bursts.current) {
         const k = (now - b.t) / (BURST_MS[b.kind] / sp);
-        if (b.kind === 'foxfire' || b.kind === 'red') {
+        if (k < 0) continue;
+        if (b.kind === 'hit') {
+          // 맨손 공격: 닿은 자리에서 때린 사람 빛깔 불똥이 사방으로 튄다
+          const n = b.big ? 10 : 6;
+          const reach = b.big ? 14 : 9;
+          for (let i = 0; i < n; i++) {
+            const a = b.seed + (i / n) * Math.PI * 2;
+            const q = spark();
+            q.tint = i % 3 ? b.color ?? 0xffffff : 0xffffff;
+            q.position.set(Math.round(b.x + Math.cos(a) * reach * Math.sqrt(k)), Math.round(b.y + Math.sin(a) * reach * 0.7 * Math.sqrt(k) + 4 * k * k));
+            q.alpha = 1 - k * k;
+          }
+          if (k < 0.4) {
+            const s = glow();
+            s.tint = b.color ?? 0xffffff;
+            s.position.set(b.x, b.y);
+            s.width = s.height = (b.big ? 22 : 14) * (0.6 + k);
+            s.alpha = 0.7 * (1 - k / 0.4);
+          }
+        } else if (b.kind === 'heal') {
+          for (let i = 0; i < 7; i++) {
+            const q = spark();
+            const ph = (k * 1.4 + i / 7) % 1;
+            q.tint = i % 2 ? 0xfff2b0 : 0x9ff0c0;
+            q.position.set(Math.round(b.x - 8 + ((i * 37 + b.seed * 5) % 16) + Math.sin(ph * 6 + i) * 1.5), Math.round(b.y + 6 - ph * 22));
+            q.alpha = Math.sin(Math.PI * ph) * (1 - k * 0.5);
+          }
+        } else if (b.kind === 'foxfire' || b.kind === 'red') {
           const s = glow();
           s.tint = b.kind === 'foxfire' ? 0x5aa0ff : 0xff4a3a;
           s.position.set(b.x, b.y);
