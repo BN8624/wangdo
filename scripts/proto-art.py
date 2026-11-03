@@ -486,7 +486,7 @@ class Packer:
 
 
 # 조선풍으로 새로 그린 건물(2026-11-02): art/pixel/buildings/<이름>.png가 있으면 원본 대신 쓴다(크기는 원본과 같아야 한다).
-# 초가집 셋은 GPT로 그린 art/pixel/raw/bldg-choga.webp를 줄인 것
+# 초가집 셋은 art/pixel/raw/bldg-choga.webp, 기와집·주막·장터 가게는 bldg-town.webp(GPT)를 줄인 것
 BUILDINGS = os.path.join(ROOT, 'art', 'pixel', 'buildings')
 
 
