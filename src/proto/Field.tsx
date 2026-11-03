@@ -30,7 +30,8 @@ interface Walk {
 /** 밤·동굴의 하늘빛: base는 어디나, dark는 불빛이 뚫는 어둠 */
 const SKY = {
   day: { base: 0, dark: 0, color: 0 },
-  night: { base: 0.3, dark: 0.62, color: 0x0b0e2a },
+  // 달빛 도는 푸른 밤(검은 남색보다 푸르게)
+  night: { base: 0.36, dark: 0.6, color: 0x0d1838 },
   cave: { base: 0.12, dark: 0.84, color: 0x08060c },
 };
 /** 사람이 든 불빛 반지름(칸) */
@@ -112,7 +113,8 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
     const lighting = new Lighting();
     const particles = new Particles();
     particles.world.zIndex = 1e9 + 1;
-    world.addChild(particles.world);
+    particles.floor.zIndex = -4e5;
+    world.addChild(particles.world, particles.floor);
     screen.addChild(lighting.view, particles.glow);
 
     const spriteOf = (key: string) => {
@@ -265,6 +267,7 @@ export function Field({ g, fx, speed, onWalked }: { g: Game; fx: Effect | null; 
         }
       }
       lighting.update(app.renderer, cw, chh, now, sky, lamps);
+      particles.floorUpdate(now, MAPS[game.map], { x: camX, y: camY, w: vw, h: vh }, pos.map((q) => ({ x: q.p.x * T + T / 2, y: q.p.y * T + T - 2 })));
       particles.update(now, MAPS[game.map], game.night, T, { x: camX, y: camY, w: vw, h: vh }, s, (x, y) => [(x - camX) * s, (y - camY) * s]);
 
       app.render();
