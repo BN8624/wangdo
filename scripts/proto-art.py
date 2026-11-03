@@ -485,6 +485,20 @@ class Packer:
         return {n: [x, y, img.width, img.height] for n, img, x, y in self.items}
 
 
+# 조선풍으로 새로 그린 건물(2026-11-02): art/pixel/buildings/<이름>.png가 있으면 원본 대신 쓴다(크기는 원본과 같아야 한다).
+# 초가집 셋은 GPT로 그린 art/pixel/raw/bldg-choga.webp를 줄인 것
+BUILDINGS = os.path.join(ROOT, 'art', 'pixel', 'buildings')
+
+
+def building(name, img):
+    p = os.path.join(BUILDINGS, f'{name}.png')
+    if not os.path.exists(p):
+        return img
+    new = Image.open(p).convert('RGBA')
+    assert new.size == img.size, f'{name}: {new.size} != {img.size}'
+    return new
+
+
 def build(src):
     os.makedirs(OUT, exist_ok=True)
     atlas = {}
@@ -493,6 +507,7 @@ def build(src):
     for name, (rel, cx, cy, cw, ch) in TILES.items():
         img = load(src, rel).crop((cx * T, cy * T, (cx + cw) * T, (cy + ch) * T))
         img = recolor(img, TILE_RECOLOR.get(name))
+        img = building(name, img)
         tp.add(name, img)
     chest = load(src, 'Items/Treasure/LittleTreasureChest.png')
     tp.add('chest', chest.crop((0, 0, 16, 16)))
