@@ -117,6 +117,8 @@ export const FOES: Record<string, FoeGroup> = {
   },
   privates: { name: '별창을 지키던 송씨 사병', ground: 'dirt', waves: [[sol(21), sol(21, 'defense'), sol(22)]] },
   privTrain: { name: '송씨 사병', ground: 'dirt', waves: [[sol(19), sol(19)]] },
+  // 9화 새벽 갈대밭: 독사가 잡혀간 뒤 남은 밀수 상단 잔당
+  reeds9: { name: '갈대밭에 숨은 독사의 잔당', ground: 'dirt', waves: [[thug(21), pick(22), thug(21, 'defense')]] },
   bribed: {
     name: '원본 장부를 노린 매수된 아전',
     ground: 'dirt',
