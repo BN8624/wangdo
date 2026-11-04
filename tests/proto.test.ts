@@ -209,6 +209,17 @@ describe('오두막의 하루(4화 뒤)', () => {
   });
 });
 
+describe('11화 보강', () => {
+  for (const pick of [0, 1, 2])
+    it(`첫 결재를 ${['흑운채 심리', '장부 내걸기', '이름 문의서'][pick]}로 해도 창고 불·자객전을 지나 끝까지 간다`, () => {
+      const r = playthrough({ picks: { first11: pick, soot11: pick % 2, wound11: pick % 2 }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] });
+      expect(r.losses).toBe(0);
+      expect(r.g.flags).toContain(['first_heukun', 'first_ledger', 'first_name'][pick]);
+      expect(r.g.flags).toContain(pick % 2 ? 'soot_scolded' : 'soot_wiped');
+      expect(r.g.flags).toContain(pick % 2 ? 'mu_asked_why' : 'mu_bandaged');
+    });
+});
+
 describe('4화', () => {
   for (const pick of [0, 1])
     it(`선택을 모두 ${pick ? '둘째' : '첫째'}로 골라도 지지 않고 끝까지 가고 깃발이 남는다`, () => {

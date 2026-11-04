@@ -122,6 +122,9 @@ export const FOES: Record<string, FoeGroup> = {
     ground: 'dirt',
     waves: [[{ name: '매수된 아전', char: 'ajeon', level: 23, role: 'support', element: 'water', kind: 'grunt', power: 0.95 }, { name: '매수된 아전', char: 'ajeon', level: 23, role: 'support', element: 'water', kind: 'grunt', power: 0.95 }, { name: '아전 우두머리', char: 'ajeon', level: 24, role: 'attack', element: 'water', kind: 'elite', power: 1.0 }]],
   },
+  // 11화 해 질 녘: 반환 곡식 창고에 불을 놓으러 온 강 집사의 사람들
+  arson: { name: '창고에 불을 놓으러 온 송씨 사병', ground: 'dirt', waves: [[sol(24), thug(23, 'defense'), sol(24)]] },
+  arsonTrain: { name: '송씨 사병', ground: 'dirt', waves: [[sol(22), thug(22)]] },
   asnTrain: { name: '자객', ground: 'dirt', waves: [[asn(23), asn(23)]] },
   assassins: {
     name: '채권 사본을 노린 자객',
