@@ -28,6 +28,8 @@ export const ITEMS: Record<string, ItemDef> = {
   // 10화 반환 잔치 장터
   dragonpin: { id: 'dragonpin', name: '용머리 비녀', slot: 'weapon', atk: 34, spd: 10, price: 420, desc: '공격 +34%, 속도 +10' },
   jadering: { id: 'jadering', name: '옥가락지', slot: 'charm', atk: 14, hp: 18, def: 12, price: 380, desc: '공격 +14%, 체력 +18%, 방어 +12%' },
+  // 곁이야기에서 받는 것
+  foxhair: { id: 'foxhair', name: '여우털 부적', slot: 'charm', atk: 8, hp: 8, spd: 6, price: 0, desc: '공격 +8%, 체력 +8%, 속도 +6' },
 };
 
 /** 장터에서 파는 것(화가 지날수록 물건이 바뀐다) */

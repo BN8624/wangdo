@@ -46,7 +46,8 @@ function playthrough(plan: Plan) {
         input = { k: 'pick', i: Math.max(0, left.indexOf(want)) };
       } else if (b.t === 'choice') input = { k: 'pick', i: plan.picks?.[b.id] ?? 0 };
     } else if (fx.k === 'collect') input = { k: 'collect', ids: collectIds(g, plan.collect) };
-    else if (fx.k === 'gift') input = { k: 'pick', i: 0 };
+    // 선물은 장신구가 빈 사람에게(없으면 첫째)
+    else if (fx.k === 'gift') input = { k: 'pick', i: fx.item ? Math.max(0, g.party.findIndex((m) => !(fx.item?.slot === 'charm' ? m.charm : m.weapon))) : 0 };
     else if (fx.k === 'defeat') {
       losses++;
       input = { k: 'train' };
@@ -171,6 +172,43 @@ describe('대본', () => {
 });
 
 // 4화(우렁각시): 숨을 자리·붙잡는 법·받아낼 것·치수·관직 선택이 갈리고, 소담이 합류한다
+describe('오두막의 하루(4화 뒤)', () => {
+  /** 기본 선택으로 진행해 오두막의 하루 고르기 앞에 세운다 */
+  const atDay4 = () => {
+    let r = step(newGame());
+    for (let i = 0; i < 5000; i++) {
+      const b = SCRIPT[r.g.pc];
+      if (b.t === 'visit' && b.id === 'day4') return r;
+      const input: Input = r.fx.k === 'collect' && b.t === 'collect' ? { k: 'collect', ids: [b.debts[0].id] } : r.fx.k === 'choice' || r.fx.k === 'gift' ? { k: 'pick', i: 0 } : r.fx.k === 'defeat' ? { k: 'train' } : { k: 'ok' };
+      r = step(r.g, input);
+    }
+    throw new Error('오두막의 하루에 닿지 못했어요');
+  };
+  /** 고른 뒤 다음 선택까지 */
+  const nextChoice = (g: Game, input: Input) => {
+    let r = step(g, input);
+    for (let i = 0; i < 200 && r.fx.k !== 'choice'; i++) r = step(r.g, { k: 'ok' });
+    return r;
+  };
+
+  it('백설과 정이 쌓였으면 곁이야기가 열리고, 아홉째 꼬리를 빗으면 5화 고백에 한 마디가 더해진다', () => {
+    const r = atDay4();
+    expect(r.g.bond.baekseol ?? 0).toBeGreaterThanOrEqual(20);
+    const c = nextChoice(r.g, { k: 'pick', i: 0 });
+    expect(SCRIPT[c.g.pc]).toMatchObject({ t: 'choice', id: 'bs_side1' });
+    const end = playthrough({ picks: { bs_side1: 0 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+    expect(end.g.flags).toContain('bs_ninth');
+    expect(end.g.log).toContain('백설의 아홉째 꼬리를 빗어 주었다');
+    expect(end.losses).toBe(0);
+  });
+
+  it('정이 모자라면 곁이야기 대신 짧은 이야기만 나온다', () => {
+    const r = atDay4();
+    const c = nextChoice({ ...r.g, bond: { ...r.g.bond, baekseol: 5 } }, { k: 'pick', i: 0 });
+    expect(SCRIPT[c.g.pc]).toMatchObject({ t: 'choice', id: 'd4_bs_small' });
+  });
+});
+
 describe('4화', () => {
   for (const pick of [0, 1])
     it(`선택을 모두 ${pick ? '둘째' : '첫째'}로 골라도 지지 않고 끝까지 가고 깃발이 남는다`, () => {
@@ -202,7 +240,7 @@ describe('5화', () => {
     it(`백설에게 ${['장부를 뒤집자', '이름을 받아 오겠다', '듣기만 한다'][pick]}고 해도 끝까지 가고 깃발이 남는다`, () => {
       // 들르기: 1화 둘, 4화 하나, 5화 둘(과부댁·주막 / 주막·아낙 / 과부댁·아낙)
       const v5 = [[0, 1], [1, 2], [0, 2]][pick];
-      const r = playthrough({ picks: { name5: pick }, visits: [0, 1, 0, ...v5], collect: ['wages'] });
+      const r = playthrough({ picks: { name5: pick }, visits: [0, 1, 0, 0, 1, ...v5], collect: ['wages'] });
       expect(r.g.done).toBe(true);
       expect(r.losses).toBe(0);
       expect(r.g.flags).toContain(['bs_vow_ledger', 'bs_vow_name', 'bs_vow_listen'][pick]);
@@ -235,7 +273,7 @@ describe('5화', () => {
 describe('6화', () => {
   for (const pick of [0, 1, 2])
     it(`입회인·작전을 ${pick + 1}번째로 골라도 약해진 나와 함께 이기고 끝까지 간다`, () => {
-      const r = playthrough({ picks: { inspect6: pick % 2, witness6: pick, tactic6: pick, warm6: pick % 2 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      const r = playthrough({ picks: { inspect6: pick % 2, witness6: pick, tactic6: pick, warm6: pick % 2 }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] });
       expect(r.g.done).toBe(true);
       expect(r.losses).toBe(0);
       expect(r.g.flags).toContain(['wit_widow', 'wit_tab', 'wit_sodam'][pick]);
@@ -261,7 +299,7 @@ describe('6화', () => {
 describe('7화', () => {
   for (const pick of [0, 1])
     it(`거적 밑에서 ${pick ? '똑똑히 보고' : '꼼짝 않고'} 증인에게 ${pick ? '약속만' : '품삯까지'} 해도 끝까지 간다`, () => {
-      const r = playthrough({ picks: { peek7: pick, witness7: pick, tactic7: 1 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      const r = playthrough({ picks: { peek7: pick, witness7: pick, tactic7: 1 }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] });
       expect(r.g.done).toBe(true);
       expect(r.g.flags).toContain(pick ? 'peeked' : 'hid_still');
       expect(r.g.flags).toContain(pick ? 'witness_shaky' : 'witness_safe');
@@ -269,7 +307,7 @@ describe('7화', () => {
     });
 
   it('독사 대장전은 작전에 따라 결과가 갈릴 만큼 세다', () => {
-    const results = [0, 1, 2].map((t) => playthrough({ picks: { tactic7: t }, visits: [0, 1, 0, 0, 1], collect: ['wages'] }).losses);
+    const results = [0, 1, 2].map((t) => playthrough({ picks: { tactic7: t }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] }).losses);
     // 적어도 한 작전은 한 번에 이긴다
     expect(Math.min(...results)).toBe(0);
   });
@@ -278,15 +316,15 @@ describe('7화', () => {
 describe('8화', () => {
   for (const pick of [0, 1, 2])
     it(`무영의 고백에 ${['나눠 적겠다', '반을 지겠다', '왜 이제야'][pick]}고 해도 끝까지 간다`, () => {
-      const r = playthrough({ picks: { mu8: pick, tea8: pick % 2 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      const r = playthrough({ picks: { mu8: pick, tea8: pick % 2 }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] });
       expect(r.g.done).toBe(true);
       expect(r.g.flags).toContain(['mu_fair', 'mu_share', 'mu_hurt'][pick]);
       expect(r.g.flags.some((f) => f === 'meok_sealed' || f === 'meok_copy')).toBe(true);
     });
 
   it('철곰은 버티기만 해서는 못 이기고, 몰아치면 이긴다', () => {
-    const push = playthrough({ picks: { tactic8: 0 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
-    const safe = playthrough({ picks: { tactic8: 1 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+    const push = playthrough({ picks: { tactic8: 0 }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] });
+    const safe = playthrough({ picks: { tactic8: 1 }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] });
     expect(push.losses).toBe(0);
     expect(safe.losses).toBeGreaterThan(0);
     expect(safe.g.done).toBe(true); // 지면 다시 하기로 이어 갈 수 있다
@@ -296,7 +334,7 @@ describe('8화', () => {
 describe('9화', () => {
   for (const pick of [0, 1])
     it(`채령에게 ${pick ? '백설의 담보를' : '장부를'} 묻고 끝까지 간다`, () => {
-      const r = playthrough({ picks: { ask9: pick, count9: pick }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      const r = playthrough({ picks: { ask9: pick, count9: pick }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] });
       expect(r.g.done).toBe(true);
       expect(r.losses).toBe(0);
       expect(r.g.flags).toContain(pick ? 'bs_name_hint' : 'asked_ledger');
@@ -313,7 +351,7 @@ describe('9화', () => {
 describe('10화', () => {
   for (const pick of [0, 1, 2])
     it(`잔치에서 ${['떡', '차', '빈 잔'][pick]}부터 골라도 끝까지 간다`, () => {
-      const r = playthrough({ picks: { feast10: pick, stand10: pick % 2 }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      const r = playthrough({ picks: { feast10: pick, stand10: pick % 2 }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] });
       expect(r.g.done).toBe(true);
       expect(r.losses).toBe(0);
       expect(r.g.flags).toContain(['feast_sodam', 'feast_mu', 'feast_bs'][pick]);
@@ -355,7 +393,7 @@ describe('10화', () => {
 describe('11화(1부 끝)', () => {
   for (const pick of [0, 1])
     it(`관복 고름에서 ${pick ? '물러서도' : '손을 잡아도'} 1부 끝까지 간다`, () => {
-      const r = playthrough({ picks: { robe11: pick, tactic11: pick }, visits: [0, 1, 0, 0, 1], collect: ['wages'] });
+      const r = playthrough({ picks: { robe11: pick, tactic11: pick }, visits: [0, 1, 0, 0, 1, 0, 1], collect: ['wages'] });
       expect(r.g.done).toBe(true);
       expect(r.losses).toBe(0);
       expect(r.g.flags).toContain(pick ? 'robe_stepback' : 'robe_held');
