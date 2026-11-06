@@ -8,6 +8,7 @@ import { BOND_NAME, battleSetup, bondTier, giveExp, groupCoin, groupExp, overwhe
 import { negoApply, negoOptions, type NegoBeat, type NegoState, type NegoView } from './nego';
 import { SCRIPT } from './story';
 import { SIDE_ORDER } from './side';
+import { QUESTS } from './quests';
 import type { Dir, FoeGroup, ItemDef, Line, Member, MemberId, Pt } from './types';
 
 export interface ChoiceOpt {
@@ -51,6 +52,8 @@ export type Beat =
   | { t: 'call'; label: string }
   /** 식객 곁이야기: 정과 진행이 닿은 다음 편이 있으면 그리로, 없으면 chat으로(둘 다 ret으로 돌아온다) */
   | { t: 'side'; who: MemberId; chat: string }
+  /** 마을 의뢰판: 그날까지 열린 의뢰 가운데 셋. 고르면 그 의뢰로 갔다가 ret으로 돌아온다 */
+  | { t: 'board' }
   | { t: 'ret' }
   /** flag가 있으면(not이면 없으면), bond면 그 식객의 정이 그만큼 쌓였으면 goto로 */
   | { t: 'if'; flag?: string; bond?: [MemberId, number]; goto: string; not?: boolean }
@@ -123,6 +126,8 @@ export interface Game {
   bsDebt?: number;
   /** 다음 전투의 작전 */
   tactic?: Tactic | null;
+  /** 도감: 만난 사람·싸운 적의 이름 */
+  seen?: string[];
   /** 저장할 때의 대본 지문(SCRIPT_SIG). 다르면 이어서 할 때 같은 목표의 첫머리로 옮긴다 */
   sig?: string;
   /** 졌을 때: 쉼터로 돌아온 뒤 수련할지 고르는 중 */
@@ -197,6 +202,15 @@ export function nextSide(g: Game, who: MemberId) {
   return first;
 }
 
+/** 지금까지 지난 오두막의 하루(dayN 깃발 가운데 가장 큰 N) */
+export const dayOf = (g: Game) => g.flags.reduce((m, f) => (/^day\d+$/.test(f) ? Math.max(m, Number(f.slice(3))) : m), 1);
+
+/** 의뢰판에 뜨는 의뢰: 그날까지 열렸고 아직 안 받은 것 가운데 새것부터 셋(묵은 의뢰는 뒤로 밀린다) */
+export const boardOf = (g: Game) =>
+  QUESTS.filter((q) => q.day <= dayOf(g) && !g.flags.includes(`q_${q.id}`))
+    .sort((a, b) => b.day - a.day)
+    .slice(0, 3);
+
 /** 대본 모양의 지문: 대본이 바뀌면 저장의 pc가 엉뚱한 비트를 가리킨다(이어서 할 때 바로잡는다) */
 export const SCRIPT_SIG = (() => {
   let h = 7;
@@ -268,6 +282,14 @@ function applyReward(g: Game, r: Reward): Game {
   return { ...g, party: giveExp(g.party, r.exp).party, coin: g.coin + r.coin };
 }
 
+/** 도감에 이름을 더한다 */
+function meet(g: Game, names: string[]): Game {
+  const fresh = names.filter((x) => !(g.seen ?? []).includes(x));
+  return fresh.length ? { ...g, seen: [...(g.seen ?? []), ...new Set(fresh)] } : g;
+}
+const npcNames = (lines: Line[]) => lines.filter((l) => l.who.startsWith('npc:')).map((l) => l.who.slice(4));
+const unitNames = (group: FoeGroup) => group.waves.flatMap((w) => w.map((u) => u.name));
+
 /** 장비를 끼운다(그 칸에 있던 것은 버린다) */
 export function equip(g: Game, item: string, who: MemberId): Game {
   const it = ITEMS[item];
@@ -306,7 +328,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
   for (let guard = 0; guard < 500; guard++) {
     if (g.done) return { g, fx: { k: 'end' } };
     if (g.defeat) return { g, fx: { k: 'defeat' } };
-    if (g.reply?.length) return { g, fx: { k: 'talk', lines: g.reply } };
+    if (g.reply?.length) return { g: meet(g, npcNames(g.reply)), fx: { k: 'talk', lines: g.reply } };
     const b = SCRIPT[g.pc];
     if (!b) return { g: { ...g, done: true }, fx: { k: 'end' } };
     switch (b.t) {
@@ -319,6 +341,11 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'call':
         g = { ...g, stack: [...g.stack, g.pc + 1], pc: labelAt(b.label) };
         continue;
+      case 'board': {
+        const avail = boardOf(g);
+        if (!avail.length) return { g, fx: { k: 'talk', lines: [{ who: 'narration', text: '의뢰판이 비어 있다. 오늘은 맡을 일이 없다.' }] } };
+        return { g, fx: { k: 'choice', prompt: '마을 의뢰판 (하나)', options: [...avail.map((q) => ({ text: q.title, desc: q.desc })), { text: '오늘은 그만둔다' }] } };
+      }
       case 'side': {
         const next = nextSide(g, b.who);
         g = next ? { ...g, flags: [...g.flags, next.done], pc: labelAt(next.label) } : { ...g, pc: labelAt(b.chat) };
@@ -378,7 +405,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
           g = { ...g, pc: g.pc + 1 };
           continue;
         }
-        return { g, fx: { k: 'talk', lines } };
+        return { g: meet(g, npcNames(lines)), fx: { k: 'talk', lines } };
       }
       case 'choice':
         return { g, fx: { k: 'choice', prompt: b.prompt, options: b.options.map((o) => ({ text: o.text, desc: o.desc })), party: b.party } };
@@ -393,6 +420,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       }
       case 'battle': {
         const group = FOES[b.foe];
+        g = meet(g, unitNames(group));
         if (overwhelms(g.party, group)) return { g, fx: { k: 'swift', group, reward: reward(g, group) } };
         const setup = battleSetup(g.party, group, g.skills, g.fresh, g.tactic ?? undefined, b.weak, g.bond);
         const { events, result } = runCombat(setup, seedOf(g), true);
@@ -429,7 +457,7 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
         return { g, fx: { k: 'collect', cap: b.cap, prompt: b.prompt, debts: b.debts.map(({ id, text, amount }) => ({ id, text, amount })) } };
       case 'nego': {
         const st = g.nego?.id === b.id ? g.nego : { id: b.id, left: b.resolve, turn: 0, used: [] };
-        if (g.nego?.id !== b.id) g = { ...g, nego: st };
+        if (g.nego?.id !== b.id) g = meet({ ...g, nego: st }, [b.who]);
         const options = negoOptions(b, st, { flags: g.flags, party: g.party.map((m) => m.id), skills: g.skills, coin: g.coin });
         return { g, fx: { k: 'nego', who: b.who, face: b.face, prompt: b.prompt, left: st.left, max: b.resolve, turn: st.turn, turns: b.turns, options } };
       }
@@ -486,6 +514,12 @@ function resolve(game: Game, input: Input): Game {
         ...(o.tactic ? { tactic: o.tactic } : {}),
       };
     }
+    case 'board': {
+      const avail = boardOf(g);
+      const q = avail[input.k === 'pick' ? input.i : 0];
+      if (!q) return next;
+      return { ...g, flags: [...g.flags, `q_${q.id}`], stack: [...g.stack, g.pc + 1], pc: labelAt(`q_${q.id}`) };
+    }
     case 'visit': {
       const done = g.picked[b.id] ?? [];
       const left = b.options.map((_, i) => i).filter((i) => !done.includes(i));
@@ -533,7 +567,7 @@ function resolve(game: Game, input: Input): Game {
         nego: null,
         pc: g.pc + 1,
         flags: withRep.flags.includes(end.flag) ? withRep.flags : [...withRep.flags, end.flag],
-        coin: withRep.coin + (end.coin ?? 0),
+        coin: Math.max(0, withRep.coin + (end.coin ?? 0)),
         log: [...g.log, end.log],
         reply: [...visibleLines(g, r.say), ...visibleLines(g, end.lines)],
       };

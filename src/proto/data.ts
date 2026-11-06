@@ -34,14 +34,33 @@ export const ITEMS: Record<string, ItemDef> = {
   shellchip: { id: 'shellchip', name: '우렁이 껍데기 조각', slot: 'charm', hp: 12, def: 12, price: 0, desc: '체력 +12%, 방어 +12%' },
   redknot: { id: 'redknot', name: '백설의 진홍 실', slot: 'charm', atk: 16, hp: 14, spd: 8, price: 0, desc: '공격 +16%, 체력 +14%, 속도 +8' },
   armorcord: { id: 'armorcord', name: '무영의 갑옷 끈', slot: 'charm', hp: 22, def: 20, price: 0, desc: '체력 +22%, 방어 +20%' },
+  // 의뢰 보상(quests.ts)
+  oldaxe: { id: 'oldaxe', name: '돌쇠의 손도끼', slot: 'weapon', atk: 18, price: 0, desc: '공격 +18%' },
+  dokbell: { id: 'dokbell', name: '도깨비 방울', slot: 'charm', spd: 12, hp: 6, price: 0, desc: '속도 +12, 체력 +6%' },
+  scalepin: { id: 'scalepin', name: '저울추 노리개', slot: 'charm', def: 14, hp: 10, price: 0, desc: '방어 +14%, 체력 +10%' },
+  pickdagger: { id: 'pickdagger', name: '주인 없는 단도', slot: 'weapon', atk: 22, spd: 8, price: 0, desc: '공격 +22%, 속도 +8' },
+  herbpouch: { id: 'herbpouch', name: '약초 주머니', slot: 'charm', hp: 26, def: 6, price: 0, desc: '체력 +26%, 방어 +6%' },
+  oar: { id: 'oar', name: '사공의 노', slot: 'weapon', atk: 30, def: 6, price: 0, desc: '공격 +30%, 방어 +6%' },
+  saltpouch: { id: 'saltpouch', name: '소금 주머니', slot: 'charm', def: 20, atk: 6, price: 0, desc: '방어 +20%, 공격 +6%' },
+  heukunblade: { id: 'heukunblade', name: '흑운채 칼', slot: 'weapon', atk: 36, price: 0, desc: '공격 +36%' },
+  asndagger: { id: 'asndagger', name: '무늬 없는 단검', slot: 'weapon', atk: 38, spd: 12, price: 0, desc: '공격 +38%, 속도 +12' },
+  chaenorigae: { id: 'chaenorigae', name: '송채령의 옥노리개', slot: 'charm', atk: 16, hp: 16, def: 16, price: 0, desc: '공격·체력·방어 +16%' },
+  // 장터에 더 들어오는 물건
+  pinestaff: { id: 'pinestaff', name: '소나무 지팡이', slot: 'weapon', atk: 10, spd: 6, price: 35, desc: '공격 +10%, 속도 +6' },
+  bamboohat: { id: 'bamboohat', name: '대삿갓', slot: 'charm', def: 8, hp: 8, price: 35, desc: '방어 +8%, 체력 +8%' },
+  ssangdo: { id: 'ssangdo', name: '쌍도', slot: 'weapon', atk: 24, spd: 6, price: 190, desc: '공격 +24%, 속도 +6' },
+  hempvest: { id: 'hempvest', name: '삼베 누비옷', slot: 'charm', hp: 16, def: 14, price: 150, desc: '체력 +16%, 방어 +14%' },
+  goldpin: { id: 'goldpin', name: '금비녀', slot: 'weapon', atk: 32, spd: 10, price: 360, desc: '공격 +32%, 속도 +10' },
+  silkshoes: { id: 'silkshoes', name: '비단 꽃신', slot: 'charm', spd: 18, hp: 10, price: 340, desc: '속도 +18, 체력 +10%' },
+  jadebell: { id: 'jadebell', name: '옥방울', slot: 'charm', atk: 18, hp: 16, def: 10, spd: 6, price: 480, desc: '공격 +18%, 체력 +16%, 방어 +10%, 속도 +6' },
   apronknot: { id: 'apronknot', name: '소담의 앞치마 끈', slot: 'charm', atk: 10, hp: 18, def: 12, price: 0, desc: '공격 +10%, 체력 +18%, 방어 +12%' },
 };
 
 /** 장터에서 파는 것(화가 지날수록 물건이 바뀐다) */
-export const SHOP = ['oakclub', 'ironpin', 'straw', 'cotton'];
-export const SHOP5 = ['steelclub', 'jadepin', 'silkband', 'mituri'];
-export const SHOP7 = ['ironfan', 'tigervest', 'jadepin', 'silkband', 'mituri'];
-export const SHOP10 = ['dragonpin', 'jadering', 'ironfan', 'tigervest'];
+export const SHOP = ['oakclub', 'ironpin', 'pinestaff', 'straw', 'cotton', 'bamboohat'];
+export const SHOP5 = ['steelclub', 'jadepin', 'ssangdo', 'silkband', 'mituri', 'hempvest'];
+export const SHOP7 = ['ironfan', 'goldpin', 'tigervest', 'jadepin', 'silkband', 'mituri'];
+export const SHOP10 = ['dragonpin', 'jadering', 'jadebell', 'silkshoes', 'ironfan', 'tigervest'];
 
 const raccoon = (level: number) => ({ name: '뒷산 너구리', mon: 'racoon' as const, level, role: 'attack' as const, element: 'wood' as const, kind: 'grunt' as const, power: 0.75 });
 const wisp = (level: number) => ({ name: '도깨비불', mon: 'wisp' as const, level, role: 'support' as const, element: 'fire' as const, kind: 'grunt' as const, power: 0.8 });
@@ -145,6 +164,11 @@ export const FOES: Record<string, FoeGroup> = {
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
   village: { name: '도깨비불', ground: 'grass', waves: [[wisp(1), wisp(2)]] },
+  // 마을 의뢰(quests.ts)
+  q_raccoons: { name: '장독 깨는 너구리', ground: 'grass', waves: [[raccoon(6), raccoon(6), raccoon(7)]] },
+  q_wisps: { name: '등잔 기름 핥는 도깨비불', ground: 'grass', waves: [[wisp(9), wisp(9), wisp(10)]] },
+  q_raccoons2: { name: '창고 너구리 떼', ground: 'dirt', waves: [[raccoon(15), raccoon(15), raccoon(16)]] },
+  q_wisps2: { name: '약초밭 도깨비불', ground: 'grass', waves: [[wisp(16), wisp(16), wisp(17)]] },
   passTrain: { name: '떠돌이 졸개', ground: 'dirt', waves: [[gob(6), wisp(6)]] },
   caveTrain: { name: '굴 박쥐', ground: 'cave', waves: [[bat(7), bat(7)]] },
   toll1: { name: '통행세 패거리', ground: 'dirt', waves: [[gob(7), gob2(7)]] },

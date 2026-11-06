@@ -10,6 +10,8 @@ import { negoApply, negoOptions, type NegoBeat } from '../src/proto/nego';
 import type { MemberId } from '../src/proto/types';
 import { SCRIPT_SIG, buy, ep4Start, labelAt, migrate, newGame, nextSide, revive, step, trialStart, visibleLines, type Game, type Input } from '../src/proto/runner';
 import { SCRIPT } from '../src/proto/story';
+import { QUESTS } from '../src/proto/quests';
+import { DEX } from '../src/proto/dex';
 import { CUTIN_MS } from '../src/proto/Battle';
 
 /** 받아내기: 계획한 빚 가운데 이 장면에 있는 것만, 없으면 첫째 빚 */
@@ -27,6 +29,8 @@ interface Plan {
   collect: string[];
   /** 이 식객에게 마음을 쏟는다: 선택은 그 식객 정이 가장 오르는 쪽, 오두막의 하루는 그 식객부터 */
   favor?: MemberId;
+  /** 의뢰판에서 앞의 것(first)부터, 뒤의 것(last)부터, 안 받기(none, 기본) */
+  board?: 'first' | 'last' | 'none' | number;
 }
 
 const SHORT: Partial<Record<MemberId, string>> = { baekseol: 'bs', muyeong: 'mu', sodam: 'sd' };
@@ -49,13 +53,19 @@ function playthrough(plan: Plan) {
         const done = g.picked[b.id] ?? [];
         const left = b.options.map((_, i) => i).filter((i) => !done.includes(i));
         input = { k: 'pick', i: Math.max(0, left.indexOf(want)) };
+      } else if (b.t === 'board') {
+        const n = fx.options.length - 1;
+        input = { k: 'pick', i: typeof plan.board === 'number' ? Math.min(plan.board, n - 1) : plan.board === 'first' ? 0 : plan.board === 'last' ? n - 1 : n };
       } else if (b.t === 'choice') {
         const best = plan.favor ? b.options.reduce((m, o, i) => ((o.bond?.[plan.favor!] ?? 0) > (b.options[m].bond?.[plan.favor!] ?? 0) ? i : m), 0) : 0;
         input = { k: 'pick', i: plan.picks?.[b.id] ?? best };
       }
     } else if (fx.k === 'collect') input = { k: 'collect', ids: collectIds(g, plan.collect) };
     // 선물은 장신구가 빈 사람에게(없으면 첫째)
-    else if (fx.k === 'gift') input = { k: 'pick', i: fx.item ? Math.max(0, g.party.findIndex((m) => !(fx.item?.slot === 'charm' ? m.charm : m.weapon))) : 0 };
+    else if (fx.k === 'gift') {
+      const empty = g.party.findIndex((m) => !(fx.item?.slot === 'charm' ? m.charm : m.weapon));
+      input = { k: 'pick', i: !fx.item ? 0 : empty >= 0 ? empty : g.party.length - 1 };
+    }
     else if (fx.k === 'defeat') {
       losses++;
       input = { k: 'train' };
@@ -232,6 +242,32 @@ describe('오두막의 하루·곁이야기', () => {
     expect(r.g.done).toBe(true);
     expect(r.losses).toBe(0);
     expect(r.g.flags).toEqual(expect.arrayContaining(['day2', 'day3', 'day4', 'day5', 'day6', 'day7', 'day8', 'day9', 'day10']));
+  });
+
+  it('마을 의뢰 스물여섯이 모두 이어지고, 받아도 지지 않고 끝까지 간다', () => {
+    const boardAll: Record<string, number[]> = {};
+    for (const b of SCRIPT) if (b.t === 'visit' && /^day\d+$/.test(b.id)) boardAll[b.id] = [b.options.findIndex((o) => /_board$/.test(o.label))];
+    const seen = new Set<string>();
+    for (const board of ['first', 'last', 1] as const) {
+      const r = playthrough({ visits: boardAll, board, collect: ['wages'] });
+      expect(r.g.done).toBe(true);
+      expect(r.losses).toBe(0);
+      for (const f of r.g.flags) if (QUESTS.some((q) => f === `q_${q.id}`)) seen.add(f);
+    }
+    expect([...seen].sort()).toEqual(QUESTS.map((q) => `q_${q.id}`).sort());
+  });
+
+  it('도감: 대본에 나오는 사람·적 이름이 모두 도감 어딘가에 있고, 끝까지 가면 대부분 열린다', () => {
+    const names = new Set<string>();
+    for (const m of JSON.stringify(SCRIPT).matchAll(/"who":"npc:([^"]+)"/g)) names.add(m[1]);
+    for (const b of SCRIPT) if (b.t === 'nego') names.add(b.who);
+    for (const g of Object.values(FOES)) for (const w of g.waves) for (const u of w) names.add(u.name);
+    const keys = new Set(DEX.flatMap((e) => e.keys));
+    expect([...names].filter((x) => !keys.has(x))).toEqual([]);
+    const r = playthrough({ collect: ['wages'] });
+    const seen = new Set(r.g.seen ?? []);
+    const open = DEX.filter((e) => (e.member && r.g.party.some((m) => m.id === e.member)) || e.keys.some((k) => seen.has(k)));
+    expect(open.length).toBeGreaterThanOrEqual(DEX.length - 2);
   });
 
   it('대본이 바뀐 저장은 같은 목표의 첫머리(지도 옮김)부터 이어 간다', () => {

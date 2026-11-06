@@ -9,6 +9,7 @@ import { SD_OF } from './pixi';
 import { BOND_NAME, bondTier, memberStats } from './party';
 import type { Effect, Game } from './runner';
 import type { ItemDef, Line, Member, MemberId } from './types';
+import { DEX, type DexEntry } from './dex';
 
 /** 받침에 맞는 조사: josa('백설', '이', '가') → '백설이' */
 export function josa(word: string, withBatchim: string, without: string) {
@@ -524,6 +525,57 @@ export function Nego({ fx, g, onPick }: { fx: Extract<Effect, { k: 'nego' }>; g:
           </button>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** 도감: 만난 사람·싸운 적. 아직 못 만난 칸은 ??? */
+export function Dex({ g, onClose }: { g: Game; onClose: () => void }) {
+  const seen = new Set(g.seen ?? []);
+  const open = (e: DexEntry) => (e.member && g.party.some((m) => m.id === e.member)) || e.keys.some((k) => seen.has(k));
+  const count = DEX.filter(open).length;
+  return (
+    <div className="menu dex">
+      <div className="row" style={{ justifyContent: 'space-between' }}>
+        <h3 style={{ margin: 0 }}>
+          도감 <span className="gear">{count} / {DEX.length}</span>
+        </h3>
+        <button className="icon-btn" aria-label="닫기" onClick={onClose}>
+          ✕
+        </button>
+      </div>
+      {(['식객', '사람', '적'] as const).map((kind) => (
+        <div key={kind}>
+          <h3>{kind}</h3>
+          <div className="dex-grid">
+            {DEX.filter((e) => e.kind === kind).map((e) =>
+              open(e) ? (
+                <div className="dex-card" key={e.id}>
+                  {e.sd ? (
+                    <div className="sdhead small">
+                      <img src={`proto/sd/${e.sd}.webp`} alt="" />
+                    </div>
+                  ) : e.char ? (
+                    <Sprite c={e.char} />
+                  ) : null}
+                  <div>
+                    <b>{e.name}</b>
+                    <p className="gear">{e.desc}</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="dex-card locked" key={e.id}>
+                  <div className="dex-q">?</div>
+                  <div>
+                    <b>???</b>
+                    <p className="gear">아직 만나지 못했다.</p>
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

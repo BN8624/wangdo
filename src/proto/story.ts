@@ -4,6 +4,7 @@
 import { SHOP10, SHOP5, SHOP7 } from './data';
 import type { Beat } from './runner';
 import type { Line } from './types';
+import { QUEST_BEATS } from './quests';
 import { SIDE_BEATS } from './side';
 
 const n = (text: string, extra: Partial<Line> = {}): Line => ({ who: 'narration', text, ...extra });
@@ -1388,16 +1389,23 @@ export const SCRIPT: Beat[] = [
   {
     t: 'visit',
     id: 'day4',
-    prompt: '오늘 하루, 무엇을 할까? (둘)',
-    pick: 2,
+    prompt: '오늘 하루, 무엇을 할까? (셋)',
+    pick: 3,
     options: [
       { text: '백설과 툇마루에서', desc: '볕 좋은 툇마루. 백설이 참빗을 들고 기다린다', label: 'd4_bs' },
       { text: '무영과 뒷마당 수련', desc: '방망이 쓰는 법을 배운다', label: 'd4_mu' },
       { text: '소담과 장 보기', desc: '소담이 값을 깎아 주는 장터', label: 'd4_sd' },
       { text: '마을 일 거들기', desc: '장작 패고 엽전 몇 푼', label: 'd4_work' },
+      { text: '의뢰판 보기', desc: '마을 사람들의 부탁(둘까지)', label: 'd4_board' },
     ],
   },
   { t: 'goto', label: 'd4_end' },
+  { t: 'label', name: 'd4_board' },
+  { t: 'walk', to: '마을 한가운데', face: 1 },
+  { t: 'board' },
+  { t: 'board' },
+  { t: 'walk', to: '오두막' },
+  { t: 'ret' },
 
   { t: 'label', name: 'd4_bs' },
   { t: 'walk', to: '오두막', face: 0 },
@@ -3627,4 +3635,6 @@ export const SCRIPT: Beat[] = [
   { t: 'end' },
   // 오두막의 하루·곁이야기: 끝 비트 뒤에 둔다(본편은 call·side로만 들어간다)
   ...SIDE_BEATS,
+  // 마을 의뢰: 의뢰판(board)으로만 들어간다
+  ...QUEST_BEATS,
 ];

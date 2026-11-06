@@ -5,7 +5,8 @@ import { MEMBER_NAME } from './data';
 import { Battle } from './Battle';
 import { Field } from './Field';
 import { MAPS } from './maps';
-import { Choice, Collect, DebtScroll, Defeat, Dialogue, Gift, Join, josa, Nego, PartyList, Shop, SkillGet } from './Panels';
+import { Choice, Collect, DebtScroll, Defeat, Dex, Dialogue, Gift, Join, josa, Nego, PartyList, Shop, SkillGet } from './Panels';
+import { QUESTS } from './quests';
 import { buy, load, newGame, save, SAVE_KEY, step, trialStart, type Effect, type Game, type Input } from './runner';
 
 const UI_KEY = 'wangdo.proto.ui';
@@ -39,6 +40,7 @@ export function App() {
   const [fx, setFx] = useState<Effect | null>(null);
   const [ui, setUiState] = useState<Ui>(loadUi);
   const [menu, setMenu] = useState(false);
+  const [dex, setDex] = useState(false);
   const [resetAsk, setResetAsk] = useState(false);
   const [fading, setFading] = useState(false);
   const [error, setError] = useState('');
@@ -311,7 +313,8 @@ export function App() {
       {fx?.k === 'battle' && <Battle key={g.pc + ':' + g.wins} fx={fx} where={g.map} night={g.night} speed={ui.speed} cutins={ui.cutins} onSpeed={(s) => setUi({ speed: s })} onDone={() => advance()} />}
       {fading && <div className="fade" />}
       {!fading && <div className="fade out" key={g.map + (g.night ? 'n' : 'd')} />}
-      {menu && (
+      {menu && dex && <Dex g={g} onClose={() => setDex(false)} />}
+      {menu && !dex && (
         <div className="menu">
           <div className="row" style={{ justifyContent: 'space-between' }}>
             <h3 style={{ margin: 0 }}>파티</h3>
@@ -358,6 +361,15 @@ export function App() {
             </button>
             <button className={`toggle ${soundSettings().sfx ? 'on' : ''}`} onClick={() => setSound({ sfx: !soundSettings().sfx })}>
               효과음
+            </button>
+          </div>
+          <h3>모은 것</h3>
+          <p className="gear" style={{ lineHeight: 1.6, margin: '0 0 8px' }}>
+            곁이야기 {g.flags.filter((f) => /^(bs|mu|sd)\d_done$/.test(f)).length} / 9 · 마을 의뢰 {g.flags.filter((f) => QUESTS.some((q) => f === `q_${q.id}`)).length} / {QUESTS.length}
+          </p>
+          <div className="row">
+            <button className="toggle" onClick={() => setDex(true)}>
+              도감 보기
             </button>
           </div>
           <h3>기록</h3>
