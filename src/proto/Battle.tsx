@@ -92,7 +92,9 @@ function place(side: 0 | 1, slot: number, n: number, boss: boolean, h: number) {
 /** 전투 배경: 바닥 타일, 위쪽 바위벽 또는 나무 줄, 위아래 그늘. 도트 크기 그대로 한 장에 굽는다 */
 const bgCache = new Map<string, HTMLCanvasElement>();
 /** 싸우는 곳: 마을·나루·고갯길·뒷산마다 무대 위·아래 가장자리를 그곳답게 꾸민다(가운데 싸우는 자리는 비운다) */
-function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number, place: MapId | null = null, night = false) {
+function battleBackground(ground: 'grass' | 'cave' | 'dirt', H: number, where: MapId | null = null, night = false) {
+  // 새 지도는 닮은 곳의 꾸밈을 빌린다: 읍내·송 대감 댁은 마을, 흑운채 산채는 고갯길
+  const place: MapId | null = where === 'town' || where === 'manor' ? 'village' : where === 'camp' ? 'pass' : where;
   const key = `${ground}:${H}:${place}:${night}`;
   const hit = bgCache.get(key);
   if (hit) return hit;

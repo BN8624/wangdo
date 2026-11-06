@@ -462,6 +462,15 @@ describe('10화', () => {
     expect(best(hearing, ['clue_ledger', 'meok_sealed', 'witness_safe'])).toBe(0);
   });
 
+  it('강 집사와 관아 포졸은 모은 단서가 있어야 말로 넘는다', () => {
+    const butler = SCRIPT.find((b) => b.t === 'nego' && b.id === 'butler') as NegoBeat;
+    expect(best(butler, [])).toBeGreaterThan(0);
+    expect(best(butler, ['butler_named', 'town_ledger', 'steward_talked', 'sd_mark'])).toBe(0);
+    const gate = SCRIPT.find((b) => b.t === 'nego' && b.id === 'town_gate') as NegoBeat;
+    expect(best(gate, [])).toBeGreaterThan(0);
+    expect(best(gate, ['town_receipt', 'q_bribe_won'])).toBe(0);
+  });
+
   it('같은 수단을 다시 쓰면 약해진다', () => {
     const hearing = SCRIPT.find((b) => b.t === 'nego' && b.id === 'hearing') as NegoBeat;
     const st = { id: hearing.id, left: hearing.resolve, turn: 0, used: [] as string[] };
@@ -469,6 +478,38 @@ describe('10화', () => {
     const twice = negoApply(hearing, once.st, 'ledger');
     expect(once.st.left - twice.st.left).toBeLessThan(hearing.resolve - once.st.left);
   });
+});
+
+describe('새 화 넷(굴·관아·산채·송 대감 댁)', () => {
+  it('본편을 따라가면 네 화를 모두 지나고, 지지 않는다', () => {
+    const r = playthrough({ collect: ['wages'] });
+    expect(r.g.done).toBe(true);
+    for (const f of ['shrine_seen', 'town_ledger', 'camp_saved', 'approval_page']) expect(r.g.flags).toContain(f);
+    expect(r.losses).toBe(0);
+    for (const id of ['prayerbeads', 'forgering']) expect(SCRIPT.some((b) => b.t === 'give' && b.item === id && ITEMS[id])).toBe(true);
+  });
+
+  for (const order of [[0, 1], [1, 0]])
+    it(`깊은 굴 갈림길을 ${order[0] ? '오른쪽' : '왼쪽'}부터 봐도 사당에 닿는다`, () => {
+      const r = playthrough({ visits: { dc_fork: order }, collect: ['wages'] });
+      expect(r.g.flags).toContain('shrine_seen');
+      expect(r.g.done).toBe(true);
+    });
+
+  for (const route of [0, 1])
+    it(`송 대감 댁에 ${route ? '행랑 마당' : '연못가'}으로 들어가도 승인란을 얻는다`, () => {
+      const r = playthrough({ picks: { route }, collect: ['wages'] });
+      expect(r.g.flags).toContain(route ? 'route_yard' : 'route_pond');
+      expect(r.g.flags).toContain('approval_page');
+      expect(r.losses).toBe(0);
+    });
+
+  for (const visits of [[0, 1], [1, 2], [2, 0]])
+    it(`산채에서 ${visits.join('·')}를 거들어도 검은바람을 막는다`, () => {
+      const r = playthrough({ visits: { camp_help: visits }, collect: ['wages'] });
+      expect(r.g.flags).toContain('camp_saved');
+      expect(r.g.done).toBe(true);
+    });
 });
 
 describe('11화(1부 끝)', () => {

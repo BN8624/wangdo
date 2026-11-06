@@ -1,0 +1,639 @@
+{
+ "compressionlevel": -1,
+ "height": 28,
+ "infinite": false,
+ "layers": [
+  {
+   "data": [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+    1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+   ],
+   "height": 28,
+   "id": 1,
+   "name": "terrain",
+   "opacity": 1,
+   "type": "tilelayer",
+   "visible": true,
+   "width": 26,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "data": [
+    0, 0, 0, 0, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 0, 0, 0, 0,
+    54, 55, 0, 0, 170, 0, 0, 0, 0, 0, 0, 124, 125, 126, 127, 0, 0, 0, 0, 0, 0, 170, 0, 0, 52, 53,
+    70, 71, 0, 0, 170, 124, 125, 126, 127, 0, 0, 140, 141, 142, 143, 0, 80, 81, 82, 83, 0, 170, 0, 0, 68, 69,
+    0, 0, 0, 0, 170, 140, 141, 142, 143, 0, 0, 156, 157, 158, 159, 0, 96, 97, 98, 99, 0, 170, 0, 0, 0, 0,
+    0, 0, 0, 0, 170, 156, 157, 158, 159, 0, 0, 0, 0, 0, 0, 0, 112, 113, 114, 115, 0, 170, 0, 0, 0, 0,
+    0, 0, 0, 0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 170, 0, 0, 0, 0,
+    0, 0, 0, 0, 170, 0, 0, 0, 0, 0, 177, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 170, 0, 0, 0, 0,
+    0, 0, 0, 0, 170, 0, 49, 0, 0, 0, 193, 0, 0, 0, 0, 0, 0, 0, 0, 47, 0, 170, 0, 0, 0, 0,
+    0, 0, 0, 0, 170, 0, 0, 50, 0, 0, 209, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 170, 0, 0, 0, 0,
+    52, 53, 0, 0, 170, 170, 170, 170, 170, 170, 170, 170, 0, 0, 170, 170, 170, 170, 170, 170, 170, 170, 0, 54, 55, 0,
+    68, 69, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 71, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    52, 53, 131, 132, 133, 134, 0, 131, 132, 133, 134, 0, 0, 0, 0, 0, 131, 132, 133, 134, 0, 131, 132, 133, 134, 0,
+    68, 69, 147, 148, 149, 150, 0, 147, 148, 149, 150, 0, 0, 0, 0, 0, 147, 148, 149, 150, 0, 147, 148, 149, 150, 0,
+    0, 0, 163, 164, 165, 166, 0, 163, 164, 165, 166, 0, 0, 0, 0, 0, 163, 164, 165, 166, 0, 163, 164, 165, 166, 0,
+    0, 0, 0, 0, 0, 0, 0, 49, 50, 0, 0, 49, 0, 0, 0, 49, 0, 0, 0, 0, 50, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 47, 0, 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 128, 129, 130, 0, 0, 47, 0, 0, 0, 0, 0, 0, 0, 131, 132, 133, 134, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 144, 145, 146, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 147, 148, 149, 150, 84, 85, 86, 87, 0, 0,
+    0, 0, 0, 160, 161, 162, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 163, 164, 165, 166, 100, 101, 102, 103, 0, 0,
+    54, 55, 0, 0, 0, 0, 0, 171, 172, 173, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 116, 117, 118, 119, 0, 0,
+    70, 71, 0, 0, 0, 0, 0, 187, 188, 189, 0, 0, 0, 0, 0, 176, 0, 0, 0, 0, 0, 0, 0, 54, 55, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 71, 0,
+    52, 53, 0, 54, 55, 0, 0, 52, 53, 0, 0, 0, 0, 0, 51, 0, 54, 55, 0, 0, 52, 53, 0, 0, 0, 0,
+    68, 69, 0, 70, 71, 0, 0, 68, 69, 0, 0, 0, 0, 0, 67, 0, 70, 71, 0, 0, 68, 69, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+   ],
+   "height": 28,
+   "id": 2,
+   "name": "deco",
+   "opacity": 1,
+   "type": "tilelayer",
+   "visible": true,
+   "width": 26,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "draworder": "topdown",
+   "id": 3,
+   "name": "objects",
+   "objects": [
+    {
+     "id": 1,
+     "name": "읍내 어귀",
+     "type": "point",
+     "point": true,
+     "x": 200,
+     "y": 424,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 2,
+     "name": "장터 거리",
+     "type": "point",
+     "point": true,
+     "x": 200,
+     "y": 264,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 3,
+     "name": "관아 문 앞",
+     "type": "point",
+     "point": true,
+     "x": 200,
+     "y": 168,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 4,
+     "name": "동헌 앞",
+     "type": "point",
+     "point": true,
+     "x": 200,
+     "y": 88,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 5,
+     "name": "형방 앞",
+     "type": "point",
+     "point": true,
+     "x": 120,
+     "y": 104,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 6,
+     "name": "옥 앞",
+     "type": "point",
+     "point": true,
+     "x": 280,
+     "y": 104,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 7,
+     "name": "주막 앞 거리",
+     "type": "point",
+     "point": true,
+     "x": 88,
+     "y": 296,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 8,
+     "name": "장터 끝",
+     "type": "point",
+     "point": true,
+     "x": 344,
+     "y": 280,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 9,
+     "name": "hyeongbang",
+     "type": "actor",
+     "point": true,
+     "x": 136,
+     "y": 104,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "ajeon"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 10,
+     "name": "pojol1",
+     "type": "actor",
+     "point": true,
+     "x": 184,
+     "y": 168,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "soldier"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 11,
+     "name": "pojol2",
+     "type": "actor",
+     "point": true,
+     "x": 232,
+     "y": 168,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "soldier"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 12,
+     "name": "prisoner",
+     "type": "actor",
+     "point": true,
+     "x": 296,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "bandit"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 13,
+     "name": "town_widow",
+     "type": "actor",
+     "point": true,
+     "x": 168,
+     "y": 280,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "widow"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 14,
+     "name": "town_fish",
+     "type": "actor",
+     "point": true,
+     "x": 280,
+     "y": 280,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "worker2"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 15,
+     "name": "rowdy1",
+     "type": "actor",
+     "point": true,
+     "x": 312,
+     "y": 264,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 16,
+     "name": "rowdy2",
+     "type": "actor",
+     "point": true,
+     "x": 328,
+     "y": 280,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "pickpocket"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 17,
+     "name": "rowdy3",
+     "type": "actor",
+     "point": true,
+     "x": 344,
+     "y": 264,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "thug"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 18,
+     "name": "town_ys",
+     "type": "actor",
+     "point": true,
+     "x": 216,
+     "y": 184,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "yunseo"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 1
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 19,
+     "name": "town_chest",
+     "type": "chest",
+     "point": true,
+     "x": 360,
+     "y": 296,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "coin",
+       "type": "int",
+       "value": 60
+      }
+     ]
+    },
+    {
+     "id": 20,
+     "name": "동헌 등잔",
+     "type": "light",
+     "point": true,
+     "x": 200,
+     "y": 68,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 3.0
+      }
+     ]
+    },
+    {
+     "id": 21,
+     "name": "주막 등잔",
+     "type": "light",
+     "point": true,
+     "x": 72,
+     "y": 340,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 3.0
+      }
+     ]
+    },
+    {
+     "id": 22,
+     "name": "장터 등잔",
+     "type": "light",
+     "point": true,
+     "x": 280,
+     "y": 244,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 2.6
+      }
+     ]
+    },
+    {
+     "id": 23,
+     "name": "주막 굴뚝",
+     "type": "smoke",
+     "point": true,
+     "x": 72,
+     "y": 304,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 24,
+     "name": "초가 굴뚝",
+     "type": "smoke",
+     "point": true,
+     "x": 344,
+     "y": 320,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    }
+   ],
+   "opacity": 1,
+   "type": "objectgroup",
+   "visible": true,
+   "x": 0,
+   "y": 0
+  }
+ ],
+ "nextlayerid": 4,
+ "nextobjectid": 25,
+ "orientation": "orthogonal",
+ "properties": [
+  {
+   "name": "name",
+   "type": "string",
+   "value": "달골 읍내"
+  },
+  {
+   "name": "bgm",
+   "type": "string",
+   "value": "home"
+  },
+  {
+   "name": "ambient",
+   "type": "string",
+   "value": "leaves"
+  }
+ ],
+ "renderorder": "right-down",
+ "tiledversion": "1.11.2",
+ "tileheight": 16,
+ "tilesets": [
+  {
+   "firstgid": 1,
+   "source": "terrain.tsj"
+  },
+  {
+   "firstgid": 8,
+   "source": "deco.tsj"
+  }
+ ],
+ "tilewidth": 16,
+ "type": "map",
+ "version": "1.10",
+ "width": 26
+}

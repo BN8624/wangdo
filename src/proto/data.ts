@@ -54,6 +54,8 @@ export const ITEMS: Record<string, ItemDef> = {
   silkshoes: { id: 'silkshoes', name: '비단 꽃신', slot: 'charm', spd: 18, hp: 10, price: 340, desc: '속도 +18, 체력 +10%' },
   jadebell: { id: 'jadebell', name: '옥방울', slot: 'charm', atk: 18, hp: 16, def: 10, spd: 6, price: 480, desc: '공격 +18%, 체력 +16%, 방어 +10%, 속도 +6' },
   apronknot: { id: 'apronknot', name: '소담의 앞치마 끈', slot: 'charm', atk: 10, hp: 18, def: 12, price: 0, desc: '공격 +10%, 체력 +18%, 방어 +12%' },
+  prayerbeads: { id: 'prayerbeads', name: '전 주인의 염주', slot: 'charm', atk: 8, hp: 10, def: 8, spd: 4, price: 0, desc: '공격 +8%, 체력 +10%, 방어 +8%, 속도 +4' },
+  forgering: { id: 'forgering', name: '무영이 벼린 쇠고리', slot: 'charm', atk: 14, def: 10, price: 0, desc: '공격 +14%, 방어 +10%' },
 };
 
 /** 장터에서 파는 것(화가 지날수록 물건이 바뀐다) */
@@ -136,7 +138,7 @@ export const FOES: Record<string, FoeGroup> = {
     waves: [
       [gob(19), gob2(19)],
       // 쇠비늘이 단단해 버티기만 하면 못 쓰러뜨린다(몰아쳐라·기술이 맞다)
-      [gob(19), { name: '철곰', char: 'cheolgom', level: 23, role: 'defense', element: 'wood', kind: 'elite', power: 1.35 }],
+      [gob(19), { name: '철곰', char: 'cheolgom', level: 23, role: 'defense', element: 'wood', kind: 'elite', power: 1.55 }],
     ],
   },
   privates: { name: '별창을 지키던 송씨 사병', ground: 'dirt', waves: [[sol(21), sol(21, 'defense'), sol(22)]] },
@@ -164,6 +166,35 @@ export const FOES: Record<string, FoeGroup> = {
   meoTrain: { name: '송씨 머슴', ground: 'dirt', waves: [[thug(11), thug(11)]] },
   // 지면 쉼터 근처에서 하는 수련(쉬운 상대)
   village: { name: '도깨비불', ground: 'grass', waves: [[wisp(1), wisp(2)]] },
+  // 새 화(extra.ts)
+  dc_bats: { name: '깊은 굴 박쥐 떼', ground: 'cave', waves: [[bat(10), bat(10), bat(11)]] },
+  dc_wisps: { name: '샘가의 도깨비불', ground: 'cave', waves: [[wisp(10), wisp(11), wisp(11)]] },
+  dc_guardian: {
+    name: '옛 사당의 사당지기',
+    ground: 'cave',
+    boss: true,
+    waves: [
+      [bat(11), wisp(11)],
+      [{ name: '사당지기 도깨비불', mon: 'wisp', level: 14, role: 'support', element: 'fire', kind: 'elite', power: 1.5 }, bat(12)],
+    ],
+  },
+  dc_train: { name: '굴 박쥐', ground: 'cave', waves: [[bat(9), bat(9)]] },
+  town_rowdy: { name: '장터 거리의 왈패', ground: 'dirt', waves: [[thug(15), pick(15), thug(15, 'defense')]] },
+  pojol: { name: '형방이 부른 관아 포졸', ground: 'dirt', waves: [[{ ...sol(16), name: '관아 포졸' }, { ...sol(16, 'defense'), name: '관아 포졸' }, { ...sol(17), name: '관아 포졸' }]] },
+  town_train: { name: '장터 왈패', ground: 'dirt', waves: [[thug(14), pick(14)]] },
+  raiders: {
+    name: '산채를 노린 검은바람',
+    ground: 'dirt',
+    boss: true,
+    waves: [
+      [{ ...gob(21), name: '검은바람 졸개' }, { ...gob(21), name: '검은바람 졸개' }, pick(21)],
+      [{ name: '검은바람 우두머리', char: 'bandit2', level: 25, role: 'attack', element: 'dark', kind: 'elite', power: 1.55 }, { ...gob(22), name: '검은바람 졸개' }],
+    ],
+  },
+  raid_train: { name: '검은바람 졸개', ground: 'dirt', waves: [[{ ...gob(20), name: '검은바람 졸개' }, { ...gob(20), name: '검은바람 졸개' }]] },
+  mguards: { name: '송 대감 댁 순라 사병', ground: 'dirt', waves: [[sol(23), sol(23, 'defense')]] },
+  mguards2: { name: '사랑채를 지키는 사병', ground: 'dirt', waves: [[sol(24), sol(24, 'defense'), sol(24)]] },
+  manor_train: { name: '송씨 사병', ground: 'dirt', waves: [[sol(22), sol(22)]] },
   // 마을 의뢰(quests.ts)
   q_raccoons: { name: '장독 깨는 너구리', ground: 'grass', waves: [[raccoon(6), raccoon(6), raccoon(7)]] },
   q_wisps: { name: '등잔 기름 핥는 도깨비불', ground: 'grass', waves: [[wisp(9), wisp(9), wisp(10)]] },

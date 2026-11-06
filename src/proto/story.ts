@@ -6,6 +6,7 @@ import type { Beat } from './runner';
 import type { Line } from './types';
 import { QUEST_BEATS } from './quests';
 import { SIDE_BEATS } from './side';
+import { EXTRA_BEATS } from './extra';
 
 const n = (text: string, extra: Partial<Line> = {}): Line => ({ who: 'narration', text, ...extra });
 const me = (text: string, extra: Partial<Line> = {}): Line => ({ who: 'me', text, ...extra });
@@ -878,6 +879,7 @@ export const SCRIPT: Beat[] = [
   },
 
   { t: 'call', label: 'hub3' },
+  { t: 'call', label: 'ep_cave' },
   // ── 4화: 우렁각시의 밥상 (원고 3화) ──
   { t: 'night', on: false },
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
@@ -1797,6 +1799,7 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'call', label: 'hub5' },
+  { t: 'call', label: 'ep_town' },
   // ── 6화: 창고를 여는 값 (원고 5화) ──
   { t: 'night', on: false },
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
@@ -1915,6 +1918,7 @@ export const SCRIPT: Beat[] = [
       { flag: 'clue_twelve', label: '짐꾼들의 술주정', power: 30, say: [me('짐꾼들 말로는 봉투는 열일곱인데 쌀은 열두 집 몫뿐이었다더군. 나머지 쌀은 어디 있소?')] },
       { flag: 'chae_sealed', label: '송씨 댁 인장 찍힌 확인서', power: 35, say: [sd('송채령 아가씨가 인장까지 찍어 준 확인서예요. 다 지급했다면서 다섯 집 몫이 비었어요.'), n('관리인의 얼굴이 하얗게 질렸다.')] },
       { flag: 'paid_wages', label: '1화에 받아 낸 품삯', power: 25, say: [me('그때 품삯 삼백이십 냥 토해 낸 거 기억하시오? 방망이는 안 잊었소.')] },
+      { flag: 'town_ledger', label: '관아 곡식 이관 장부', power: 30, say: [sd('관아 서고 이관 장부예요. 받은 사람 도장이 비어 있는 칸이 다섯이에요. 그 칸, 관리인 어른 수결 옆이고요.'), npc('창고 관리인', 'keeper', '……그, 그걸 어떻게.')] },
     ],
     react: [
       npc('창고 관리인', 'keeper', '모, 모릅니다! 소인은 문만 지켰습니다요!'),
@@ -2644,6 +2648,7 @@ export const SCRIPT: Beat[] = [
   },
   { t: 'night', on: false },
   { t: 'call', label: 'hub8' },
+  { t: 'call', label: 'ep_camp' },
   // ── 9화: 비어 있는 인장 (원고 8화) ──
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
   { t: 'night', on: true },
@@ -2934,6 +2939,7 @@ export const SCRIPT: Beat[] = [
   },
   { t: 'night', on: false },
   { t: 'call', label: 'hub9' },
+  { t: 'call', label: 'ep_manor' },
   // ── 10화: 누구의 빚인가 (원고 9화) ──
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
   { t: 'night', on: false },
@@ -3069,6 +3075,8 @@ export const SCRIPT: Beat[] = [
       { flag: 'prep_sodam', label: '소담의 날짜 순서표', power: 20, say: [me('같은 날, 같은 곡식이 세 군데로 갔소. 이 세 줄을 보시오.'), n('소담이 동그라미 친 종이를 조사관 앞에 펼쳤다.')] },
       { flag: 'prep_bs', label: '백설이 읽은 대리인의 눈썹', power: 20, say: [bs('(작게) 나리, 맨 왼쪽 대리인이요. 이자 이야기만 나오면 눈썹이 떨려요.'), me('왼쪽 대리인께 묻겠소. 그 이자, 직접 세어 보셨소?'), n('대리인의 눈썹이 꿈틀했다.')] },
       { flag: 'prep_mu', label: '흑운채가 실제로 받은 양', power: 20, say: [mu('산채가 실제로 받은 양이오. 송씨 장부와 맞는 줄이 하나도 없소.')] },
+      { flag: 'approval_page', label: '뜯긴 승인란', power: 35, say: [sd('송 대감 댁 장부에서 뜯겨 나간 승인란이에요. 이자를 올린 날마다 강 집사 수결이 있어요.'), n('대리인 하나가 침을 삼켰다.')] },
+      { flag: 'camp_saved', label: '산채가 지킨 상자', power: 30, say: [mu('검은바람이 노린 송씨 상자요. 산채가 피 흘려 지켰소. 봉인 그대로요.'), npc('먹쇠', 'meoksoe', '도깨비가 사람 장부를 지켰소. 적어 두시오.')] },
     ],
     react: [
       npc('송씨 측 대리인', 'chaeryeong', '이자는 계약대로 받은 것입니다.'),
@@ -3518,6 +3526,7 @@ export const SCRIPT: Beat[] = [
       n('그날 밤 오두막. 관아에 방이 생겼지만, 우리는 누가 먼저랄 것 없이 여기로 돌아와 있었다.'),
       sd('채권 사본에 달골 별창의 옛 이름이 있어요. 날짜는 송씨 장부보다 훨씬 오래됐고요.'),
       mu('이 인장, 방망이 손잡이 무늬와 같소. 해를 두른 용.'),
+      bs('뒷산 굴 옛 사당 벽에도 이 용이 있었어요. 전 주인이 새긴.', { if: 'shrine_seen' }),
       n('손잡이를 가볍게 두드렸다. 사본의 지워진 이름 자리만 먹물처럼 검게 번졌다.'),
     ],
   },
@@ -3637,4 +3646,6 @@ export const SCRIPT: Beat[] = [
   ...SIDE_BEATS,
   // 마을 의뢰: 의뢰판(board)으로만 들어간다
   ...QUEST_BEATS,
+  // 새 화 넷: 본편에서 call로 들어간다
+  ...EXTRA_BEATS,
 ];
