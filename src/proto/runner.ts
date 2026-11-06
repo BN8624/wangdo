@@ -7,6 +7,7 @@ import { MAPS, dirTo, findPath, grid, pointOf, walkable, type MapId } from './ma
 import { BOND_NAME, battleSetup, bondTier, giveExp, groupCoin, groupExp, overwhelms, type Tactic } from './party';
 import { negoApply, negoOptions, type NegoBeat, type NegoState, type NegoView } from './nego';
 import { SCRIPT } from './story';
+import { SIDE_ORDER } from './side';
 import type { Dir, FoeGroup, ItemDef, Line, Member, MemberId, Pt } from './types';
 
 export interface ChoiceOpt {
@@ -46,6 +47,10 @@ export type Beat =
   | { t: 'visit'; id: string; prompt: string; pick: number; options: { text: string; desc: string; label: string }[] }
   | { t: 'label'; name: string }
   | { t: 'goto'; label: string }
+  /** 이름표로 가서, ret을 만나면 다음 비트로 돌아온다(오두막의 하루처럼 따로 둔 묶음) */
+  | { t: 'call'; label: string }
+  /** 식객 곁이야기: 정과 진행이 닿은 다음 편이 있으면 그리로, 없으면 chat으로(둘 다 ret으로 돌아온다) */
+  | { t: 'side'; who: MemberId; chat: string }
   | { t: 'ret' }
   /** flag가 있으면(not이면 없으면), bond면 그 식객의 정이 그만큼 쌓였으면 goto로 */
   | { t: 'if'; flag?: string; bond?: [MemberId, number]; goto: string; not?: boolean }
@@ -118,6 +123,8 @@ export interface Game {
   bsDebt?: number;
   /** 다음 전투의 작전 */
   tactic?: Tactic | null;
+  /** 저장할 때의 대본 지문(SCRIPT_SIG). 다르면 이어서 할 때 같은 목표의 첫머리로 옮긴다 */
+  sig?: string;
   /** 졌을 때: 쉼터로 돌아온 뒤 수련할지 고르는 중 */
   defeat: boolean;
   done: boolean;
@@ -180,6 +187,22 @@ export function newGame(): Game {
     done: false,
   };
 }
+
+/** 이 식객의 아직 안 본 첫 곁이야기가 정·진행 조건을 채웠으면 그 편 */
+export function nextSide(g: Game, who: MemberId) {
+  const first = (SIDE_ORDER[who] ?? []).find((s) => !g.flags.includes(s.done));
+  if (!first) return null;
+  if ((g.bond[who] ?? 0) < first.bond) return null;
+  if (first.need && !g.flags.includes(first.need)) return null;
+  return first;
+}
+
+/** 대본 모양의 지문: 대본이 바뀌면 저장의 pc가 엉뚱한 비트를 가리킨다(이어서 할 때 바로잡는다) */
+export const SCRIPT_SIG = (() => {
+  let h = 7;
+  for (const b of SCRIPT) for (const ch of b.t + ('text' in b ? String(b.text) : '') + ('name' in b ? String(b.name) : '')) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return `${SCRIPT.length}:${h.toString(36)}`;
+})();
 
 const LABELS = new Map<string, number>();
 SCRIPT.forEach((b, i) => {
@@ -293,6 +316,14 @@ export function step(game: Game, input?: Input): { g: Game; fx: Effect } {
       case 'goto':
         g = { ...g, pc: labelAt(b.label) };
         continue;
+      case 'call':
+        g = { ...g, stack: [...g.stack, g.pc + 1], pc: labelAt(b.label) };
+        continue;
+      case 'side': {
+        const next = nextSide(g, b.who);
+        g = next ? { ...g, flags: [...g.flags, next.done], pc: labelAt(next.label) } : { ...g, pc: labelAt(b.chat) };
+        continue;
+      }
       case 'if':
         g = { ...g, pc: (b.bond ? (g.bond[b.bond[0]] ?? 0) >= b.bond[1] : has(g, b.flag ?? '')) !== !!b.not ? labelAt(b.goto) : g.pc + 1 };
         continue;
@@ -523,9 +554,28 @@ function resolve(game: Game, input: Input): Game {
   }
 }
 
+/** 대본이 바뀐 뒤의 저장: 같은 목표가 시작되는 곳(그 앞의 지도 옮김부터) 다시 이어 간다. 끝난 저장은 끝에 둔다 */
+export function migrate(g: Game): Game {
+  if (g.sig === SCRIPT_SIG) return g;
+  const endAt = SCRIPT.findIndex((b) => b.t === 'end');
+  let at: number;
+  if (g.done) at = endAt;
+  else {
+    const goal = SCRIPT.findIndex((b) => b.t === 'goal' && b.text === g.goal);
+    const from = goal >= 0 ? goal : Math.min(g.pc, endAt);
+    at = from;
+    for (let i = from; i >= 0; i--)
+      if (SCRIPT[i].t === 'map') {
+        at = i;
+        break;
+      }
+  }
+  return { ...g, sig: SCRIPT_SIG, pc: at, stack: [], reply: null, nego: null, check: null, defeat: false };
+}
+
 export function save(g: Game) {
   try {
-    localStorage.setItem(SAVE_KEY, JSON.stringify(g));
+    localStorage.setItem(SAVE_KEY, JSON.stringify({ ...g, sig: SCRIPT_SIG }));
   } catch {
     /* 저장이 막혀도 이번 판은 이어진다 */
   }
@@ -538,7 +588,7 @@ export const ep4Start = () => SCRIPT.findIndex((b) => b.t === 'goal' && b.text =
 export function trialStart(): Game {
   const first4 = ep4Start();
   let r = step(newGame());
-  for (let i = 0; i < 5000 && r.g.pc < first4 - 1; i++) {
+  for (let i = 0; i < 5000 && (r.g.pc < first4 - 1 || r.g.stack.length > 0); i++) {
     const b = SCRIPT[r.g.pc];
     const input: Input =
       r.fx.k === 'collect' && b.t === 'collect' ? { k: 'collect', ids: [b.debts[0].id] } : r.fx.k === 'choice' || r.fx.k === 'gift' ? { k: 'pick', i: 0 } : r.fx.k === 'defeat' ? { k: 'train' } : { k: 'ok' };
@@ -557,7 +607,7 @@ export function load(): Game | null {
     const raw = localStorage.getItem(SAVE_KEY);
     if (!raw) return null;
     const g = JSON.parse(raw) as Game;
-    return g.v === 2 ? revive(g) : null;
+    return g.v === 2 ? revive(migrate(g)) : null;
   } catch {
     return null;
   }

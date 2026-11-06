@@ -30,6 +30,11 @@ export const ITEMS: Record<string, ItemDef> = {
   jadering: { id: 'jadering', name: '옥가락지', slot: 'charm', atk: 14, hp: 18, def: 12, price: 380, desc: '공격 +14%, 체력 +18%, 방어 +12%' },
   // 곁이야기에서 받는 것
   foxhair: { id: 'foxhair', name: '여우털 부적', slot: 'charm', atk: 8, hp: 8, spd: 6, price: 0, desc: '공격 +8%, 체력 +8%, 속도 +6' },
+  clubcord: { id: 'clubcord', name: '무영의 붉은 끈', slot: 'charm', atk: 10, spd: 5, price: 0, desc: '공격 +10%, 속도 +5' },
+  shellchip: { id: 'shellchip', name: '우렁이 껍데기 조각', slot: 'charm', hp: 12, def: 12, price: 0, desc: '체력 +12%, 방어 +12%' },
+  redknot: { id: 'redknot', name: '백설의 진홍 실', slot: 'charm', atk: 16, hp: 14, spd: 8, price: 0, desc: '공격 +16%, 체력 +14%, 속도 +8' },
+  armorcord: { id: 'armorcord', name: '무영의 갑옷 끈', slot: 'charm', hp: 22, def: 20, price: 0, desc: '체력 +22%, 방어 +20%' },
+  apronknot: { id: 'apronknot', name: '소담의 앞치마 끈', slot: 'charm', atk: 10, hp: 18, def: 12, price: 0, desc: '공격 +10%, 체력 +18%, 방어 +12%' },
 };
 
 /** 장터에서 파는 것(화가 지날수록 물건이 바뀐다) */
@@ -112,7 +117,7 @@ export const FOES: Record<string, FoeGroup> = {
     waves: [
       [gob(19), gob2(19)],
       // 쇠비늘이 단단해 버티기만 하면 못 쓰러뜨린다(몰아쳐라·기술이 맞다)
-      [gob(19), { name: '철곰', char: 'cheolgom', level: 22, role: 'defense', element: 'wood', kind: 'elite', power: 1.2 }],
+      [gob(19), { name: '철곰', char: 'cheolgom', level: 23, role: 'defense', element: 'wood', kind: 'elite', power: 1.35 }],
     ],
   },
   privates: { name: '별창을 지키던 송씨 사병', ground: 'dirt', waves: [[sol(21), sol(21, 'defense'), sol(22)]] },

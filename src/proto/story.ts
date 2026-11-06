@@ -4,6 +4,7 @@
 import { SHOP10, SHOP5, SHOP7 } from './data';
 import type { Beat } from './runner';
 import type { Line } from './types';
+import { SIDE_BEATS } from './side';
 
 const n = (text: string, extra: Partial<Line> = {}): Line => ({ who: 'narration', text, ...extra });
 const me = (text: string, extra: Partial<Line> = {}): Line => ({ who: 'me', text, ...extra });
@@ -535,6 +536,7 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'night', on: false },
+  { t: 'call', label: 'hub2' },
   { t: 'goal', text: '고갯길로' },
   {
     t: 'talk',
@@ -874,6 +876,7 @@ export const SCRIPT: Beat[] = [
     ],
   },
 
+  { t: 'call', label: 'hub3' },
   // ── 4화: 우렁각시의 밥상 (원고 3화) ──
   { t: 'night', on: false },
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
@@ -1371,6 +1374,7 @@ export const SCRIPT: Beat[] = [
   //    정이 쌓인 식객은 곁이야기가 열린다(정 단계: 가까움 20 · 깊은 정 45 · 연모 70) ──
   { t: 'night', on: false },
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
+  { t: 'flag', set: 'day4' },
   { t: 'goal', text: '오두막의 하루' },
   {
     t: 'talk',
@@ -1397,7 +1401,8 @@ export const SCRIPT: Beat[] = [
 
   { t: 'label', name: 'd4_bs' },
   { t: 'walk', to: '오두막', face: 0 },
-  { t: 'if', bond: ['baekseol', 20], goto: 'd4_bs_story' },
+  { t: 'side', who: 'baekseol', chat: 'd4_bs_chat' },
+  { t: 'label', name: 'd4_bs_chat' },
   {
     t: 'talk',
     lines: [
@@ -1417,78 +1422,10 @@ export const SCRIPT: Beat[] = [
   },
   { t: 'ret' },
 
-  // 백설 곁이야기 1 '아홉째 꼬리'(가까움): 아홉째 꼬리만 차갑다 = 저당 잡힌 이름(5화 고백의 복선)
-  { t: 'label', name: 'd4_bs_story' },
-  {
-    t: 'talk',
-    lines: [
-      n('백설 곁이야기 · 아홉째 꼬리'),
-      n('오후 볕이 툇마루에 길게 누워 있었다. 백설은 그 볕 한가운데 엎드려, 아홉 꼬리를 부채처럼 펼쳐 말리고 있었다.', { scene: 'bs-side1' }),
-      bs('나리, 마침 잘 오셨어요. 이거요.'),
-      n('그녀가 어깨 너머로 참빗을 내밀었다. 대나무 빗살이 볕에 반짝였다.'),
-      me('빗을 왜 나한테 주오.'),
-      bs('꼬리 좀 빗어 달라고요. 혼자 하면 뒤쪽까지 손이 안 닿아요.'),
-      me('여우 꼬리는 아무나 만지는 게 아니라던데.'),
-      bs('그러니까 아무한테나 부탁 안 하잖아요.'),
-      n('나는 툇마루 끝에 걸터앉았다. 꼬리 하나가 기다렸다는 듯 내 무릎 위로 스르르 올라왔다. 볕에 데워진 털이 손바닥보다 따뜻했다.'),
-      bs('……살살요. 거긴 간지러워요. 아니, 거기는 괜찮아요. 거기는…… 좀 더요.'),
-      n('빗질 한 번에 은빛 털이 물결처럼 갈라졌다가 다시 모였다. 백설이 팔에 뺨을 묻고 길게 숨을 내쉬었다. 꼬리 끝이 빗질에 맞춰 까닥거렸다.'),
-      bs('사람들은 몰라요. 꼬리를 맡긴다는 게 어떤 건지.'),
-      me('어떤 거요?'),
-      bs('목덜미를 내놓는 거랑 비슷해요. 물어뜯겨도 할 말이 없는 자리거든요.'),
-      n('흘러내린 옷깃 사이로 하얀 어깨가 볕을 받고 있었다. 그녀는 옷깃을 올리지 않았다. 나도 올려 주지 않았다.'),
-      n('여덟째 꼬리까지 빗었을 때였다. 마지막 꼬리 하나가 무릎 위로 올라오다 말고 멈췄다. 다른 꼬리들과 달리, 그 꼬리만은 볕을 받고도 차가웠다.'),
-      bs('……그건 안 빗으셔도 돼요.'),
-      n('목소리가 조금 낮아져 있었다. 그녀는 돌아보지 않았다.'),
-    ],
-  },
-  {
-    t: 'choice',
-    id: 'bs_side1',
-    prompt: '차가운 아홉째 꼬리',
-    options: [
-      {
-        text: '이것도 빗겠소',
-        desc: '차가운 꼬리를 무릎에 올려 끝까지 빗는다',
-        bond: { baekseol: 8 },
-        flag: 'bs_ninth',
-        log: '백설의 아홉째 꼬리를 빗어 주었다',
-        reply: [
-          me('여덟 개만 빗으면 빗질 값을 반만 받아야 하잖소. 나는 셈이 틀리는 건 못 참소.'),
-          n('차가운 꼬리를 무릎 위로 끌어 올렸다. 백설의 어깨가 움찔했다. 빗살이 지나갈 때마다 꼬리가 아주 조금씩 온기를 되찾았다. 끝까지는 아니었다.'),
-          bs('……이 꼬리는요, 아무도 안 만졌어요. 아주 오래. 저도요.'),
-          bs('나리 손은 이상해요. 빚쟁이 손인데 따뜻해요.'),
-          n('그녀가 고개를 돌렸다. 볕 때문인지 눈가가 붉었다. 웃는 얼굴이었다. 이번에는 웃으려다 실패하지 않았다.'),
-        ],
-      },
-      {
-        text: '묻지 않고 여덟 개만 빗는다',
-        desc: '그녀가 말하고 싶을 때까지 기다린다',
-        bond: { baekseol: 5 },
-        flag: 'bs_eight',
-        log: '백설의 아홉째 꼬리는 묻지 않았다',
-        reply: [
-          n('나는 빗을 내려놓았다. 차가운 꼬리는 그녀 쪽으로 슬그머니 돌아갔다.'),
-          bs('……안 물어보세요?'),
-          me('받을 날이 오면 받겠소. 빚은 원래 기다리는 거요.'),
-          bs('나리는 정말, 빚 이야기밖에 못 하세요.'),
-          n('그렇게 말하면서도 그녀는 남은 여덟 꼬리를 전부 내 무릎 위에 올려놓았다. 무거웠다. 해가 질 때까지 아무도 일어나지 않았다.'),
-        ],
-      },
-    ],
-  },
-  {
-    t: 'talk',
-    lines: [
-      n('볕이 기울었다. 참빗에 은빛 털 몇 가닥이 남아 있었다. 백설은 그걸 하나하나 떼어 내 엮더니, 내 소매 속에 밀어 넣었다.', { scene: null }),
-      bs('부적이에요. 잃어버리면 이자 받을 거예요.'),
-    ],
-  },
-  { t: 'give', item: 'foxhair', from: '백설의 선물' },
-  { t: 'ret' },
-
   { t: 'label', name: 'd4_mu' },
   { t: 'walk', to: '장독대', face: 0 },
+  { t: 'side', who: 'muyeong', chat: 'd4_mu_chat' },
+  { t: 'label', name: 'd4_mu_chat' },
   {
     t: 'talk',
     lines: [
@@ -1523,6 +1460,8 @@ export const SCRIPT: Beat[] = [
   { t: 'ret' },
 
   { t: 'label', name: 'd4_sd' },
+  { t: 'side', who: 'sodam', chat: 'd4_sd_chat' },
+  { t: 'label', name: 'd4_sd_chat' },
   { t: 'walk', to: '장터', face: 1 },
   {
     t: 'talk',
@@ -1849,6 +1788,7 @@ export const SCRIPT: Beat[] = [
       mu('…………장작이 모자라오. 더 패고 오겠소.'),
     ],
   },
+  { t: 'call', label: 'hub5' },
   // ── 6화: 창고를 여는 값 (원고 5화) ──
   { t: 'night', on: false },
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
@@ -2124,6 +2064,7 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'night', on: false },
+  { t: 'call', label: 'hub6' },
   // ── 7화: 강으로 간 곡식 (원고 6화) ──
   { t: 'night', on: false },
   { t: 'map', map: 'ferry', at: '나루 어귀', dir: 1 },
@@ -2384,6 +2325,7 @@ export const SCRIPT: Beat[] = [
       mu('……가서 말하겠소. 여기서 말하면 핑계가 될 것 같소.'),
     ],
   },
+  { t: 'call', label: 'hub7' },
   // ── 8화: 흑운채의 맹세 (원고 7화) ──
   // 송 대감의 저녁 초대(2026-11-04 보강): 11화 전에 악역이 먼저 얼굴을 보이고, 식객 셋을 저마다 흔든다
   { t: 'night', on: false },
@@ -2693,6 +2635,7 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'night', on: false },
+  { t: 'call', label: 'hub8' },
   // ── 9화: 비어 있는 인장 (원고 8화) ──
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
   { t: 'night', on: true },
@@ -2982,6 +2925,7 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'night', on: false },
+  { t: 'call', label: 'hub9' },
   // ── 10화: 누구의 빚인가 (원고 9화) ──
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
   { t: 'night', on: false },
@@ -3291,6 +3235,7 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'night', on: false },
+  { t: 'call', label: 'hub10' },
   // ── 11화: 현감의 첫 빚 (원고 10화, 1부 끝) ──
   { t: 'map', map: 'village', at: '오두막', dir: 0 },
   { t: 'night', on: false },
@@ -3680,4 +3625,6 @@ export const SCRIPT: Beat[] = [
     ],
   },
   { t: 'end' },
+  // 오두막의 하루·곁이야기: 끝 비트 뒤에 둔다(본편은 call·side로만 들어간다)
+  ...SIDE_BEATS,
 ];
