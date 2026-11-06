@@ -907,3 +907,35 @@ button {
 .bond-empty {
   color: rgba(232, 114, 138, 0.35);
 }
+
+/* 도감 */
+.dex-grid {
+  display: grid;
+  gap: 8px;
+}
+.dex-card {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 8px;
+  border: 1px solid rgba(232, 200, 115, 0.18);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+}
+.dex-card p {
+  margin: 4px 0 0;
+  line-height: 1.5;
+}
+.dex-card.locked {
+  opacity: 0.5;
+}
+.dex-q {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+}
