@@ -13,9 +13,13 @@ import pass from './maps/pass.tmj?raw';
 import cave1 from './maps/cave1.tmj?raw';
 import cave2 from './maps/cave2.tmj?raw';
 import ferry from './maps/ferry.tmj?raw';
+import town from './maps/town.tmj?raw';
+import manor from './maps/manor.tmj?raw';
+import camp from './maps/camp.tmj?raw';
+import deepcave from './maps/deepcave.tmj?raw';
 
-export type MapId = 'backhill' | 'village' | 'pass' | 'cave1' | 'cave2' | 'ferry';
-const RAW: Record<MapId, string> = { backhill, village, pass, cave1, cave2, ferry };
+export type MapId = 'backhill' | 'village' | 'pass' | 'cave1' | 'cave2' | 'ferry' | 'town' | 'manor' | 'camp' | 'deepcave';
+const RAW: Record<MapId, string> = { backhill, village, pass, cave1, cave2, ferry, town, manor, camp, deepcave };
 
 export interface ChestDef {
   id: string;

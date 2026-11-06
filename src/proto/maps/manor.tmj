@@ -1,0 +1,573 @@
+{
+ "compressionlevel": -1,
+ "height": 26,
+ "infinite": false,
+ "layers": [
+  {
+   "data": [
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1,
+    1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 6, 6, 6, 6, 6, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 6, 6, 6, 6, 6, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 6, 6, 6, 6, 6, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
+    1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+   ],
+   "height": 26,
+   "id": 1,
+   "name": "terrain",
+   "opacity": 1,
+   "type": "tilelayer",
+   "visible": true,
+   "width": 26,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "data": [
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 0,
+    0, 170, 52, 53, 0, 0, 0, 0, 0, 54, 55, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 52, 53, 170, 0,
+    0, 170, 68, 69, 0, 0, 0, 0, 0, 70, 71, 0, 0, 124, 125, 126, 127, 0, 124, 125, 126, 127, 68, 69, 170, 0,
+    0, 170, 0, 0, 124, 125, 126, 127, 0, 0, 0, 0, 0, 140, 141, 142, 143, 0, 140, 141, 142, 143, 0, 0, 170, 0,
+    0, 170, 0, 0, 140, 141, 142, 143, 0, 47, 0, 0, 0, 156, 157, 158, 159, 0, 156, 157, 158, 159, 0, 0, 170, 0,
+    0, 170, 0, 0, 156, 157, 158, 159, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 170, 0,
+    0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 170, 0,
+    0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 48, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 177, 0, 0, 170, 0,
+    0, 170, 0, 80, 81, 82, 83, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 193, 229, 0, 170, 0,
+    0, 170, 0, 96, 97, 98, 99, 0, 0, 0, 52, 53, 0, 0, 0, 0, 0, 0, 0, 0, 0, 209, 0, 0, 170, 0,
+    0, 170, 0, 112, 113, 114, 115, 0, 0, 0, 68, 69, 0, 0, 0, 0, 229, 0, 0, 0, 0, 0, 0, 0, 170, 0,
+    0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 229, 0, 0, 0, 0, 48, 0, 170, 0,
+    0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 48, 0, 0, 0, 0, 0, 54, 55, 170, 0,
+    0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 71, 170, 0,
+    0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 170, 0,
+    0, 170, 0, 84, 85, 86, 87, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 120, 121, 122, 123, 0, 0, 0, 170, 0,
+    0, 170, 0, 100, 101, 102, 103, 0, 0, 176, 0, 0, 0, 0, 0, 0, 0, 136, 137, 138, 139, 0, 0, 0, 170, 0,
+    0, 170, 0, 116, 117, 118, 119, 0, 0, 0, 176, 0, 0, 0, 0, 0, 0, 152, 153, 154, 155, 0, 0, 0, 170, 0,
+    0, 170, 52, 53, 0, 0, 0, 171, 172, 173, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 54, 55, 0, 0, 170, 0,
+    0, 170, 68, 69, 0, 0, 0, 187, 188, 189, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 70, 71, 0, 0, 170, 0,
+    0, 170, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 170, 0,
+    0, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 0, 0, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 170, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+   ],
+   "height": 26,
+   "id": 2,
+   "name": "deco",
+   "opacity": 1,
+   "type": "tilelayer",
+   "visible": true,
+   "width": 26,
+   "x": 0,
+   "y": 0
+  },
+  {
+   "draworder": "topdown",
+   "id": 3,
+   "name": "objects",
+   "objects": [
+    {
+     "id": 1,
+     "name": "솟을대문",
+     "type": "point",
+     "point": true,
+     "x": 200,
+     "y": 392,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 2,
+     "name": "행랑 마당",
+     "type": "point",
+     "point": true,
+     "x": 200,
+     "y": 264,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 3,
+     "name": "소담의 옛 방",
+     "type": "point",
+     "point": true,
+     "x": 88,
+     "y": 264,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 4,
+     "name": "곳간 앞",
+     "type": "point",
+     "point": true,
+     "x": 104,
+     "y": 216,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 5,
+     "name": "사랑채 앞",
+     "type": "point",
+     "point": true,
+     "x": 104,
+     "y": 136,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 6,
+     "name": "연못가",
+     "type": "point",
+     "point": true,
+     "x": 248,
+     "y": 184,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 7,
+     "name": "안채 뒤",
+     "type": "point",
+     "point": true,
+     "x": 296,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 8,
+     "name": "뒷문",
+     "type": "point",
+     "point": true,
+     "x": 376,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true
+    },
+    {
+     "id": 9,
+     "name": "mguard1",
+     "type": "actor",
+     "point": true,
+     "x": 168,
+     "y": 248,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "soldier"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 3
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
+      }
+     ]
+    },
+    {
+     "id": 10,
+     "name": "mguard2",
+     "type": "actor",
+     "point": true,
+     "x": 248,
+     "y": 232,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "soldier"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
+      }
+     ]
+    },
+    {
+     "id": 11,
+     "name": "mguard3",
+     "type": "actor",
+     "point": true,
+     "x": 120,
+     "y": 200,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "soldier"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
+      }
+     ]
+    },
+    {
+     "id": 12,
+     "name": "mguard4",
+     "type": "actor",
+     "point": true,
+     "x": 280,
+     "y": 136,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "soldier"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
+      }
+     ]
+    },
+    {
+     "id": 13,
+     "name": "butler",
+     "type": "actor",
+     "point": true,
+     "x": 120,
+     "y": 152,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "keeper"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      },
+      {
+       "name": "light",
+       "type": "string",
+       "value": "torch"
+      }
+     ]
+    },
+    {
+     "id": 14,
+     "name": "m_chae",
+     "type": "actor",
+     "point": true,
+     "x": 360,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "chaeryeong"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 2
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 15,
+     "name": "m_song",
+     "type": "actor",
+     "point": true,
+     "x": 104,
+     "y": 120,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "char",
+       "type": "string",
+       "value": "songdaegam"
+      },
+      {
+       "name": "dir",
+       "type": "int",
+       "value": 0
+      },
+      {
+       "name": "hidden",
+       "type": "bool",
+       "value": true
+      }
+     ]
+    },
+    {
+     "id": 16,
+     "name": "manor_chest",
+     "type": "chest",
+     "point": true,
+     "x": 88,
+     "y": 232,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "item",
+       "type": "string",
+       "value": "silkband"
+      }
+     ]
+    },
+    {
+     "id": 17,
+     "name": "사랑채 등잔",
+     "type": "light",
+     "point": true,
+     "x": 104,
+     "y": 116,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 3.0
+      }
+     ]
+    },
+    {
+     "id": 18,
+     "name": "안채 등잔",
+     "type": "light",
+     "point": true,
+     "x": 248,
+     "y": 100,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 3.0
+      }
+     ]
+    },
+    {
+     "id": 19,
+     "name": "대문 등잔",
+     "type": "light",
+     "point": true,
+     "x": 200,
+     "y": 356,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 2.6
+      }
+     ]
+    },
+    {
+     "id": 20,
+     "name": "연못 등잔",
+     "type": "light",
+     "point": true,
+     "x": 264,
+     "y": 148,
+     "width": 0,
+     "height": 0,
+     "rotation": 0,
+     "visible": true,
+     "properties": [
+      {
+       "name": "kind",
+       "type": "string",
+       "value": "lamp"
+      },
+      {
+       "name": "radius",
+       "type": "float",
+       "value": 2.4
+      }
+     ]
+    }
+   ],
+   "opacity": 1,
+   "type": "objectgroup",
+   "visible": true,
+   "x": 0,
+   "y": 0
+  }
+ ],
+ "nextlayerid": 4,
+ "nextobjectid": 21,
+ "orientation": "orthogonal",
+ "properties": [
+  {
+   "name": "name",
+   "type": "string",
+   "value": "송 대감 댁"
+  },
+  {
+   "name": "bgm",
+   "type": "string",
+   "value": "story"
+  },
+  {
+   "name": "ambient",
+   "type": "string",
+   "value": "none"
+  }
+ ],
+ "renderorder": "right-down",
+ "tiledversion": "1.11.2",
+ "tileheight": 16,
+ "tilesets": [
+  {
+   "firstgid": 1,
+   "source": "terrain.tsj"
+  },
+  {
+   "firstgid": 8,
+   "source": "deco.tsj"
+  }
+ ],
+ "tilewidth": 16,
+ "type": "map",
+ "version": "1.10",
+ "width": 26
+}
